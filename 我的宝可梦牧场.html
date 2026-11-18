@@ -2403,7 +2403,8 @@ function abBlock(m){ const L=abList(m.id), H=abHid(m.id), a=abOf(m), cur=abSlot(
   return `<div class="md-sec"><div class="md-h">特性</div><div class="abrow"><div style="min-width:0;flex:1"><b>${abName(a)}</b>${cur===2?' <span class="tag r4">隐藏特性</span>':''}<div class="muted">${abDesc(a)}</div>${cur<2&&L.length>1?`<div class="muted" style="margin-top:2px">另一种：${abName(L[1-cur])}</div>`:''}${H&&cur<2?`<div class="muted" style="margin-top:2px">隐藏特性：${abName(H)}（用胶囊 ${abChance(m)}% 几率变成它，每用一次 +1%）</div>`:''}</div>${can?`<button class="btn alt" data-abcap="${m.uid}" ${n?'':'disabled'}>${iImg('abcap',20)} 用特性胶囊（持有 ${n}）</button>`:'<span class="muted">只有 1 种特性</span>'}</div></div>`; }
 function abDex(id){ const p=PAB[id]||[], L=abList(id), h=p[2]&&!L.includes(p[2])?p[2]:0;
   return `<div class="abdex">${L.map((a,i)=>`<div><b>特性${L.length>1?' '+(i+1):''}：${abName(a)}</b><div class="muted">${abDesc(a)}</div></div>`).join('')}${h?`<div><b>隐藏特性：${abName(h)}</b> <span class="tag">${abHid(id)?`特性胶囊 ${HID_P}% 起，每用一次 +1%`:'暂时得不到'}</span><div class="muted">${abDesc(h)}</div></div>`:''}</div>`; }
-function wxEnter(id,mine,o){ abEnter(o,mine); const w=WXAB[id], b=B||D; if(!w||!b||b.wx===w) return; if(o&&abOf(o)!==WXID[w]) return; if((b.wx==='hrain'||b.wx==='hsun')&&w!=='hrain'&&w!=='hsun') return; b.wx=w; b.wxT=0; b.log.push(`${mine?'':'对方的 '}${SP[id][0]} 的特性：${WXN[w][1]}！${WXN[w][2]}`); }
+/* 开战时场上有两只以上带天气特性的宝可梦（Kris 2026-11-18）：只发动第一只的（照出场顺序：对方先、我方后）；之后中途换上场的照常发动 */
+function wxEnter(id,mine,o){ abEnter(o,mine); const w=WXAB[id], b=B||D; if(!w||!b||b.wx===w) return; if(b.__wxStart&&b.__wxPk) return; if(o&&abOf(o)!==WXID[w]) return; if((b.wx==='hrain'||b.wx==='hsun')&&w!=='hrain'&&w!=='hsun') return; b.wx=w; b.wxT=0; if(b.__wxStart) b.__wxPk=1; b.log.push(`${mine?'':'对方的 '}${SP[id][0]} 的特性：${WXN[w][1]}！${WXN[w][2]}`); }
 const wxMult=type=>{ const w=(B||D||{}).wx; if(w==='hrain') return type==='水'?1.5:type==='火'?0:1; if(w==='hsun') return type==='火'?1.5:type==='水'?0:1; if(w==='rain') return type==='水'?1.5:type==='火'?.5:1; if(w==='sun') return type==='火'?1.5:type==='水'?.5:1; return 1; };
 const hasTy=(o,t)=>o.tyO?(o.tyO.includes(t)||o.tyAdd===t):(SP[o.id][2]===t||SP[o.id][8]===t||o.tyAdd===t);
 /* 招式开的天气（大晴天、求雨、沙暴、冰雹……）持续 5 回合（Kris 2026-10-29）；特性开的天气不限回合 */
@@ -2425,7 +2426,7 @@ function startBattle(cfg){
   loadActive(); if(cfg.wx&&WXN[cfg.wx]){ B.wx=cfg.wx; B.log.push(`对方的 ${SP[B.foe.id][0]} 的特性：${WXN[cfg.wx][1]}！${WXN[cfg.wx][2]}`); }   /* 道馆重赛：开场天气 */
   /* 野外对战的随机天气（Kris 2026-11-02）：每场有 WILD_WX_P 的几率出现天气，出现时按战斗背景（野外区域）抽；月见山 / 山洞没有天气。沙暴 / 冰雹每回合会伤害非免疫的宝可梦，双方一样。只管有野外怪物的战斗（特效测试、变身测试没有 wid，不算） */
   if(cfg.kind==='wild'&&cfg.wid&&!cfg.wx&&Math.random()<WILD_WX_P){ const L=WILD_WX[battleBg(B)]||[]; if(L.length){ const w=L[Math.floor(Math.random()*L.length)]; if(WXN[w]){ B.wx=w; B.log.push(`野外的天气：${WXN[w][0]}。${WXN[w][2]}`); } } }
-  wxEnter(B.me.id,true,B.me); wxEnter(B.foe.id,false,B.foe); if(foes.length>1) B.log.push(`对方带了 ${foes.length} 只宝可梦，第一只是 ${SP[B.foe.id][0]}。`);
+  B.__wxStart=1; wxEnter(B.foe.id,false,B.foe); wxEnter(B.me.id,true,B.me); B.__wxStart=0; if(foes.length>1) B.log.push(`对方带了 ${foes.length} 只宝可梦，第一只是 ${SP[B.foe.id][0]}。`);
   $('#modal').hidden=false; bRender();
 }
 function btAllies(b){ const tm=b.cfg.team, N=tm.length+1, hit=b.hit; b.hit=0;
@@ -5642,7 +5643,7 @@ function startDouble(title,team,reward,rating,onWin,onLose,ckey,opts){
   D.used={}; D.gu={}; D.foeItems=opts&&opts.items?opts.items.slice():null;
   if(opts&&opts.gk){ const fs=D.foes; let ix=-1; for(let i=fs.length-1;i>=0;i--){ if((opts.gk!=='mega'||MEGA[fs[i].id])&&(opts.gk!=='dyn'||!NODYN.has(fs[i].id))){ ix=i; break; } } if(ix>=0) fs[ix].gm={k:opts.gk,t:opts.gk==='tera'&&opts.gt&&CHART[opts.gt]?opts.gt:null}; }
   else if(opts&&opts.gm) D.foes[D.foes.length-1].gm={k:opts.gm};
-  D.foes.forEach(f=>{ S.seen=S.seen||{}; S.seen[f.id]=1; }); B=null; D.my.forEach(i=>wxEnter(D.party[i].me.id,true,D.party[i].me)); D.fo.forEach(i=>wxEnter(D.foes[i].id,false,D.foes[i])); $('#modal').hidden=false; dRender(); }
+  D.foes.forEach(f=>{ S.seen=S.seen||{}; S.seen[f.id]=1; }); B=null; D.__wxStart=1; D.fo.forEach(i=>wxEnter(D.foes[i].id,false,D.foes[i])); D.my.forEach(i=>wxEnter(D.party[i].me.id,true,D.party[i].me)); D.__wxStart=0; $('#modal').hidden=false; dRender(); }
 const dAlive=side=>(side==='m'?D.my:D.fo).map((i,s)=>[i,s]).filter(([i])=>i>=0&&(side==='m'?D.party[i].mh:D.foes[i].fh)>0);
 function dCur(){ return dAlive('m').find(([i,s])=>!D.sel.some(x=>x.slot===s)); }
 function dRender(){
