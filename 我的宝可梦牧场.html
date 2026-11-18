@@ -15727,7 +15727,7 @@ const BGMA={"battle":"SUQzBAAAAAACClRQRTEAAAANAAADR28gSWNoaW5vc2UAVFhYWAAAACEAAA
   /* ---------- 宝可梦叫声 ---------- */
   const CRYBUF=new Map();
   /* 开场流程用：叫一声，叫完才 resolve（没声音时稍等一下就 resolve，节奏还是一样） */
-  window.cryP=function(id){ return new Promise(res=>{ if(!SND.cry||!live()||typeof CRIES==='undefined'||!CRIES[String(id)]) return setTimeout(res,350);
+  window.cryP=function(id){ return new Promise(res=>{ setTimeout(res,2600);   /* 保险：解码卡住也不会让开场停住 */ if(!SND.cry||!live()||typeof CRIES==='undefined'||!CRIES[String(id)]) return setTimeout(res,350);
     const k=String(id), go=buf=>{ if(!buf) return res(); if(window.__sndDebug) (window.__sndLog=window.__sndLog||[]).push('cry:'+k); const s=AC.createBufferSource(); s.buffer=buf; s.connect(CRYG); s.onended=()=>res(); s.start(); setTimeout(res,buf.duration*1000+400); };
     const got=CRYBUF.get(k); if(got&&got.then) return got.then(go); if(got) return go(got);
     const bin=atob(CRIES[k]), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
@@ -15922,12 +15922,12 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
   async function openSeq(){ const st=(typeof D!=='undefined'&&D&&D.my&&!document.querySelector('#modal').hidden)?D:B, dbl=st&&st===D; if(!st) return openEnd();
     const alive=()=>(dbl?D===st:B===st)&&!document.querySelector('#modal').hidden;
     try{
-      await sleep((window.__btIntroEnd||0)-performance.now()); if(!alive()) return;
+      await sleep((window.__btIntroEnd||0)-420-performance.now()); if(!alive()) return;   /* 转场开始淡出时就开始进场（Kris 2026-11-18：不要只剩野生宝可梦站在暗掉的画面上） */
       const host=document.querySelector('#battle .garena'); if(!host) return;
       const wild=!dbl&&(!st.cfg||st.cfg.kind==='wild');
       /* ① 双方进场 */
       const mtw=trEnter(host,SLIDE); let ftw=null;
-      if(wild){ const sp=host.querySelector('.gsp.foe'); if(sp) sp.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:SLIDE,easing:'linear'}); }
+      if(wild){ const sp=host.querySelector('.gsp.foe'); document.body.classList.remove('opn-hf'); if(sp) sp.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:SLIDE,easing:'linear'}); }
       else if(!dbl&&st.cfg.av) ftw=foeEnter(host,st.cfg.av,SLIDE);
       await sleep(SLIDE+350); if(!alive()) return;
       /* ② 对方派出宝可梦，叫完 */
@@ -15944,7 +15944,7 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
       for(const [k,v] of mk){ const m=dbl?(D.party[v]&&D.party[v].me):st.me; if(m) await cryP(m.id); if(!alive()) return; }
     }catch(e){ console.warn(e); } finally{ openEnd(); } }
   /* 开战时（有特效才做）：先把流程挂上，第一次画面先不放出场动画（entCheck 看 __openHold），等转场播完再一步一步来 */
-  function openArm(wild){ if(!fxOn()||(navigator.webdriver&&!window.__forceOpen)) return;   /* 自动测试不走开场流程 */ window.__openHold=true; openStart(); if(!wild) document.body.classList.add('opn-hf'); setTimeout(()=>{ window.__openHold=false; openSeq(); },0); }
+  function openArm(wild){ if(!fxOn()||(navigator.webdriver&&!window.__forceOpen)) return;   /* 自动测试不走开场流程 */ window.__openHold=true; openStart(); document.body.classList.add('opn-hf'); const tk=window.__openTk=(window.__openTk||0)+1; setTimeout(()=>{ if(window.__opening&&window.__openTk===tk) openEnd(); },16000);   /* 保险：开场流程最多 16 秒，怎样都会解锁按钮 */ setTimeout(()=>{ window.__openHold=false; openSeq(); },0); }
   /* 进入对战的转场（Kris 2026-11-18）：像 GBA 一样先闪两下白光，黑条扫过整个画面，再淡出露出战场；
      转场前半段后面看到的是原本的页面（对战画面先藏起来），黑条盖满后才换成对战画面；这段时间对战音乐先开始播，宝可梦出场、训练家丢球都等转场播完。野生：横条；训练家：竖条＋精灵球；世界 Boss（还有没有人物图的馆主类对战）：斜条＋精灵球；馆主 / 四天王 / 冠军 / 传奇训练家：VS 转场（vsIntro） */
   const INTRO=1900;   /* 闪光 0～0.7 秒，黑条 0.7～1.25 秒扫满，全黑停一下，1.5 秒开始淡出 */ window.__btIntroEnd=0;
