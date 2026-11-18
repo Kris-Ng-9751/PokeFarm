@@ -2527,7 +2527,7 @@ const _bRender=bRender;
 bRender=function(){ const b=B; if(b&&b.beats&&b.beats.length&&!b.busy){ const bs=b.beats; b.beats=null; return bReplay(b,bs); } if(b&&!b.busy) b.beats=null; return _bRender.apply(this,arguments); };
 /* 打倒对方宝可梦（Kris 2026-11-19）：回放完先让它叫一声，再往下沉倒下；之后才轮到对方派下一只 / 收回宝可梦、训练家出来。
    对方马上派下一只的情况（我方没有别的宝可梦可换）：派出延到倒下之后，回放时场上还是被打倒的那只 */
-{ const _fd=bFoeDown; bFoeDown=function(){ const b=B; if(b&&b.beats) b.__fntPend=1; return _fd.apply(this,arguments); };
+{ const _fd=bFoeDown; bFoeDown=function(){ const b=B; if(b&&b.beats&&b.cfg.kind!=='wild') b.__fntPend=1; return _fd.apply(this,arguments); };   /* 野生的打倒后还要捕捉，留在场上（Kris 2026-11-19） */
   const _sn=bSendNext; bSendNext=function(){ const b=B; if(b&&b.__fntPend&&b.beats&&b.beats.length&&!b.busy){ b.__pendSend=1; return bRender(); } return _sn.apply(this,arguments); }; }
 function foeFaint(b,done){ const sp=document.querySelector('#battle .gsp.foe'), id=b.foe&&b.foe.id; let fin=false; const end=()=>{ if(fin) return; fin=true; b.__fntShow=b.fcur+':'+id; fntSync(); done(); };
   const drop=()=>{ if(B!==b) return end(); const s2=document.querySelector('#battle .gsp.foe'); if(s2){ s2.classList.add('fnt'); } const fi=document.querySelector('#battle .ginfo.f'); if(fi) fi.classList.add('fntinfo'); setTimeout(end,520); };
