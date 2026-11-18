@@ -15600,11 +15600,11 @@ nav#subnav [data-tab="map"]{display:none!important}
   /* 页面路由：render 里那张表是写死的，这里补上新页面 */
   { const _r=render; render=function(){ if(tab==='tower'||tab==='friends'){ try{ renderShell(); if((FEAT[tab]||0)>(S.tl||1)) return rLocked(); (tab==='tower'?rTower:rFriends)(); capLists(); polish(); save(); }catch(e){ console.error(e); $('#main').innerHTML='<section class="panel"><div class="card"><h2>这一页出错了</h2><div class="muted">页面：'+tab+'<br>错误：'+String(e&&e.message||e)+'</div></div></section>'; } try{ titleCheck(); }catch(e){} return; } const r=_r.apply(this,arguments); try{ titleCheck(); }catch(e){} return r; }; }
 
-  { const _g=GSEC.rank; GSEC.rank=()=>[..._g(),
+  { const _g=GSEC.rank; GSEC.rank=()=>_g()+[
     gBox(gH('对战塔','对战 → 对战塔，训练家 Lv'+FEAT.tower+' 开放'),`<ul class="gul"><li>从队伍里选 ${TW_PICK} 只上塔，一层一个训练家（3 只宝可梦），<b>层与层之间 HP 不回复</b>，倒下的不能再上场，3 只都倒下就结束。</li><li>对手第 1 层 Lv46，每层 +1 级，第 55 层到 Lv100；之后每层对手 HP 再加 4%，可以一直往上打。每 10 层是<b>塔主</b>：最后一只会太晶化，第 30 层起还会带神兽。</li><li>每天 ${TW_DAY} 次；中途可以「结束挑战」，已经拿到的奖励不会扣。最高层永久记录，排行榜和训练家卡片上都看得到。</li><li>奖励：每过一层有金币和星尘；第一次打到每个第 10 层有稀有道具和神奇糖果。</li></ul>`),
     gBox(gH('称号'),`<p>达成条件就会得到称号（图鉴、异色、徽章、冠军、对战塔、段位、紧急任务、好友……一共 ${TITLES.length} 个）。到<b>训练家卡片</b>里点一个佩戴，会显示在训练家卡片、主页，别人在排行榜和好友里也看得到。</p>`),
     gBox(gH('好友','社交 → 好友'),`<ul class="gul"><li>在「找训练家」里加好友，点「拜访牧场」看他的宝可梦、称号和纪录。</li><li>每天第一次拜访一位好友得 ${VISIT_RW} 金币，每天最多 ${VISIT_MAX} 位。</li><li>每天能给好友送 ${GIFT_DAY} 份礼物（金币或道具；传说道具、稀有道具和拍卖、交换不了的道具不能送），对方在「好友」里领取。送礼物要在 OSE Console 里才能用。</li></ul>`),
-    gBox(gH('排行榜','社交 → 排行榜'),`<p>可以按<b>段位、图鉴、异色、对战塔最高层、本周紧急任务</b>排名。本周紧急任务每周一重新算。</p>`)]; }
+    gBox(gH('排行榜','社交 → 排行榜'),`<p>可以按<b>段位、图鉴、异色、对战塔最高层、本周紧急任务</b>排名。本周紧急任务每周一重新算。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
   const st=document.createElement('style'); st.textContent=`
 .ttl{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 10px;font:700 12.5px var(--sans);color:#fff;background:var(--tc);box-shadow:inset 0 -2px 0 #0002;white-space:nowrap;vertical-align:middle}.ttl::before{content:"★";font-size:11px;opacity:.85}.ttl.s{padding:1px 8px;font-size:11.5px}
 .ttlg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}.ttlc{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:2px solid var(--tc);border-radius:12px;background:#fff;padding:8px 10px;cursor:pointer;font:inherit;color:inherit}.ttlc b{color:var(--tc);font-size:14px}.ttlc small{color:var(--muted);font-size:12px}.ttlc.on{background:color-mix(in srgb,var(--tc) 14%,#fff)}.ttlc em{position:absolute;top:6px;right:8px;font-style:normal;font-size:11px;font-weight:800;color:var(--tc)}.ttlc.lock{border-color:var(--line);opacity:.55;cursor:default}.ttlc.lock b{color:var(--ink2)}
@@ -15866,7 +15866,7 @@ const BGMA={"battle":"SUQzBAAAAAACClRQRTEAAAANAAADR28gSWNoaW5vc2UAVFhYWAAAACEAAA
     btnSync(); }
   { const _rs=renderShell; renderShell=function(){ const r=_rs.apply(this,arguments); try{ btnSync(); }catch(e){} return r; }; }
   setTimeout(()=>{ try{ btnSync(); }catch(e){} },0);
-  { const _g=GSEC.start; GSEC.start=()=>[..._g(),gBox(gH('声音'),`<p>右上角的喇叭按钮可以分别开关<b>背景音乐</b>（牧场一首；野生宝可梦、训练家、道馆馆主 / 四天王 / 传奇训练家、世界 Boss 的对战和胜利各用 GBA 原曲）、<b>音效</b>（按钮、出招、打中、捕捉、升级、领奖励）和<b>宝可梦叫声</b>（出场和捕捉成功时），也能调音量。一开始音效和叫声是开的、音乐是关的；设定记在这台设备上。浏览器规定要先点一下画面才会出声。</p>`)]; }
+  { const _g=GSEC.start; GSEC.start=()=>_g()+[gBox(gH('声音'),`<p>右上角的喇叭按钮可以分别开关<b>背景音乐</b>（牧场一首；野生宝可梦、训练家、道馆馆主 / 四天王 / 传奇训练家、世界 Boss 的对战和胜利各用 GBA 原曲）、<b>音效</b>（按钮、出招、打中、捕捉、升级、领奖励）和<b>宝可梦叫声</b>（出场和捕捉成功时），也能调音量。一开始音效和叫声是开的、音乐是关的；设定记在这台设备上。浏览器规定要先点一下画面才会出声。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
 
   const st=document.createElement('style'); st.textContent=`
 .sndbtn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-left:auto;border:1px solid var(--line);border-radius:999px;background:var(--card,#fff);color:var(--ink2,#666);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}.sndbtn:hover{color:var(--leaf)}.sndbtn+.langbtn{margin-left:8px!important}
