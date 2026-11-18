@@ -2525,6 +2525,16 @@ function dynTick(b){ if(!(b.dyn>0)) return; b.dyn--; if(b.dyn===0){ b.dynMx=b.mx
 function beatsOn(){ const b=B; b.beats=[]; b.bd={m:b.mh,f:b.fh}; b.bd0={m:b.mh,f:b.fh}; }
 const _bRender=bRender;
 bRender=function(){ const b=B; if(b&&b.beats&&b.beats.length&&!b.busy){ const bs=b.beats; b.beats=null; return bReplay(b,bs); } if(b&&!b.busy) b.beats=null; return _bRender.apply(this,arguments); };
+/* 打倒对方宝可梦（Kris 2026-11-19）：回放完先让它叫一声，再往下沉倒下；之后才轮到对方派下一只 / 收回宝可梦、训练家出来。
+   对方马上派下一只的情况（我方没有别的宝可梦可换）：派出延到倒下之后，回放时场上还是被打倒的那只 */
+{ const _fd=bFoeDown; bFoeDown=function(){ const b=B; if(b&&b.beats) b.__fntPend=1; return _fd.apply(this,arguments); };
+  const _sn=bSendNext; bSendNext=function(){ const b=B; if(b&&b.__fntPend&&b.beats&&b.beats.length&&!b.busy){ b.__pendSend=1; return bRender(); } return _sn.apply(this,arguments); }; }
+function foeFaint(b,done){ const sp=document.querySelector('#battle .gsp.foe'), id=b.foe&&b.foe.id; let fin=false; const end=()=>{ if(fin) return; fin=true; b.__fntShow=b.fcur+':'+id; fntSync(); done(); };
+  const drop=()=>{ if(B!==b) return end(); const s2=document.querySelector('#battle .gsp.foe'); if(s2){ s2.classList.add('fnt'); } const fi=document.querySelector('#battle .ginfo.f'); if(fi) fi.classList.add('fntinfo'); setTimeout(end,520); };
+  if(!sp||!id) return end(); (window.cryP?window.cryP(id):Promise.resolve()).then(()=>setTimeout(drop,120)); setTimeout(()=>{ if(!fin&&!(document.querySelector('#battle .gsp.foe.fnt'))) drop(); },3200); }
+function fntSync(){ const b=B; if(!b||!b.foe) return; const sp=document.querySelector('#battle .gsp.foe'); if(sp) sp.classList.toggle('fntd',b.__fntShow===b.fcur+':'+b.foe.id); const fi=document.querySelector('#battle .ginfo.f'); if(fi) fi.classList.toggle('fntinfo',b.__fntShow===b.fcur+':'+b.foe.id); }
+{ const _ss=sizeSprites; sizeSprites=function(){ const r=_ss.apply(this,arguments); try{ fntSync(); }catch(e){} return r; }; }
+{ const st=document.createElement('style'); st.textContent='#battle .gsp.foe.fnt{animation:fntdrop .45s ease-in forwards}#battle .gsp.foe.fntd{visibility:hidden}#battle .ginfo.f.fntinfo{opacity:0;transition:opacity .3s}@keyframes fntdrop{from{transform:none;clip-path:inset(0 0 0 0)}to{transform:translateY(100%);clip-path:inset(0 0 100% 0)}}'; document.head.appendChild(st); }
 /* 两回合招式的第 2 回合（Kris 2026-11-18）：蓄力 / 躲起来之后，不用再按「战斗」，自己放出蓄好的招式 */
 function chgAuto(){ const b=B; if(!b||b.busy||b.over||b.pick||b.shift||(b.beats&&b.beats.length)||window.__opening) return; const id=b.me&&b.me._chg; if(!id||!MV[id]||b.__chgAuto===b.log.length+':'+id) return;
   b.__chgAuto=b.log.length+':'+id; setTimeout(()=>{ if(B!==b||b.busy||b.over||b.pick||b.shift||!b.me||b.me._chg!==id||document.querySelector('#modal').hidden) return; const k=getMoves(b.mon).findIndex(x=>+x===+id); bTurn(Math.max(0,k)); },650); }
@@ -2533,7 +2543,7 @@ function bReplay(b,bs){ b.busy=true; let i=0; const st={over:b.over,pick:b.pick,
   let pm=b.bd0?b.bd0.m:bs[0].mh, pf=b.bd0?b.bd0.f:bs[0].fh;
   const hpShow=(mh,fh)=>{ const q=(h,x)=>Math.max(0,Math.round(100*h/x)), c=p=>p>50?'g':p>20?'y':'r', fb=document.querySelector('#battle .ginfo.f .ghp i'), mb=document.querySelector('#battle .ginfo.m .ghp i'), mt=document.querySelector('#battle .ginfo.m .gn.small span:last-child');
     if(fb){ const p=q(fh,fxV(b)); fb.style.width=p+'%'; fb.className=c(p); } if(mb){ const p=q(mh,mxV(b)); mb.style.width=p+'%'; mb.className=c(p); } if(mt) mt.textContent=`${Math.max(0,mh)} / ${mxV(b)}`; };
-  const step=()=>{ if(B!==b) return; if(i>=bs.length){ b.stg=null; b.busy=false; Object.assign(b,st); return _bRender(); }
+  const step=()=>{ if(B!==b) return; if(i>=bs.length){ b.stg=null; if(b.__fntPend&&fxOn()){ b.__fntPend=0; _bRender(); return foeFaint(b,()=>{ if(B!==b) return; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; bSendNext(); } else _bRender(); }); } b.__fntPend=0; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; return bSendNext(); } return _bRender(); }
     const e=bs[i++]; if(e.dynEnd){ pm=e.mh; pf=e.fh; } if(e.castFx&&window.castStep) castStep(b,e); b.stg={n:e.n,mh:pm,fh:pf}; _bRender(); { const w=entWait(); if(w>0&&(e.id||e.mv)){ i--; return setTimeout(step,w); } }   /* 有宝可梦正在从精灵球出场：等它完全出来再出招（Kris 2026-10-31） */   /* 血条先保持出招前的样子，打中的那一刻（命中特效结束、对手开始闪）再扣 */
     const id=e.id, still=id&&FXSTILL.has(id)&&fxOn(), cat=id?(!MV[id][2]?'st':SPECIAL.has(id)?'sp':'ph'):null, contact=!e.z&&!e.semi&&((cat==='ph'&&!NOCONTACT.has(MV[id][0]))||(cat==='sp'&&SPCONTACT.has(MV[id][0]))), bite=!e.z&&cat==='ph'&&/牙|咬|爪|拳/.test(MV[id][0]), chg=!still&&!e.z&&!e.semi&&(cat==='sp'||cat==='st'||bite), pad=chg&&fxOn()?420:0;   /* Z 招式自己带开场蓄力和冲刺，不再另外冲一下 */   /* 牙 / 咬 / 爪 / 拳类物理招式也先蓄力，再冲上去（Kris 2026-10-28） */   /* 物理招式冲一下；特殊 / 变化招式蓄力 0.4 秒再出招 */
     const a=document.querySelector('#battle .gsp.'+(e.who==='me'?'me':'foe')); if(e.semi&&!(fxOn()&&FXF[e.semi])&&window.semiVis) semiVis(b,e.who==='me',e.semi.startsWith('semi1')); if(a&&cat&&!still&&!e.semi){ const k=e.z&&/^(超)?极巨/.test(e.z)?'charge':contact&&fxOn()?(bite?'charge':null):(cat==='ph'&&!bite?'lunge':'charge');   /* 极巨 / 超极巨招式：站在原地蓄力出招，不往前冲（Kris 2026-11-18） */ a.classList.remove('lunge','charge'); void a.offsetWidth; if(k) a.classList.add(k);
@@ -15873,7 +15883,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
   function side(host,k,html,first){ const sp=host.querySelector('.gsp.'+k); if(!sp||!html) return; const tw=document.createElement('div'); tw.className='trwin '+k+(first?' in':''); tw.innerHTML=html; tw.setAttribute('aria-hidden','true');
     if(/class="bk"/.test(html)){ const z=bkSz(heroNow(),host.clientHeight); tw.style.left=Math.round(sp.offsetLeft+(sp.offsetWidth-z.w)/2)+'px'; tw.style.width=z.w+'px'; tw.style.height=z.h+'px'; tw.style.bottom='0'; }
     else if(k==='foe') foeRect(host,sp,tw); else { tw.style.left=sp.offsetLeft+'px'; tw.style.width=sp.offsetWidth+'px'; tw.style.top=sp.offsetTop+'px'; tw.style.height=sp.offsetHeight+'px'; }   /* 背面图是半身像，贴着画面底边，跟 GBA 一样 */
-    if(first){ sp.classList.add('trcall'); setTimeout(()=>sp.classList.add('trgone'),480); } else sp.classList.add('trgone');
+    if(first&&!sp.classList.contains('fntd')){ sp.classList.add('trcall'); setTimeout(()=>sp.classList.add('trgone'),480); } else sp.classList.add('trgone');   /* 对方被打倒的那只已经倒下了，不用再收回（Kris 2026-11-19） */
     host.appendChild(tw); const fi=document.querySelector('#battle .ginfo.'+(k==='foe'?'f':'m')); if(fi) fi.classList.add(first?'trhide':'trgone'); }
   function apply(){ if(!won()) return; const b=B, host=document.querySelector('#battle .garena'); if(!host||host.querySelector('.trwin:not(.thr)')) return;
     const first=!b.__trWin; b.__trWin=1; let hero=null; try{ hero=myCard().hero; }catch(e){}
