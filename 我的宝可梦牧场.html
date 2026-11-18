@@ -39,11 +39,11 @@
 @keyframes wxsunb{from{opacity:.82}to{opacity:1}}
 
 /* 精灵球出场（Kris 2026-10-31） */
-.pbe{position:absolute;left:0;top:0;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 2px #0006)}
-.pbe i{position:absolute;left:0;width:100%;height:50%;box-sizing:border-box;border:2px solid #1d1d22}
-.pbe .t{top:0;background:linear-gradient(#ff6a4a,#d92b14);border-radius:999px 999px 0 0;border-bottom-width:1.5px;transform-origin:8% 100%;z-index:1}
-.pbe .b{top:50%;background:linear-gradient(#ffffff,#d9dde3);border-radius:0 0 999px 999px;border-top-width:1.5px}
-.pbe .k{left:50%;top:50%;width:36%;height:36%;background:#fff;border-radius:50%;transform:translate(-50%,-50%);z-index:2}
+.pbe{position:absolute;left:0;top:0;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 2px #0006)}.pbe img{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
+
+
+
+
 .pbf{position:absolute;z-index:3;pointer-events:none;border-radius:50%;background:radial-gradient(circle,#fff 0 22%,#ffffffcc 38%,#fff6c055 58%,#fff0 72%)}
 .pbr{position:absolute;z-index:3;pointer-events:none;border-radius:50%;background:repeating-conic-gradient(#fff 0 5deg,#fff0 5deg 22deg);-webkit-mask:radial-gradient(circle,#0000 0 12%,#000 20%,#0000 70%);mask:radial-gradient(circle,#0000 0 12%,#000 20%,#0000 70%)}
 .pbs{position:absolute;z-index:3;pointer-events:none;width:9px;height:9px;background:var(--c);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
@@ -8630,11 +8630,11 @@ function entPlay(host,gsp,side,key,t0){ const hr=host.getBoundingClientRect(), r
   const W=hr.width, H=hr.height, s=Math.max(14,Math.min(34,W*.028)), cx=r.left+r.width/2-hr.left, h=Math.max(r.height,H*.18), cy=r.bottom-h*.5-hr.top;
   const sx=side==='m'?cx-W*.28:cx+W*.22, sy=side==='m'?H+s:-s, px=(sx+cx)/2, py=Math.min(sy,cy)-H*.16, A=[];
   const el=(cls,css)=>{ const d=document.createElement('div'); d.className=cls; if(css) d.style.cssText=css; host.appendChild(d); return d; };
-  const ball=el('pbe',`width:${s}px;height:${s}px`); ball.innerHTML='<i class="t"></i><i class="b"></i><i class="k"></i>';
+  const ball=el('pbe',`width:${s}px;height:${s}px`); ball.innerHTML=iImg('ball',s);   /* 用精灵球的道具图（Kris 2026-11-18） */
   const T=(x,y,rot,sc)=>`translate(${x-s/2}px,${y-s/2}px) rotate(${rot}deg) scale(${sc||1})`;
   A.push(ball.animate([{transform:T(sx,sy,0),opacity:1},{transform:T(px,py,-360),offset:.5},{transform:T(cx,cy,-700),offset:.82},{transform:T(cx,cy-s*.55,-720),offset:.9},{transform:T(cx,cy,-720),offset:1}],{duration:430,easing:'linear',fill:'both'}));   /* ① 弧线飞过来，落下轻轻一弹 */
   A.push(ball.animate([{opacity:1},{opacity:1,offset:.6},{opacity:0}],{duration:260,delay:430,fill:'forwards'}));
-  A.push(ball.querySelector('.t').animate([{transform:'rotate(0)'},{transform:'rotate(-58deg) translateY(-12%)'}],{duration:150,delay:430,easing:'ease-out',fill:'both'}));   /* ② 上半边打开 */
+  A.push(ball.firstElementChild.animate([{transform:'scale(1)',filter:'brightness(1)'},{transform:'scale(1.3)',filter:'brightness(2.2)'}],{duration:150,delay:430,easing:'ease-out',fill:'both'}));   /* ② 球亮一下、胀一下（打开） */
   const fl=el('pbf',`left:${cx}px;top:${cy}px;width:${h*1.5}px;height:${h*1.5}px`);
   A.push(fl.animate([{transform:'translate(-50%,-50%) scale(.05)',opacity:0},{transform:'translate(-50%,-50%) scale(.6)',opacity:1,offset:.3},{transform:'translate(-50%,-50%) scale(1.15)',opacity:0}],{duration:520,delay:440,easing:'ease-out',fill:'both'}));   /* ③ 白光炸开 */
   const ry=el('pbr',`left:${cx}px;top:${cy}px;width:${h*2.1}px;height:${h*2.1}px`);
