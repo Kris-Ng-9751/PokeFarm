@@ -15919,20 +15919,34 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
     tw.animate([{transform:'none',opacity:1},{transform:'translateX(-120%)',opacity:0}],{duration:520,delay:T0+rel+260,easing:'ease-in',fill:'forwards'});
     setTimeout(()=>tw.remove(),T0+rel+820); host.__thr=now+T0+rel; return rel; };
   /* 进入对战的转场（Kris 2026-11-18）：像 GBA 一样先闪两下白光，黑条扫过整个画面，再淡出露出战场；
-     转场前半段后面看到的是原本的页面（对战画面先藏起来），黑条盖满后才换成对战画面；这段时间对战音乐先开始播，宝可梦出场、训练家丢球都等转场播完。野生：横条；训练家：竖条＋精灵球；馆主 / 四天王 / 传奇训练家 / 世界 Boss：斜条＋精灵球 */
+     转场前半段后面看到的是原本的页面（对战画面先藏起来），黑条盖满后才换成对战画面；这段时间对战音乐先开始播，宝可梦出场、训练家丢球都等转场播完。野生：横条；训练家：竖条＋精灵球；世界 Boss（还有没有人物图的馆主类对战）：斜条＋精灵球；馆主 / 四天王 / 冠军 / 传奇训练家：VS 转场（vsIntro） */
   const INTRO=1900;   /* 闪光 0～0.7 秒，黑条 0.7～1.25 秒扫满，全黑停一下，1.5 秒开始淡出 */ window.__btIntroEnd=0;
-  function btIntro(kind){ if(!fxOn()) return; const old=document.querySelector('.btin'); if(old) old.remove();
+  function btIntro(kind,av){ if(!fxOn()) return; const old=document.querySelector('.btin'); if(old) old.remove();
+    if(kind==='vs'&&av) return vsIntro(av);
     const el=document.createElement('div'); el.className='btin '+kind; el.setAttribute('aria-hidden','true'); el.innerHTML='<i></i>'.repeat(8)+(kind!=='wild'?`<b>${iImg('ball',96)}</b>`:''); document.body.appendChild(el);
     window.__btIntroEnd=performance.now()+INTRO; document.body.classList.add('btwait'); setTimeout(()=>document.body.classList.remove('btwait'),1380);   /* 黑条盖满之前，后面看到的还是原本的页面；全黑了才换成对战画面（Kris 2026-11-18） */
     setTimeout(()=>el.classList.add('out'),INTRO-400); setTimeout(()=>{ el.remove(); document.body.classList.remove('btwait'); },INTRO+120);
     setTimeout(()=>{ if(window.__bgmSync) __bgmSync(); },0); }
-  const kindOf=cfg=>{ if(!cfg||cfg.kind==='wild') return 'wild'; const t=cfg.tag||''; return /^(道馆挑战|道馆重赛|四天王|冠军战|四天王重赛|传奇训练家)$/.test(t)||/^世界 Boss/.test(t)?'boss':'trainer'; };
+  /* 馆主 / 四天王 / 冠军 / 传奇训练家：照绿宝石打四天王的 VS 转场（Kris 2026-11-18）
+     ① 粉红色带从左边滑进来、对手的人物图冲进带子里，一颗精灵球划过；② 蓝色带从右边滑进来，我方训练家站在上面；
+     ③ 白光盖满 → 全黑（这时才换成对战画面）；④ 黑幕从中间一条横线往上下拉开，露出战场 */
+  const VSLEN=3000;
+  function vsIntro(av){ let hero=null; try{ hero=myCard().hero; }catch(e){}
+    const el=document.createElement('div'); el.className='btin vs'; el.setAttribute('aria-hidden','true');
+    el.innerHTML=`<div class="vsd"></div><div class="vsb f"><div class="vsl"></div><div class="vsp">${av}</div><span class="vsball">${iImg('ball',40)}</span></div>
+      <div class="vsb m"><div class="vsl"></div><div class="vsp">${hero&&TCIMG[hero]?`<img src="data:image/png;base64,${TCIMG[hero]}" alt="">`:''}</div></div>
+      <div class="vsw"></div><div class="vsk t"></div><div class="vsk b"></div>`;
+    document.body.appendChild(el); window.__btIntroEnd=performance.now()+VSLEN; document.body.classList.add('btwait');
+    setTimeout(()=>document.body.classList.remove('btwait'),2250);   /* 全黑了才换成对战画面 */
+    setTimeout(()=>el.classList.add('open'),2350); setTimeout(()=>{ el.remove(); document.body.classList.remove('btwait'); },VSLEN+80);
+    setTimeout(()=>{ if(window.__bgmSync) __bgmSync(); },0); }
+  const kindOf=cfg=>{ if(!cfg||cfg.kind==='wild') return 'wild'; const t=cfg.tag||''; if(/^(道馆挑战|道馆重赛|四天王|冠军战|四天王重赛|传奇训练家)$/.test(t)) return cfg.av?'vs':'boss'; return /^世界 Boss/.test(t)?'boss':'trainer'; };
   /* 转场要在真正开打时才播：有「出战队伍」窗的话，等玩家按「出战」才播（Kris 2026-11-18） */
   let pend=null;
-  { const _tp=teamPop; teamPop=function(title,go,dbl){ const k=pend; pend=null; return _tp.call(this,title,function(){ if(k) try{ btIntro(k); }catch(e){} return go.apply(this,arguments); },dbl); }; }
+  { const _tp=teamPop; teamPop=function(title,go,dbl){ const k=pend; pend=null; return _tp.call(this,title,function(){ if(k) try{ btIntro(k.k,k.av); }catch(e){} return go.apply(this,arguments); },dbl); }; }
   const popWill=cfg=>!window.__noTeamPop&&!(cfg&&cfg.noPop);
-  { const _sb=startBattle; startBattle=function(cfg){ const k=kindOf(cfg); if(popWill(cfg)) pend=k; else try{ btIntro(k); }catch(e){} return _sb.apply(this,arguments); }; }
-  { const _sd=startDouble; startDouble=function(){ if(popWill(null)) pend='trainer'; else try{ btIntro('trainer'); }catch(e){} return _sd.apply(this,arguments); }; }
+  { const _sb=startBattle; startBattle=function(cfg){ const k={k:kindOf(cfg),av:cfg&&cfg.av}; if(popWill(cfg)) pend=k; else try{ btIntro(k.k,k.av); }catch(e){} return _sb.apply(this,arguments); }; }
+  { const _sd=startDouble; startDouble=function(){ if(popWill(null)) pend={k:'trainer'}; else try{ btIntro('trainer'); }catch(e){} return _sd.apply(this,arguments); }; }
   const mo=new MutationObserver(()=>{ try{ apply(); }catch(e){} });
   const arm=()=>{ const h=document.getElementById('battle'); if(h&&!h.__trw){ h.__trw=1; mo.observe(h,{childList:true,subtree:true}); } }; arm(); setInterval(arm,1500);
   const st=document.createElement('style'); st.textContent=`
@@ -15947,7 +15961,18 @@ ${[0,1,2,3,4,5,6,7].map(k=>`.btin i:nth-child(${k+1}){animation-delay:${(.68+k*.
 .btin.trainer i,.btin.boss i{top:0;height:100%;width:12.6%;animation-name:btinv}.btin.trainer i:nth-child(odd),.btin.boss i:nth-child(odd){--f:-101%}.btin.trainer i:nth-child(even),.btin.boss i:nth-child(even){--f:101%}@keyframes btinv{from{transform:translateY(var(--f))}to{transform:none}}
 .btin.boss i{width:19.5%}.btin.boss{transform:skewX(-18deg) scale(1.35)}
 .btin b{position:absolute;z-index:3;left:50%;top:50%;width:96px;height:96px;margin:-48px 0 0 -48px;animation:btball .9s .55s cubic-bezier(.3,.7,.3,1) both}.btin b img{display:block;width:100%!important;height:100%!important;image-rendering:pixelated}@keyframes btball{from{transform:scale(0) rotate(-540deg);opacity:0}60%{opacity:1}to{transform:scale(1) rotate(0);opacity:1}}
-.btin.out{animation:btout .4s ease-in forwards}@keyframes btout{to{opacity:0}}
+.btin.out{animation:btout .4s ease-in forwards}
+.btin.vs{background:none}.btin.vs::before{display:none}.vsd{position:absolute;inset:0;background:rgba(0,0,0,.45);animation:vsfade .3s both}
+.vsb{position:absolute;left:0;width:100%;height:22%;overflow:hidden}.vsb.f{top:20%;background:linear-gradient(#ff7fd6,#e23aa8 55%,#c42590);animation:vsinl .4s .15s cubic-bezier(.2,.8,.3,1) both}.vsb.m{top:44%;background:linear-gradient(#8fd2ff,#3b9be6 55%,#2a7fd0);animation:vsinr .4s .35s cubic-bezier(.2,.8,.3,1) both}
+.vsl{position:absolute;inset:0;background:repeating-linear-gradient(transparent 0 9px,rgba(255,255,255,.55) 9px 11px,transparent 11px 23px),linear-gradient(90deg,transparent,rgba(255,255,255,.25) 50%,transparent);background-size:100% 100%,60% 100%;animation:vsln .35s linear infinite}
+.vsp{position:absolute;top:-3%;height:250%;display:flex;align-items:flex-start;justify-content:center}   /* 人物放大成半身特写，像 GBA 的头像 */.vsp img{height:100%!important;width:auto!important;max-width:none;image-rendering:pixelated;filter:drop-shadow(0 4px 0 rgba(0,0,0,.25))}.vsp>span{height:100%;display:flex;align-items:flex-start}.vsp>span img{height:100%!important}
+.vsb.f .vsp{right:16%;animation:vspf .35s .5s cubic-bezier(.2,.8,.3,1) both}.vsb.m .vsp{left:38%;animation:vspm .35s .7s cubic-bezier(.2,.8,.3,1) both}
+.vsball{position:absolute;top:50%;width:40px;height:40px;margin-top:-20px;left:-60px;animation:vsball .7s .75s linear both}.vsball img{width:100%!important;height:100%!important;image-rendering:pixelated}
+.vsw{position:absolute;inset:0;background:#fff;opacity:0;animation:vsw .5s 1.55s ease-in forwards}
+.vsk{position:absolute;left:0;width:100%;height:50.5%;background:#000;opacity:0;animation:vsk .25s 2s linear forwards}.vsk.t{top:0}.vsk.b{bottom:0}
+.btin.vs.open .vsw,.btin.vs.open .vsb,.btin.vs.open .vsd{display:none}.btin.vs.open .vsk{opacity:1;animation:none;transition:transform .6s cubic-bezier(.5,0,.3,1)}.btin.vs.open .vsk.t{transform:translateY(-100%)}.btin.vs.open .vsk.b{transform:translateY(100%)}
+@keyframes vsfade{from{opacity:0}}@keyframes vsinl{from{transform:translateX(-101%)}}@keyframes vsinr{from{transform:translateX(101%)}}@keyframes vsln{from{background-position:0 0,-60% 0}to{background-position:0 0,160% 0}}
+@keyframes vspf{from{transform:translateX(160%)}}@keyframes vspm{from{transform:translateX(-260%)}}@keyframes vsball{from{left:-60px;transform:rotate(0)}to{left:110%;transform:rotate(900deg)}}@keyframes vsw{to{opacity:1}}@keyframes vsk{to{opacity:1}}@keyframes btout{to{opacity:0}}
 @media (prefers-reduced-motion:reduce){.btin{display:none}#battle .trwin.in,#battle .gsp.trcall .gs{animation:none}}`;
   document.head.appendChild(st);
 })();
