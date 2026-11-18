@@ -922,7 +922,7 @@ table{border-collapse:separate;border-spacing:0}th{text-align:left;font-weight:5
 .grd{display:inline-block;padding:0 8px;border-radius:999px;font-size:12px;color:#fff;background:var(--leaf)}.grd-h{background:#c8641c}.grd-x{background:#7a1a2a}
 .grpv{max-width:860px;margin:0 auto;padding:4px}.grchain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}.grst{display:flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 10px}.grst.ldr{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}.grst.big{justify-content:center}.grarr{font:22px var(--pix);color:var(--ink2)}
 .grinfo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;font-size:13px}@media(max-width:700px){.grinfo{grid-template-columns:1fr}}
-.grstars{color:#e0a020;letter-spacing:1px}.grparty{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}.grhp{display:flex;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px 6px;font-size:12px}.grhp img{width:40px;height:40px;image-rendering:pixelated}.grhp>div{flex:1;min-width:0}.grhp .bar{height:6px}.grhp.ko{opacity:.45}.grmv{display:flex;flex-direction:column;gap:3px}.grmv button{width:30px;height:24px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);font-size:11px;cursor:pointer;line-height:1}.grmv button:disabled{opacity:.3;cursor:default}.grmv button:not(:disabled):hover{border-color:var(--leaf);color:var(--leaf)}
+.grstars{color:#e0a020;letter-spacing:1px}.grparty{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}.grhp{display:flex;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px 6px;font-size:12px}.grhp img{width:40px;height:40px;image-rendering:pixelated}.grhp>div{flex:1;min-width:0}.grhp .bar{height:6px}.grhp.ko{opacity:.45}.grdr{cursor:grab;touch-action:none;user-select:none}.grdh{color:var(--muted);font-size:18px;padding:0 4px;line-height:1}.grdr.grsrc{opacity:.35}.grdr.grover{outline:2px dashed var(--leaf);outline-offset:2px}.grghost{position:fixed;z-index:1000;pointer-events:none;box-shadow:0 8px 22px #0004;transform:rotate(-2deg);cursor:grabbing}
 .grbonus{display:flex;flex-wrap:wrap;gap:6px}.grbt{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink2);opacity:.55}.grbt i{width:9px;height:9px;border-radius:50%;background:var(--c)}.grbt.on{opacity:1;color:var(--ink);border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
 .grdets{display:grid;gap:4px;margin-top:6px}.grdet{display:grid;grid-template-columns:minmax(0,1.4fr) auto auto auto;gap:10px;align-items:center;font-size:12.5px;padding:4px 6px;background:#f6f6ee;border-radius:8px}
 </style>
@@ -5029,11 +5029,17 @@ function gymPreview(ri,gi,rw,first){ const R=TR.regions[ri], g=R.gyms[gi], st=gy
   $('#modal').hidden=false;
   $('#gpvx').onclick=()=>{ $('#modal').hidden=true; render(); };
   $('#gpvgo').onclick=()=>{ $('#modal').hidden=true; fightGym(ri,gi,true); }; }
-/* 道馆馆员：每个道馆固定 2 位（同一个道馆每次阵容一样），用道馆属性、这个等级野外会出现的形态；等级是馆主队伍平均等级的 85%，前面的道馆 2 只，后面的 3 只 */
+/* 道馆馆员：每个道馆固定 2 位（同一个道馆每次阵容一样），用道馆属性、当地（这个地区）的宝可梦、这个等级野外会出现的形态；等级是馆主队伍平均等级的 85%，前面的道馆 2 只，后面的 3 只 */
 const GS_NO=new Set([793,794,795,796,797,798,799,803,804,805,806,984,985,986,987,988,989,990,991,992,993,994,995,1005,1006,1009,1010,1020,1021,1022,1023]);   /* 究极异兽、悖谬宝可梦不当馆员的宝可梦 */
+const REGNAT=[[1,151],[152,251],[252,386],[387,493],[494,649],[650,721],[722,809],[810,898],[906,1025]];   /* 各地区的宝可梦（全国图鉴编号）：关都、城都、丰缘、神奥、合众、卡洛斯、阿罗拉、伽勒尔、帕底亚 */
 function gymStaff(ri,gi){ const g=TR.regions[ri].gyms[gi], t=g.type_zh, rnd=grRng(grHash('gs'+ri+'-'+gi)), lv=Math.max(5,Math.round(avgLv(g.team)*.85)), n=gi<4?2:3;
-  let pool=Object.keys(SP).map(Number).filter(id=>id<=1025&&!GS_NO.has(id)&&(SP[id][2]===t||SP[id][8]===t)&&!SP[id][10]&&(()=>{ const r=wildLvRange(id); return lv>=r[0]&&lv<=r[1]; })());
-  if(pool.length<4) pool=Object.keys(SP).map(Number).filter(id=>id<=1025&&!GS_NO.has(id)&&(SP[id][2]===t||SP[id][8]===t)&&!SP[id][10]&&minLv(id)<=lv);
+  /* 馆员用当地的宝可梦（Kris 2026-11-19）：关都馆员用关都（第一世代）的、城都用第二世代……；当地不够才放宽到以前的世代，再不够才用全部 */
+  const [lo,hi]=REGNAT[ri]||[1,1025], typ=id=>id<=1025&&!GS_NO.has(id)&&(SP[id][2]===t||SP[id][8]===t)&&!SP[id][10], lvOK=id=>{ const r=wildLvRange(id); return lv>=r[0]&&lv<=r[1]; }, all=Object.keys(SP).map(Number).filter(typ);
+  const loc=id=>id>=lo&&id<=hi; let pool=all.filter(id=>loc(id)&&lvOK(id));
+  if(pool.length<3) pool=all.filter(id=>loc(id)&&minLv(id)<=lv+8);   /* 当地不够：等级放宽一点（例如关都电系 Lv18 也能有皮卡丘） */
+  if(pool.length<2) pool=all.filter(id=>loc(id)&&minLv(id)<=lv+20);
+  if(pool.length<2) pool=all.filter(id=>id<=hi&&minLv(id)<=lv);
+  if(pool.length<2) pool=all.filter(id=>minLv(id)<=lv);
   const used=new Set(g.team.map(x=>x[0])), pick=()=>{ for(let k=0;k<60;k++){ const id=pool[Math.floor(rnd()*pool.length)]; if(id&&!used.has(id)){ used.add(id); return id; } } return pool[Math.floor(rnd()*pool.length)]||g.team[0][0]; };
   return [0,1].map(k=>{ const cls=k===0&&GNPC[t]?GNPC[t]:GNPC2[(grHash(g.en)+k)%GNPC2.length]; return {cls,lv,foes:Array.from({length:n},(_,j)=>({id:pick(),lv:Math.max(5,lv-1+j)}))}; }); }
 
@@ -5084,11 +5090,20 @@ function chnStep(){ const R=CHN; if(!R) return; const f=R.fights[R.step], last=R
 function chnInter(){ const R=CHN; if(!R){ $('#modal').hidden=true; return render(); } const f=R.fights[R.step];
   /* 连战中间可以调整出场顺序（Kris 2026-11-19），但不能换别的宝可梦进来：只在 S.team 里上下移动 */
   const TM=S.team.filter(u=>mon(u)), lead=TM.find(u=>!R.carry||R.carry[u]==null||R.carry[u]>0);
-  const party=TM.map((u,i)=>{ const m=mon(u), mx=maxhp(m), h=R.carry&&R.carry[m.uid]!=null?R.carry[m.uid]:mx; return `<div class="grhp ${h?'':'ko'}"><img src="${spfM(m,m.shiny)}" alt=""><div><b>${SP[m.id][0]}</b>${u===lead?' <span class="tag r4" style="white-space:nowrap;font-size:10.5px;padding:0 5px">首发</span>':''}<div class="bar"><i style="width:${Math.round(h/mx*100)}%;background:${h>mx*.5?'var(--leaf)':h>mx*.2?'var(--sun)':'var(--red)'}"></i></div><small class="muted">${h} / ${mx}</small></div><span class="grmv"><button type="button" data-gr="mv:${i}:-1" ${i===0?'disabled':''} aria-label="往前移">▲</button><button type="button" data-gr="mv:${i}:1" ${i===TM.length-1?'disabled':''} aria-label="往后移">▼</button></span></div>`; }).join('');
+  const party=TM.map((u,i)=>{ const m=mon(u), mx=maxhp(m), h=R.carry&&R.carry[m.uid]!=null?R.carry[m.uid]:mx; return `<div class="grhp grdr ${h?'':'ko'}" data-gri="${i}"><img src="${spfM(m,m.shiny)}" alt="" draggable="false"><div><b>${SP[m.id][0]}</b>${u===lead?' <span class="tag r4" style="white-space:nowrap;font-size:10.5px;padding:0 5px">首发</span>':''}<div class="bar"><i style="width:${Math.round(h/mx*100)}%;background:${h>mx*.5?'var(--leaf)':h>mx*.2?'var(--sun)':'var(--red)'}"></i></div><small class="muted">${h} / ${mx}</small></div><span class="grdh" aria-hidden="true">⠿</span></div>`; }).join('');
   $('#battle').innerHTML=`<div class="grpv"><h2 style="margin:0 0 6px">下一位对手（${R.step+1}/${R.fights.length}）</h2><div class="grst big">${f.av}<div><b>${f.name}</b><div class="muted">${f.team.length} 只 · Lv${f.lv}${f.wx?` · 天气：${WXN[f.wx][0]}`:''}</div>${grMons(f.team,f.lv,40)}</div></div>
-    <div class="muted" style="margin:10px 0 4px">你的队伍：可以用 ▲▼ 调整出场顺序，不能换别的宝可梦（HP 不会回复，倒下的不能再上场）</div><div class="grparty">${party}</div>
+    <div class="muted" style="margin:10px 0 4px">你的队伍：按住拖动可以调整出场顺序，不能换别的宝可梦（HP 不会回复，倒下的不能再上场）</div><div class="grparty">${party}</div>
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" data-gr="go">继续挑战</button><button class="btn alt" data-gr="quit">放弃</button></div></div>`;
-  $('#modal').hidden=false; }
+  $('#modal').hidden=false; grDrag(); }
+/* 连战中间按住拖动调整出场顺序（Kris 2026-11-19，手机、电脑都能拖）：拖到哪一格就插到那里 */
+function grDrag(){ const box=document.querySelector('.grparty'); if(!box) return; let drag=null;
+  box.querySelectorAll('.grdr').forEach(el=>{ el.onpointerdown=e=>{ if(e.button>0) return; e.preventDefault(); const r=el.getBoundingClientRect(); drag={el,from:+el.dataset.gri,dx:e.clientX-r.left,dy:e.clientY-r.top,ghost:null,to:null,x0:e.clientX,y0:e.clientY}; el.setPointerCapture(e.pointerId); };
+    el.onpointermove=e=>{ if(!drag||drag.el!==el) return; if(!drag.ghost){ if(Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<6) return; const g=el.cloneNode(true), r=el.getBoundingClientRect(); g.classList.add('grghost'); g.style.width=r.width+'px'; document.body.appendChild(g); drag.ghost=g; el.classList.add('grsrc'); }
+      drag.ghost.style.left=(e.clientX-drag.dx)+'px'; drag.ghost.style.top=(e.clientY-drag.dy)+'px';
+      drag.ghost.style.display='none'; const t=document.elementFromPoint(e.clientX,e.clientY), over=t&&t.closest('.grdr'); drag.ghost.style.display='';
+      box.querySelectorAll('.grdr').forEach(x=>x.classList.toggle('grover',x===over&&x!==el)); drag.to=over?+over.dataset.gri:null; };
+    el.onpointerup=el.onpointercancel=e=>{ if(!drag||drag.el!==el) return; const d=drag; drag=null; if(d.ghost) d.ghost.remove(); box.querySelectorAll('.grdr').forEach(x=>x.classList.remove('grover','grsrc'));
+      if(d.ghost&&d.to!=null&&d.to!==d.from){ const TM=S.team.filter(u=>mon(u)), [m]=TM.splice(d.from,1); TM.splice(d.to,0,m); S.team=TM; save(); chnInter(); } }; }); }
 /* 结算：奖励 + 星级评价，rec 是这个难度的记录 {c 通关, st 最佳星数, d 今天领过} */
 function grSettle(rec,b,t,first,daily,star){ const team=S.team.map(mon).filter(Boolean), ts=Array.isArray(t)?t:[t], anti=m=>[SP[m.id][2],SP[m.id][8]].filter(Boolean).some(x=>ts.some(tt=>((CHART[x]||{})[tt]||1)>1));
   const s1=b.party.filter(p=>p.mh>0).length>=3, s2=(b.lastMyM||0)>1, s3=team.filter(anti).length>=3, n=[s1,s2,s3].filter(Boolean).length, old=rec.st||0, msgs=[];
@@ -5123,7 +5138,7 @@ function e4Preview(ri,dk){ const L=e4Plan(ri,dk), E=E4D[dk], reg=TR.regions[ri],
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" data-gr="e4start:${ri}:${dk}">开始挑战</button></div></div>`;
   $('#modal').hidden=false; }
 document.addEventListener('click',e=>{ const x=e.target.closest('[data-gr]'); if(!x||x.disabled) return; const a=x.dataset.gr;
-  if(a==='close'){ $('#modal').hidden=true; return render(); } if(a==='go') return chnStep(); if(a.startsWith('mv:')&&CHN){ const [,i,d]=a.split(':').map(Number), TM=S.team.filter(u=>mon(u)), j=i+d; if(j<0||j>=TM.length) return; [TM[i],TM[j]]=[TM[j],TM[i]]; S.team=TM; save(); return chnInter(); } if(a==='quit'){ CHN=null; $('#modal').hidden=true; toast('放弃了这次重赛'); return render(); }
+  if(a==='close'){ $('#modal').hidden=true; return render(); } if(a==='go') return chnStep(); if(a==='quit'){ CHN=null; $('#modal').hidden=true; toast('放弃了这次重赛'); return render(); }
   if(a.startsWith('pv:')){ const [,ri,gi,dk]=a.split(':'); return grPreview(+ri,+gi,dk); }
   if(a.startsWith('e4pv:')){ const [,ri,dk]=a.split(':'); return e4Preview(+ri,dk); }
   if(a.startsWith('start:')){ const [,ri,gi,dk]=a.split(':'); $('#modal').hidden=true; return grStart(+ri,+gi,dk); }   /* 先关掉预览，选队伍的弹窗才不会被挡住 */
