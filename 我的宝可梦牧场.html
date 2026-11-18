@@ -15843,7 +15843,13 @@ const BGMA={"title":"SUQzBAAAAAABflRQRTEAAAANAAADR28gSWNoaW5vc2UAVFhYWAAAACEAAAN
   let onField='';
   function cryWatch(){ const ids=[]; if(typeof B!=='undefined'&&B&&B.me&&B.foe){ ids.push('f'+B.foe.id,'m'+B.me.id); } else if(typeof D!=='undefined'&&D&&D.my){ D.fo.forEach((i,s)=>{ const f=D.foes[i]; if(f&&f.fh>0) ids.push('f'+s+':'+f.id); }); D.my.forEach((i,s)=>{ const p=D.party[i]; if(p&&p.mh>0) ids.push('m'+s+':'+p.me.id); }); }
     const now=ids.join(','); if(now===onField) return; const old=new Set(onField.split(',')); onField=now; if(!inBattle()) return;
-    ids.filter(x=>!old.has(x)).slice(0,4).forEach((x,i)=>cry(+x.split(':').pop().replace(/^[fm]/,''),.25+i*.55)); }
+    const nw=ids.filter(x=>!old.has(x)).slice(0,4); if(!nw.length) return;
+    /* 叫声等宝可梦从精灵球里完全出来才叫（Kris 2026-11-18）：看出场动画的开始时间（ENT），出场约 0.95 秒后完全现身；
+       没有出场动画的（野生宝可梦一开始就在场上）等开场转场播完再叫 */
+    setTimeout(()=>{ const now=performance.now(), dbl=!!(typeof D!=='undefined'&&D&&D.my); let last=0;
+      nw.forEach(x=>{ const side=x[0], m=/^[fm](\d):/.exec(x), key=dbl?'d'+side+(m?m[1]:'0'):'s'+side, a=(typeof ENT!=='undefined'&&ENT.act[key])||null;
+        let at=a?a.t0+950:Math.max(now,window.__btIntroEnd||0)+250; at=Math.max(at,last+550); last=at;
+        cry(+x.split(':').pop().replace(/^[fm]/,''),Math.max(0,(at-now)/1000)); }); },80); }
   /* 捕捉：丢球、吸进去、摇晃、成功 / 挣脱 */
   { const _ca=catchAnim; catchAnim=function(key,ok,done){ sfx('throw'); const T=[setTimeout(()=>sfx('absorb'),650),setTimeout(()=>sfx('shake'),1400),setTimeout(()=>sfx('shake'),2050),setTimeout(()=>sfx('shake'),2700)];
       return _ca.call(this,key,ok,function(){ T.forEach(clearTimeout); if(ok){ HOLD=true; bgmStop(); if(SND.sfx&&typeof BGMA!=='undefined'&&BGMA.caught){ filePlay('caught'); if(window.__sndDebug) (window.__sndLog=window.__sndLog||[]).push('caught'); } else sfx('caught',null,500); } else sfx('broke',null,500); if(ok){ try{ cry(B&&B.foe&&B.foe.id,.6); }catch(e){} } return done.apply(this,arguments); }); }; }
@@ -15920,8 +15926,12 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
     window.__btIntroEnd=performance.now()+INTRO; setTimeout(()=>el.classList.add('out'),INTRO-400); setTimeout(()=>el.remove(),INTRO+120);
     setTimeout(()=>{ if(window.__bgmSync) __bgmSync(); },0); }
   const kindOf=cfg=>{ if(!cfg||cfg.kind==='wild') return 'wild'; const t=cfg.tag||''; return /^(道馆挑战|道馆重赛|四天王|冠军战|四天王重赛|传奇训练家)$/.test(t)||/^世界 Boss/.test(t)?'boss':'trainer'; };
-  { const _sb=startBattle; startBattle=function(cfg){ try{ btIntro(kindOf(cfg)); }catch(e){} return _sb.apply(this,arguments); }; }
-  { const _sd=startDouble; startDouble=function(){ try{ btIntro('trainer'); }catch(e){} return _sd.apply(this,arguments); }; }
+  /* 转场要在真正开打时才播：有「出战队伍」窗的话，等玩家按「出战」才播（Kris 2026-11-18） */
+  let pend=null;
+  { const _tp=teamPop; teamPop=function(title,go,dbl){ const k=pend; pend=null; return _tp.call(this,title,function(){ if(k) try{ btIntro(k); }catch(e){} return go.apply(this,arguments); },dbl); }; }
+  const popWill=cfg=>!window.__noTeamPop&&!(cfg&&cfg.noPop);
+  { const _sb=startBattle; startBattle=function(cfg){ const k=kindOf(cfg); if(popWill(cfg)) pend=k; else try{ btIntro(k); }catch(e){} return _sb.apply(this,arguments); }; }
+  { const _sd=startDouble; startDouble=function(){ if(popWill(null)) pend='trainer'; else try{ btIntro('trainer'); }catch(e){} return _sd.apply(this,arguments); }; }
   const mo=new MutationObserver(()=>{ try{ apply(); }catch(e){} });
   const arm=()=>{ const h=document.getElementById('battle'); if(h&&!h.__trw){ h.__trw=1; mo.observe(h,{childList:true,subtree:true}); } }; arm(); setInterval(arm,1500);
   const st=document.createElement('style'); st.textContent=`
