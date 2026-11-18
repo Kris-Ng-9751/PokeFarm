@@ -15840,7 +15840,7 @@ const BGMA={"battle":"SUQzBAAAAAACClRQRTEAAAANAAADR28gSWNoaW5vc2UAVFhYWAAAACEAAA
         cry(+x.split(':').pop().replace(/^[fm]/,''),Math.max(0,(at-now)/1000)); }); },80); }
   /* 捕捉：丢球、吸进去、摇晃、成功 / 挣脱 */
   { const _ca=catchAnim; catchAnim=function(key,ok,done){ sfx('throw'); const T=[setTimeout(()=>sfx('absorb'),650),setTimeout(()=>sfx('shake'),1400),setTimeout(()=>sfx('shake'),2050),setTimeout(()=>sfx('shake'),2700)];
-      return _ca.call(this,key,ok,function(){ T.forEach(clearTimeout); if(ok){ HOLD=true; bgmStop(); if(SND.sfx&&typeof BGMA!=='undefined'&&BGMA.caught){ filePlay('caught'); if(window.__sndDebug) (window.__sndLog=window.__sndLog||[]).push('caught'); } else sfx('caught',null,500); } else sfx('broke',null,500); if(ok){ try{ cry(B&&B.foe&&B.foe.id,.6); }catch(e){} } return done.apply(this,arguments); }); }; }
+      return _ca.call(this,key,ok,function(){ T.forEach(clearTimeout); if(ok){ HOLD=true; bgmStop(); if(SND.sfx&&typeof BGMA!=='undefined'&&BGMA.caught){ filePlay('caught'); if(window.__sndDebug) (window.__sndLog=window.__sndLog||[]).push('caught'); } else sfx('caught',null,500); } else sfx('broke',null,500);   /* 捕捉成功后不再叫（Kris 2026-11-18） */ return done.apply(this,arguments); }); }; }
   /* 升级、领奖励、进化 */
   { const _ae=addExp; addExp=function(m){ const o=m&&m.lv, r=_ae.apply(this,arguments); if(m&&m.lv>o) sfx('level',null,1200); return r; }; }
   /* 进化：放 Kris 提供的「恭喜！你的宝可梦进化了」小曲，播完再回到背景音乐（Kris 2026-11-18） */
