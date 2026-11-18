@@ -2523,6 +2523,10 @@ function dynTick(b){ if(!(b.dyn>0)) return; b.dyn--; if(b.dyn===0){ b.dynMx=b.mx
 function beatsOn(){ const b=B; b.beats=[]; b.bd={m:b.mh,f:b.fh}; b.bd0={m:b.mh,f:b.fh}; }
 const _bRender=bRender;
 bRender=function(){ const b=B; if(b&&b.beats&&b.beats.length&&!b.busy){ const bs=b.beats; b.beats=null; return bReplay(b,bs); } if(b&&!b.busy) b.beats=null; return _bRender.apply(this,arguments); };
+/* 两回合招式的第 2 回合（Kris 2026-11-18）：蓄力 / 躲起来之后，不用再按「战斗」，自己放出蓄好的招式 */
+function chgAuto(){ const b=B; if(!b||b.busy||b.over||b.pick||b.shift||(b.beats&&b.beats.length)||window.__opening) return; const id=b.me&&b.me._chg; if(!id||!MV[id]||b.__chgAuto===b.log.length+':'+id) return;
+  b.__chgAuto=b.log.length+':'+id; setTimeout(()=>{ if(B!==b||b.busy||b.over||b.pick||b.shift||!b.me||b.me._chg!==id||document.querySelector('#modal').hidden) return; const k=getMoves(b.mon).findIndex(x=>+x===+id); bTurn(Math.max(0,k)); },650); }
+{ const _ss=sizeSprites; sizeSprites=function(){ const r=_ss.apply(this,arguments); try{ chgAuto(); }catch(e){} return r; }; }
 function bReplay(b,bs){ b.busy=true; let i=0; const st={over:b.over,pick:b.pick,shift:b.shift,menu:b.menu}; b.over=null; b.pick=false; b.shift=false; b.menu='main';   /* 放的时候先不显示战斗结束 / 换人的界面 */
   let pm=b.bd0?b.bd0.m:bs[0].mh, pf=b.bd0?b.bd0.f:bs[0].fh;
   const hpShow=(mh,fh)=>{ const q=(h,x)=>Math.max(0,Math.round(100*h/x)), c=p=>p>50?'g':p>20?'y':'r', fb=document.querySelector('#battle .ginfo.f .ghp i'), mb=document.querySelector('#battle .ginfo.m .ghp i'), mt=document.querySelector('#battle .ginfo.m .gn.small span:last-child');
@@ -5670,6 +5674,16 @@ dRender=function(){ const d=D; if(d&&d.beats&&d.beats.length&&!d.busy){ const bs
 function dBeat(as,asl,ds,dsl){ const d=D; if(!d.beats) return; d.beats.push({as,asl,ds,dsl,sv:dSemiNow(),n:d.log.length,pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:[...d.my],fo:[...d.fo]}); }
 /* 特效程序里写死的「#battle .gsp.me / .gsp.foe / #bme / #bfoe」，双打放特效时暂时改指到这一拍的两只精灵 */
 function dMapSet(M){ window.__dmap=M||null; }
+/* 双打特效（Kris 2026-11-18）：特效里很多是过一会儿才去找精灵（setTimeout / requestAnimationFrame / 动画结束事件）。
+   范围招式对每只目标各放一次，以前找精灵时对应已经换成最后一只，结果特效全挤在同一只身上、另一只没有。
+   现在每次放特效都记住「这一次对应的是哪两只」，之后的计时器、动画事件里也照这个对应去找。 */
+let DZM=null;
+function dZone(M,fn){ const z0=DZM, p0=window.__dmap; DZM=M; window.__dmap=M; try{ return fn(); } finally{ DZM=z0; window.__dmap=z0||p0; } }
+(function(){ const wrap=(cb,M)=>function(){ const z0=DZM, p0=window.__dmap; DZM=M; window.__dmap=M; try{ return cb.apply(this,arguments); } finally{ DZM=z0; window.__dmap=z0||p0; } };
+  const st=window.setTimeout, raf=window.requestAnimationFrame, ael=EventTarget.prototype.addEventListener;
+  window.setTimeout=function(cb,...a){ return st.call(window,(DZM&&typeof cb==='function')?wrap(cb,DZM):cb,...a); };
+  window.requestAnimationFrame=function(cb){ return raf.call(window,(DZM&&typeof cb==='function')?wrap(cb,DZM):cb); };
+  EventTarget.prototype.addEventListener=function(t,cb,o){ return ael.call(this,t,(DZM&&typeof cb==='function')?wrap(cb,DZM):cb,o); }; })();
 (function(){ const R=s=>{ const M=window.__dmap; if(!M||typeof s!=='string'||!D) return s; return s.replace(/\.gsp\.me(?![\w-])/g,'.gsp.'+M.me).replace(/\.gsp\.foe(?![\w-])/g,'.gsp.'+M.foe).replace(/#bme(?![\w-])/g,'#battle .gsp.'+M.me).replace(/#bfoe(?![\w-])/g,'#battle .gsp.'+M.foe); };
   for(const P of [Document.prototype,Element.prototype]){ const q=P.querySelector, qa=P.querySelectorAll; P.querySelector=function(x){ return q.call(this,R(x)); }; P.querySelectorAll=function(x){ return qa.call(this,R(x)); }; } })();
 function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shift,menu:d.menu}; d.over=null; d.shift=null; d.menu='main';
@@ -5691,11 +5705,11 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
       setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl])=>{ const x=document.querySelector(`#battle .gsp.d${s}${sl}`); if(x){ x.classList.remove('hit'); void x.offsetWidth; x.classList.add('hit'); } }); },260);
       return setTimeout(step,same?860:1000); }
     const mvn=MV[e.mv]?MV[e.mv][0]:'', isMax=!!(e.z&&/^(超)?极巨/.test(e.z)), contact=!e.z&&((e.cat==='ph'&&!NOCONTACT.has(mvn))||(e.cat==='sp'&&SPCONTACT.has(mvn)));
-    const mapTo=([s,sl])=>dMapSet(fromMe?{me:'dm'+e.asl,foe:'d'+s+sl}:{foe:'df'+e.asl,me:'d'+s+sl});
+    const mapOf=([s,sl])=>fromMe?{me:'dm'+e.asl,foe:'d'+s+sl}:{foe:'df'+e.asl,me:'d'+s+sl}, mapTo=t=>dMapSet(mapOf(t));
     mapTo(tg[0]);
-    if(a){ a.classList.remove('lunge','charge'); void a.offsetWidth; if(contact&&!isMax) setTimeout(()=>{ if(D===d){ mapTo(tg[0]); fxDash(a,fromMe,Math.max(140,fd.hit-120),fd.hold||140); } },100); else a.classList.add(isMax||e.cat!=='ph'?'charge':'lunge'); }
+    if(a){ a.classList.remove('lunge','charge'); void a.offsetWidth; if(contact&&!isMax) setTimeout(()=>{ if(D===d) dZone(mapOf(tg[0]),()=>fxDash(a,fromMe,Math.max(140,fd.hit-120),fd.hold||140)); },100); else a.classList.add(isMax||e.cat!=='ph'?'charge':'lunge'); }
     if(MV[e.mv]) fxTint(MV[e.mv][1],fd.total);
-    setTimeout(()=>{ if(D!==d) return; tg.forEach(t=>{ mapTo(t); fxPlay(fm,fromMe); }); },180);
+    setTimeout(()=>{ if(D!==d) return; tg.forEach(t=>dZone(mapOf(t),()=>fxPlay(fm,fromMe))); mapTo(tg[0]); },180);   /* 每只目标各自记住对应，特效不会全挤到最后一只身上 */
     setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl,mm])=>{ const n=e.cat==='st'?0:blinkN(mm); if(n) blink(`#battle .gsp.d${s}${sl}`,n); }); },fd.hit+180);
     if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,prev); },fd.total+180);
     setTimeout(step,fd.total+420); };
