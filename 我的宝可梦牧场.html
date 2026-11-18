@@ -1817,7 +1817,8 @@ function evoAsk(uid){ const m=mon(uid); if(!m||!EVO[m.id]) return; monOpen=true;
 /* 学习技能弹窗（Kris 2026-10-28）：升级学会了新技能 → 弹窗显示；技能已满 4 个 → 弹窗问要忘记哪一个（或不学）；「可学习的 TM」改成按钮，点开是弹窗 */
 let tmPopFor=null;
 const mvCard=id=>`<div class="md-mv" style="min-height:0"><div class="t"><b>${MV[id][0]}</b><span class="ty" style="background:${TYC[MV[id][1]]||'#aaa'}">${MV[id][1]}</span>${SIG[id]?'<span class="tag r4">专属</span>':''}</div><span class="muted">${mvLine(id).replace(/^[^·]+·\s*/,'').replace(' · 专属','')}</span></div>`;
-function learnPop(uid){ const m=mon(uid); if(!m) return; const nw=m.lnew||[], pd=(m.pend||[]).find(x=>(m.pf||[]).includes(x)); getMoves(m);   /* 弹窗只问刚刚想学的（pf）；以前攒下来的「想学会」只留在宝可梦详情里，不会一只一只自动弹出来 */
+function learnPop(uid){ const m=mon(uid); if(!m) return; ['lnew','pend','pf'].forEach(k=>{ if(m[k]) m[k]=m[k].filter(x=>MV[x]); });   /* 存档里不存在的招式先拿掉，免得弹窗画到一半出错、只剩一个空框（Kris 2026-11-18） */
+  const nw=m.lnew||[], pd=(m.pend||[]).find(x=>(m.pf||[]).includes(x)); getMoves(m);   /* 弹窗只问刚刚想学的（pf）；以前攒下来的「想学会」只留在宝可梦详情里，不会一只一只自动弹出来 */
   if(!nw.length&&pd==null){ return learnDone(uid); }
   $('#modal').hidden=false;
   if(nw.length) $('#battle').innerHTML=`<div style="text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center" role="dialog" aria-label="学会新技能"><div style="font:18px var(--pix)">${nameOf(m)} 学会了新技能！</div><img src="${spm(m)}" alt="" style="width:96px;height:96px;image-rendering:pixelated"><div style="display:flex;flex-direction:column;gap:6px;width:100%;max-width:420px;text-align:left">${nw.map(mvCard).join('')}</div><div class="row" style="justify-content:center"><button class="btn" data-m="lok:${uid}">好的</button><button class="btn alt" data-m="lall" title="关闭所有宝可梦的学习提示，想学会的招式还在宝可梦详情里">一键关闭</button></div></div>`;
@@ -15772,6 +15773,11 @@ const CRIES={"1":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//
   document.head.appendChild(st);
 })();
 /* ===== 第十五阶段结束 ===== */
+/* 保险（Kris 2026-11-18）：弹窗打开了、内容却没画出来（中途出错）时，不要留下一个空白框挡住画面——直接关掉 */
+(function(){ const md=document.getElementById('modal'), bt=document.getElementById('battle'); if(!md||!bt) return;
+  const chk=()=>{ if(!md.hidden&&!bt.children.length&&!bt.textContent.trim()){ md.hidden=true; console.warn('空白弹窗已自动关闭'); try{ evoAsking=null; tmPopFor=null; sigPopFor=null; }catch(e){} } };
+  new MutationObserver(()=>requestAnimationFrame(()=>requestAnimationFrame(chk))).observe(md,{attributes:true,attributeFilter:['hidden']});
+  setInterval(chk,1500); })();
 
 
 
