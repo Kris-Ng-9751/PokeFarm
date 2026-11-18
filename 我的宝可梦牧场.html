@@ -8799,10 +8799,13 @@ function abfxCheck(){ const host=document.querySelector('#battle .garena'); if(!
    战斗记录里每有一行「xx 的特性：日照！」这类天气特性，还没轮到它（宝可梦还没完全出来）就先把天气画面藏起来（body.wxhold） */
 const WXABN=new Set(Object.values(WXN).map(x=>x[1]));
 const isWxLine=t=>{ const m=/的特性：([^！!]+)[！!]/.exec(t); return !!(m&&WXABN.has(m[1])); };
-function wxHoldSync(st){ const L=(st&&st.log)||[], n=L.filter(isWxLine).length, r=ABFX.wxr.get(st)||0; document.body.classList.toggle('wxhold',n>r);
+function wxHoldSync(st){ const L=(st&&st.log)||[], r=ABFX.wxr.get(st)||0, idx=[]; L.forEach((t,i)=>{ if(isWxLine(t)) idx.push(i); });
+  /* 原始回归、Mega 进化（场上变身）带来的天气不用等出场，马上换，不中断原本的天气画面（Kris 2026-11-19） */
+  const inPlace=i=>/回归成了|Mega 进化成了/.test(L[i+1]||''), hold=idx.some((li,k)=>k>=r&&!inPlace(li));
+  document.body.classList.toggle('wxhold',hold);
   /* 战斗记录里的天气特性那一行也等发动了才显示（Kris 2026-11-19） */
   const host=document.querySelector('#battle .garena'), dbl=host&&host.classList.contains('dbl'); let k=0;
-  document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div').forEach(d=>{ if(isWxLine(d.textContent)){ d.classList.toggle('wxpend',k>=r); k++; } else if(d.textContent.startsWith('就决定是你了！')) d.classList.add('goyou'); }); }
+  document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div').forEach(d=>{ if(isWxLine(d.textContent)){ d.classList.toggle('wxpend',k>=r&&!(idx[k]!=null&&inPlace(idx[k]))); k++; } else if(d.textContent.startsWith('就决定是你了！')) d.classList.add('goyou'); }); }
 { const st=document.createElement('style'); st.textContent='#battle .gsc>div.wxpend{display:none}body.opn-hm #battle .gsc>div.goyou{display:none}'; document.head.appendChild(st); }
 /* 开场流程中（转场、进场、丢球）先不弹特性标签 / 能力箭头，等那一边的宝可梦出来、血条框出现了才弹（Kris 2026-11-18：日照的标签在转场时就跑出来了） */
 function abfxReady(foe){ if(!window.__opening) return entWait()<=0;   /* 平时也等精灵球出场动画放完 */ const c=document.body.classList; if(c.contains('btwait')||document.querySelector('.btin')) return false;
