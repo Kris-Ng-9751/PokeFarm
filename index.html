@@ -37,6 +37,8 @@ body{background:radial-gradient(900px 500px at 50% 30%,var(--bg1),var(--bg2) 70%
 @keyframes bstripe{to{background-position:28px 0}}
 @keyframes btip{0%{opacity:0;transform:translateY(6px)}4%,18%{opacity:1;transform:none}22%,100%{opacity:0}}
 @keyframes bpulse{50%{transform:scale(1.05)}}
+.snd{position:fixed;top:14px;right:14px;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid rgba(244,239,220,.35);border-radius:999px;background:rgba(0,0,0,.25);color:var(--cream);font:13px 'Noto Sans SC',system-ui,sans-serif;cursor:pointer}.snd:hover{background:rgba(0,0,0,.4)}.snd:focus-visible{outline:2px solid #fff;outline-offset:2px}.snd svg{width:18px;height:18px}
+.sndtip{position:fixed;top:56px;right:14px;font-size:12px;color:var(--mute);opacity:0;transition:opacity .3s}.sndtip.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.bball,.bsh,.bbar i,.btips span,.ready .start{animation:none}.btips span:first-child{opacity:1}}
 </style>
 </head>
@@ -50,6 +52,7 @@ body{background:radial-gradient(900px 500px at 50% 30%,var(--bg1),var(--bg2) 70%
   <div class="btips" aria-hidden="true"><span>连续签到 7 天，第 7 天送稀有宝箱</span><span>珍宝阁里第 300 抽必出神兽，抽到后重新累计</span><span>探索队和矿工队出门后，回来记得领奖励</span><span>世界 Boss 每小时整点刷新，别错过</span><span>Mega 进化、极巨化、太晶化，每只宝可梦三选一</span></div>
 </div>
 <div class="fade" id="fade"></div>
+<button class="snd" id="snd" type="button" aria-pressed="false"></button><div class="sndtip" id="sndtip">点一下画面就会开始播放音乐</div>
 <script>
 (function(){
   /* 像素精灵球：0 透明 1 描边 2 红 3 白 4 中间按钮（和游戏里的加载画面同一颗） */
@@ -78,7 +81,27 @@ body{background:radial-gradient(900px 500px at 50% 30%,var(--bg1),var(--bg2) 70%
     setTimeout(function(){ if(!done){ btn.setAttribute('aria-disabled','false'); msg.textContent='网络有点慢，也可以直接点「开始游戏」'; } },15000);
   }
 
-  btn.addEventListener('click',function(e){ if(btn.getAttribute('aria-disabled')==='true'){ e.preventDefault(); return; } e.preventDefault(); document.getElementById('fade').classList.add('on'); setTimeout(function(){ location.href=GAME; },380); });
+  /* 标题曲（Kris 2026-11-18）：Kris 提供的 GBA 标题画面音乐 title.mp3，前奏放一次，之后从 10 秒到 51.316 秒无限循环（接缝 0.12 秒交叉淡化）。
+     跟游戏共用声音设定（localStorage 的 ose.ranch.snd，背景音乐默认开）；浏览器规定网页被点之前不能出声，所以第一次点画面才开始播 */
+  var KEY='ose.ranch.snd', SND={bgm:1,vol:.6}; try{ var o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o.bgm!=null) SND.bgm=o.bgm; if(o.vol!=null) SND.vol=o.vol; }catch(e){}
+  var LS=10, LE=51.316, ac=null, gain=null, src=null, el=null, playing=false, sndb=document.getElementById('snd'), tip=document.getElementById('sndtip');
+  var ICON=function(on){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>'+(on?'<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>':'<path d="M17 9l5 6M22 9l-5 6"/>')+'</svg>'+(on?'音乐开':'音乐关'); };
+  var drawB=function(){ sndb.innerHTML=ICON(!!SND.bgm); sndb.setAttribute('aria-pressed',SND.bgm?'true':'false'); sndb.setAttribute('aria-label',SND.bgm?'关掉音乐':'打开音乐'); };
+  var keep=function(){ try{ var o=JSON.parse(localStorage.getItem(KEY)||'{}'); o.bgm=SND.bgm; localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} };
+  var startWA=function(){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return startEl(); ac=ac||new C(); gain=ac.createGain(); gain.gain.value=SND.vol*.6; gain.connect(ac.destination);
+    fetch('title.mp3').then(function(r){ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(function(ab){ return new Promise(function(res,rej){ ac.decodeAudioData(ab,res,rej); }); }).then(function(b){
+      var sr=b.sampleRate, sS=Math.round(LS*sr), eS=Math.min(b.length,Math.round(LE*sr)), xf=Math.round(.12*sr);
+      for(var c=0;c<b.numberOfChannels;c++){ var d=b.getChannelData(c); for(var i=0;i<xf;i++){ var k=i/xf, at=eS-xf+i; d[at]=d[at]*(1-k)+d[sS-xf+i]*k; } }
+      if(!SND.bgm||!playing) return; src=ac.createBufferSource(); src.buffer=b; src.loop=true; src.loopStart=LS; src.loopEnd=LE; src.connect(gain); src.start(); }).catch(function(){ startEl(); }); };
+  var startEl=function(){ if(el) return el.play().catch(function(){}); el=new Audio('title.mp3'); el.volume=Math.min(1,SND.vol*.6); el.addEventListener('timeupdate',function(){ if(el.currentTime>=LE) el.currentTime=LS+(el.currentTime-LE); }); el.addEventListener('ended',function(){ el.currentTime=LS; el.play().catch(function(){}); }); el.play().catch(function(){}); };
+  var play=function(){ if(playing||!SND.bgm) return; playing=true; tip.classList.remove('on'); if(location.protocol==='file:') return startEl(); if(ac&&ac.state==='suspended') ac.resume(); startWA(); };
+  var stop=function(fade){ playing=false; if(src&&gain){ try{ var t=ac.currentTime; gain.gain.setValueAtTime(gain.gain.value,t); gain.gain.linearRampToValueAtTime(0,t+(fade||.2)); src.stop(t+(fade||.2)+.02); }catch(e){} src=null; } if(el){ el.pause(); } };
+  drawB(); if(SND.bgm) tip.classList.add('on');
+  /* 浏览器允许的话不用点就直接放 */
+  try{ var C0=window.AudioContext||window.webkitAudioContext; if(C0&&SND.bgm&&location.protocol!=='file:'){ ac=new C0(); if(ac.state==='running') play(); } }catch(e){}
+  ['pointerdown','keydown','touchstart'].forEach(function(ev){ document.addEventListener(ev,function(e){ if(e.target.closest&&e.target.closest('#snd,#start')) return; play(); },{capture:true,passive:true}); });
+  sndb.addEventListener('click',function(){ SND.bgm=SND.bgm?0:1; keep(); drawB(); if(SND.bgm) play(); else { stop(); tip.classList.remove('on'); } });
+  btn.addEventListener('click',function(e){ if(btn.getAttribute('aria-disabled')==='true'){ e.preventDefault(); return; } e.preventDefault(); stop(.35); document.getElementById('fade').classList.add('on'); setTimeout(function(){ location.href=GAME; },380); });
 })();
 </script>
 </body>
