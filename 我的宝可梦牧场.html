@@ -1339,7 +1339,7 @@ const unlockText=k=>{ const b=BI.find(x=>x[0]===k); return b&&!biOK(k)?biNeed(k)
 const TABS=[['diary','日记'],['ranch','主页'],['team','队伍'],['box','我的宝可梦'],['daily','签到 / 任务'],['cm','委托任务'],['urg','紧急任务'],['wk','周挑战'],['nursery','培育中心'],['gacha','珍宝阁'],['wild','野外'],['arena','对战'],['gym','道馆'],['e4','四天王'],['legend','传奇训练家'],['bag','背包'],['craft','制作'],['shop','商场'],['dex','图鉴'],['lab','图鉴研究所'],['pr','PR 奖励'],['card','训练家卡片'],['farm','农场'],['explore','地图探索'],['sq','特别任务'],['ms','里程碑'],['mine','矿洞'],['fish','钓鱼池'],['fossil','化石复原'],['boss','世界 Boss'],['auction','拍卖'],['trade','交换'],['map','全地图'],['rank','排行榜'],['guide','游玩指南'],['devtools','开发者工具'],['devfx','技能特效']];
 let tab='ranch';
 /* 14 个分页分成 5 组：上面一排是大类，有子页的再显示第二排（Kris 2026-10-24） */
-const GROUPS=[['home','牧场',['ranch','map','farm','mine','fish','fossil','nursery']],['mons','宝可梦',['team','box','dex','lab']],['daily','每日',['daily','cm','urg','sq','ms','pr','diary']],['gacha','珍宝阁',['gacha']],['adv','冒险',['wild','explore','boss']],['battle','对战',['arena','wk','gym','e4','legend']],['rank','社交',['rank']],['items','背包',['bag','craft']],['shop','商场',['shop','auction','trade']],['guide','指南',['guide']],['dev','开发者',['devtools','devfx']]];
+const GROUPS=[['home','牧场',['ranch','map','farm','mine','fish','fossil','nursery']],['mons','宝可梦',['team','box','dex','lab']],['daily','每日',['daily','cm','urg','sq','ms','pr','diary']],['gacha','珍宝阁',['gacha']],['adv','冒险',['wild','explore','boss']],['battle','对战',['arena','wk','gym','e4','legend']],['rank','排行榜',['rank']],['items','背包',['bag','craft']],['shop','商场',['shop','auction','trade']],['guide','指南',['guide']],['dev','开发者',['devtools','devfx']]];
 const TABNAME=Object.fromEntries(TABS);
 let cardFrom='ranch';
 const groupOf=t=>GROUPS.find(g=>g[2].includes(t))||GROUPS[0];
@@ -5267,7 +5267,7 @@ function dexDetail(id){
   trimImgs('.pd-art>img,.pd-en img');
 }
 
-/* ---------- 玩家列表（排行榜 / 好友 / 对战玩家用，只在联机时读取） ---------- */
+/* ---------- 玩家列表（排行榜 / 对战玩家用，只在联机时读取） ---------- */
 let PL={rows:null,me:'',at:0,loading:false,err:''};
 function plLoad(force){ const Y=window.__POKEFARM_SYNC; if(!Y||PL.loading) return; if(!force&&PL.rows&&Date.now()-PL.at<60000) return; PL.loading=true;
   fetch(Y.url.replace(/save$/,'players'),{credentials:'same-origin'}).then(r=>r.ok?r.json():Promise.reject(r.status)).then(j=>{ PL.me=j.user||''; PL.rows=(j.players||[]).filter(p=>p.u!==PL.me); PL.at=Date.now(); PL.err=''; OTHERS.length=0; OTHERS.push(...PL.rows); }).catch(e=>{ PL.err='读取失败（'+e+'）'; PL.rows=PL.rows||[]; }).finally(()=>{ PL.loading=false; if(tab==='arena'||tab==='rank'||tab==='boss'||tab==='urg') render(); }); }
@@ -6938,7 +6938,7 @@ const GSEC={
   gBox(gH('每天可以这样玩'),`<ol class="gol"><li><b>签到</b>（每日 → 签到 / 任务）领奖励，第 7 天有宝箱。</li><li>做<b>每日任务</b>（前 3 条保底、后 3 条随等级变难），顺便推进<b>每周任务</b>和<b>每月任务</b>，全部完成还有大奖。</li><li>到「主页」逛逛：中间的牧场图上点设施，就能进农场、矿洞、钓鱼池、化石复原、培育中心，收获、重新种上、派宝可梦出去。</li><li>给宝可梦<b>培育</b>（喂树果、训练）：每只每天合计 ${BRMAX} 次。</li><li>打对战（每天 ${ARN_DAY} 次）、道馆、周挑战：赢了得经验、金币、徽章、TM、段位分。</li><li>看「商场 → 购买 → 每日特惠」，每天换一批特价；用不上的道具可以到「商场 → 出售」换金币，材料够了去「背包 → 制作」合成。</li></ol>`),
   gBox(gH('存档备份'),`<p>存档放在这个浏览器里${window.__POKEFARM_SYNC?'，在 OSE Console 里也会同步到服务器':''}。清浏览器资料、换电脑之前，到「训练家卡片」最下面的「存档备份」导出一份（文件或文字都可以）；之后用「从文件导入」或「贴上文字导入」就能还原。导入会整份换掉现在的存档。</p>`),
   gBox(gH('页面在哪里','最上面一排是大类（手机上可以左右滑），点进去下面可以切换分页'),gTable(['大类','里面有'],GROUPS.filter(g=>g[1]!=='开发者').map(g=>[`<b>${g[1]}</b>`,g[2].map(t=>(TABS.find(x=>x[0]===t)||[t,t])[1]).join('、')]))),
-  gBox(gH('训练家卡片'),`<ul class="gul"><li><b>在哪里</b>：点主页左上角的训练家资料卡（手机上点最上面的训练家）。别人的卡片：「排行榜」或「好友」里点那位训练家，所有人的卡片都能看。</li><li><b>名字和头像</b>：名字跟着你的登录账号（原型里是示例名），头像是你选的主角。主角选好后可以<b>锁定</b>，锁定后再换要花 ${HERO_COST} 金币。</li><li><b>训练家经验</b>：来自签到、每日任务、对战和捕捉。</li><li><b>卡片上的资料</b>：训练家等级、对战段位、金钱和星尘、图鉴（见到、捉到、异色）、宝可梦数量和队伍数、游戏时间、冒险开始，最下面是各地区的徽章。</li><li><b>卡片星星</b>：颜色随星星升级：绿 → 铜 → 银 → 金 → 蓝 → 5 星彩虹。条件：当上任意地区冠军、集齐 1025 种图鉴、集齐全部徽章、击败全部传奇训练家、收集 100 种异色。</li></ul>`)].join(''),
+  gBox(gH('训练家卡片'),`<ul class="gul"><li><b>在哪里</b>：点主页左上角的训练家资料卡（手机上点最上面的训练家）。别人的卡片：「排行榜」里点那位训练家，所有人的卡片都能看。</li><li><b>名字和头像</b>：名字跟着你的登录账号（原型里是示例名），头像是你选的主角。主角选好后可以<b>锁定</b>，锁定后再换要花 ${HERO_COST} 金币。</li><li><b>训练家经验</b>：来自签到、每日任务、对战和捕捉。</li><li><b>卡片上的资料</b>：训练家等级、对战段位、金钱和星尘、图鉴（见到、捉到、异色）、宝可梦数量和队伍数、游戏时间、冒险开始，最下面是各地区的徽章。</li><li><b>卡片星星</b>：颜色随星星升级：绿 → 铜 → 银 → 金 → 蓝 → 5 星彩虹。条件：当上任意地区冠军、集齐 1025 种图鉴、集齐全部徽章、击败全部传奇训练家、收集 100 种异色。</li></ul>`)].join(''),
  raise:()=>[
   gBox(gH('图鉴研究所'),`<p>图鉴旁边的「图鉴研究所」把收集变成一项项研究，每一档只能领一次，有“一键领取”：</p><ul class="gul"><li><b>地区</b>：一个地区（第 1 到第 9 代）的宝可梦收集到 50%、全部，各一次奖励。</li><li><b>属性</b>：一个属性（单属性或双属性都算）收集到 50%、全部。</li><li><b>进化</b>：一套进化（最初形态到最终形态）每一只都收集到。</li><li><b>异色</b>：每个地区收集 1 / 5 / 10 / 20 只异色。</li><li><b>样子</b>：地区样子（阿罗拉、伽勒尔、洗翠等）要拥有；Mega 样子要在战斗里 Mega 进化过；盖欧卡、固拉多的原始样子要携带宝珠在战斗里原始回归过。</li></ul>`),
   gBox(gH('怎么让宝可梦变强'),gTable(['方法','效果','说明'],[[`${gIt('berry')} 喂树果`,'+18 经验起',`在宝可梦详情左边的「培育」里喂；亲密度 +8。可以改选别的树果：喂经验的（莓莓果等）经验更多，加亲密度的（樱子果等）只加亲密度`],['训练','+25 经验','也在「培育」里；花 20 金币，亲密度 +4'],[`${gIt('candy')} 神奇糖果`,'直接升 1 级','稀有道具：训练家 1 星后开放，商场不卖；满级用不了'],[`${gIt('m_xp1')}${gIt('m_xp4')} 经验糖果 S / M / L / XL`,'+100 / +500 / +2000 / +8000 经验','商场、宝箱、探索里有'],['赢战斗','平分经验','出过场的宝可梦一起分；亲密度 +3']])+`<p class="muted">喂食和训练<b>每只宝可梦每天合计 ${BRMAX} 次</b>（0 点重置）。等级上限 100；满级后不能再喂经验或训练，亲密度满了不能再喂亲密度树果。</p>`),
@@ -7007,7 +7007,7 @@ gBox(gH('性格培育','培育中心第二页'),`<p>把<b>一只宝可梦</b>和
 
   ].join(''),
  rank:()=>[
-  gBox(gH('对战和段位'),`<p>「对战 → 对战」打 NPC、打其他玩家的阵容、2v2 双打（训练家 Lv${DUO_LV}）。每种每天最多 ${ARN_DAY} 次，0 点重置；手动刷新对手第一次免费，之后每次 ${REF_COST} 金币。要先在「我的对战阵容」锁定队伍，别人才能挑战你。</p>`+gTable(['结果','段位分'],[['赢 NPC','+3 到 +8（对手越强越多）'],['赢玩家','+20'],['输给玩家','-12'],['别人来挑战，你的阵容守住了','+12'],['别人来挑战，阵容被打败','-8']])+gTable(['段位','需要的段位分'],RANKS.map(([n,v])=>[n,v]))+`<p class="muted">「社交 → 排行榜」可以按段位、图鉴、异色、对战塔、本周紧急任务排名，点一位训练家能看他的卡片。</p>`),
+  gBox(gH('对战和段位'),`<p>「对战 → 对战」打 NPC、打其他玩家的阵容、2v2 双打（训练家 Lv${DUO_LV}）。每种每天最多 ${ARN_DAY} 次，0 点重置；手动刷新对手第一次免费，之后每次 ${REF_COST} 金币。要先在「我的对战阵容」锁定队伍，别人才能挑战你。</p>`+gTable(['结果','段位分'],[['赢 NPC','+3 到 +8（对手越强越多）'],['赢玩家','+20'],['输给玩家','-12'],['别人来挑战，你的阵容守住了','+12'],['别人来挑战，阵容被打败','-8']])+gTable(['段位','需要的段位分'],RANKS.map(([n,v])=>[n,v]))+`<p class="muted">「排行榜」可以按段位、图鉴、异色、对战塔、本周紧急任务排名，点一位训练家能看他的卡片。</p>`),
   gBox(gH('道馆、四天王、传奇训练家'),`<ul class="gul"><li><b>道馆</b>：每个地区有自己的一组馆主，第一次打赢得徽章、TM、金币和星尘，之后只给少量金币。集齐一个地区的徽章去挑战<b>四天王</b>，打赢冠军就成为那个地区的冠军。</li><li><b>道馆重赛</b>：拿到徽章后开放，有普通（Lv60）、困难（Lv80）、地狱（Lv100）三个难度，先连战馆员再打馆主；通关前一个难度才开放下一个。</li><li><b>四天王重赛</b>：成为该地区冠军后开放，普通 / 困难 / 地狱，连续打四天王和冠军。</li><li>重赛中间 HP 不回复；对手每位都带 6 只，王牌会 Mega / 太晶 / 极巨化，还会用回复道具；每场开场有天气。</li><li><b>星级评价</b>（每场最多 3 星）：① 打完还剩 3 只以上没倒下 ② 最后一击用效果拔群的招式 ③ 队伍里有 3 只以上克制对手属性的宝可梦。同一位馆主三个难度合计 9 星送 1 个粘糕。</li><li><b>传奇训练家</b>：游戏里最强的几位，队伍固定、等级很高，每位有特定条件。</li></ul>`),
   gBox(gH('周挑战'),`<p>「对战 → 周挑战」每周一个属性主题，分几档难度，对手越多、等级越高奖励越好；通关得赛季积分，<b>赛季每月重置</b>。训练家 Lv${FEAT.wk} 开放。</p>`),
     gBox(gH('世界 Boss'),`<ul class="gul">${LIVE()?`<li>监控有<b>告警</b>：出一只超稀有的非神兽 Boss；有 <b>P0 工单</b>：出一只神兽 Boss（要卡片 1 星），<b>P0 Boss 全服每天只会刷新一只</b>（0 点重置）：当天第一条 P0 工单变成 Boss，所有训练家看到的是同一只，当天后面再有 P0 工单也不会再出。每只 Boss 存在 1 小时，告警提前恢复了也不会走；同一个告警只出一只，要等它恢复后再次告警才会再出。</li>`:'<li>每小时整点刷新一只<b>超稀有以上</b>的 Boss（超稀有、传说、幻兽都有可能）；传说和幻兽的 Boss 要卡片 1 星。停留到下一个整点，没打完就换新的。</li>'}<li>Boss 的 HP 很高（告警 Boss ×5、神兽 Boss ×8），攻击、防御、特攻、特防、速度也强化（告警 ×${BOSS_STAT}、神兽 ×${P0_STAT}，组队每多 1 位队友再 +10%），还可能带 Mega、极巨化或太晶化的形态上场。可以个人挑战，也可以带最多 2 位队友组队。</li><li>打败后有 <b>10 次</b>捕捉机会，每次都用掉 1 次；打败的 Boss 会留在「已击败 · 等你捕捉」里，直到捉到或机会用完，没参与的人领全员奖励后也一样。</li></ul><div class="row" style="gap:4px">${[150,384,10169,10170,10171].map(id=>gSp(id,48)).join('')}</div>`),
@@ -15408,23 +15408,20 @@ nav#subnav [data-tab="map"]{display:none!important}
   setTimeout(()=>{ try{ if(typeof S!=='undefined'&&S&&S.chosen){ renderShell(); render(); } }catch(e){} },0);   /* 开页时第一次画面在这段代码之前就画好了，这里重画一次，主页和新标签才会出现 */
 })();
 /* ===== 第十三阶段 · 主页结束 ===== */
-/* ===== 第十四阶段（Kris 2026-11-18）：对战塔 · 称号 · 好友（拜访牧场、送礼物）· 排行榜 =====
-   别的账号的资料来自 OSE Console 后台：players 每一行带上存档里的 S.pub（公开资料）；送礼物用 gifts 接口。
-   后台还没加这些接口时，好友 / 排行榜照样能用（看不到的那一栏显示「—」），送礼物会提示要等后台更新。 */
+/* ===== 第十四阶段（Kris 2026-11-18）：对战塔 · 称号 · 排行榜 =====
+   别的账号的资料来自 OSE Console 后台：players 每一行带上存档里的 S.pub（公开资料）。
+   后台还没加 pub 时，排行榜照样能用（看不到的那一栏显示「—」）。好友页面（拜访牧场、送礼物）已经拿掉（Kris 2026-11-19）。 */
 (function(){
   const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const SYNC=()=>window.__POKEFARM_SYNC;
-  const api=p=>SYNC().url.replace(/save$/,p);
 
   /* ---------- 页面、分组 ---------- */
-  TABS.push(['tower','对战塔'],['friends','好友']); TABNAME.tower='对战塔'; TABNAME.friends='好友'; TABNAME.rank='排行榜';
-  { const bt=GROUPS.find(g=>g[0]==='battle'); if(bt&&!bt[2].includes('tower')) bt[2].splice(bt[2].indexOf('arena')+1,0,'tower');
-    const rk=GROUPS.find(g=>g[0]==='rank'); if(rk){ rk[1]='社交'; if(!rk[2].includes('friends')) rk[2].push('friends'); } }
+  TABS.push(['tower','对战塔']); TABNAME.tower='对战塔'; TABNAME.rank='排行榜';
+  { const bt=GROUPS.find(g=>g[0]==='battle'); if(bt&&!bt[2].includes('tower')) bt[2].splice(bt[2].indexOf('arena')+1,0,'tower'); }
   FEAT.tower=20;
 
   /* ---------- 存档里的新资料 ---------- */
   const TW=()=>{ const t=(S.tower=S.tower||{best:0,day:'',n:0,mile:{},run:null,wk:{k:'',best:0}}); t.mile=t.mile||{}; t.wk=t.wk||{k:'',best:0}; if(t.day!==today()){ t.day=today(); t.n=0; } const wk=weekInfo().key; if(t.wk.k!==wk) t.wk={k:wk,best:0}; return t; };
-  const SO=()=>{ const o=(S.social=S.social||{fr:[],vd:'',vl:[],visits:0,sent:0,gd:'',gn:0}); o.fr=o.fr||[]; o.vl=o.vl||[]; if(o.vd!==today()){ o.vd=today(); o.vl=[]; } if(o.gd!==today()){ o.gd=today(); o.gn=0; } return o; };
   const urgWeek=()=>{ const u=(S.urg=S.urg||{}), k=weekInfo().key; if(!u.wk||u.wk.k!==k) u.wk={k,n:0}; return u.wk; };
   { const _ud=urgDone; urgDone=function(){ const r=_ud.apply(this,arguments); try{ urgWeek().n++; }catch(e){} return r; }; }
 
@@ -15451,10 +15448,7 @@ nav#subnav [data-tab="map"]{display:none!important}
     ['tw50','塔的霸主','对战塔打到第 50 层',()=>TW().best>=50,3],
     ['tw100','无尽之塔','对战塔打到第 100 层',()=>TW().best>=100,4],
     ['rk','段位大师','对战段位达到大师（1500 分）',()=>((S.pvp&&S.pvp.rating)||0)>=1500,3],
-    ['ug50','救援先锋','紧急任务累计完成 50 个',()=>((S.urg&&S.urg.total)||0)>=50,2],
-    ['fr5','交友达人','有 5 位好友',()=>SO().fr.length>=5,1],
-    ['gift20','慷慨的朋友','送出 20 份礼物',()=>(SO().sent||0)>=20,2],
-    ['visit30','常来串门','拜访好友 30 次',()=>(SO().visits||0)>=30,1]];
+    ['ug50','救援先锋','紧急任务累计完成 50 个',()=>((S.urg&&S.urg.total)||0)>=50,2]];
   const TT={}; TITLES.forEach(t=>TT[t[0]]=t);
   const TCOL=['','#6b8f5e','#3b82c4','#8a5ac0','#c9900f'];
   const titleOK=id=>{ const t=TT[id]; try{ return !!(t&&t[3]()); }catch(e){ return false; } };
@@ -15463,10 +15457,9 @@ nav#subnav [data-tab="map"]{display:none!important}
   let ttlSeen=null;
   function titleCheck(){ const got=TITLES.filter(t=>titleOK(t[0])).map(t=>t[0]); S.titleGot=S.titleGot||null; if(!S.titleGot){ S.titleGot=got; return; } const nw=got.filter(k=>!S.titleGot.includes(k)); if(nw.length){ S.titleGot=got; toast('获得新称号：'+nw.map(k=>'「'+TT[k][1]+'」').join('、')+'，到训练家卡片里佩戴'); dlog('reward','获得称号 '+nw.map(k=>TT[k][1]).join('、')); } }
 
-  /* ---------- 公开资料：别人在排行榜、好友、拜访里看到的（存档时一起更新） ---------- */
-  function pubSnap(){ const t=TW(), uw=urgWeek(), all=(S.mons||[]).filter(m=>m&&!m.test), tm=(S.team||[]).map(mon).filter(Boolean);
-    const rest=all.filter(m=>!tm.includes(m)).sort((a,b)=>(b.shiny?1:0)-(a.shiny?1:0)||b.lv-a.lv), ranch=[...tm,...rest].slice(0,10).map(m=>({id:m.id,lv:m.lv,s:m.shiny?1:0}));
-    const id=myTitle(); return {v:1,title:id,titleN:TT[id][1],tower:t.best||0,towerW:{k:t.wk.k,best:t.wk.best||0},urgW:{k:uw.k,n:uw.n},urgT:(S.urg&&S.urg.total)||0,dex:caughtN(),shiny:shinyN(),ranch,fr:SO().fr.length,farm:cardInfo().farm}; }
+  /* ---------- 公开资料：别人在排行榜、训练家卡片里看到的（存档时一起更新） ---------- */
+  function pubSnap(){ const t=TW(), uw=urgWeek();
+    const id=myTitle(); return {v:1,title:id,titleN:TT[id][1],tower:t.best||0,towerW:{k:t.wk.k,best:t.wk.best||0},urgW:{k:uw.k,n:uw.n},urgT:(S.urg&&S.urg.total)||0,dex:caughtN(),shiny:shinyN(),farm:cardInfo().farm}; }
   window.__pubSnap=pubSnap;   /* save() 每次存档时调用 */
   const pubOf=o=>o&&o.pub&&typeof o.pub==='object'?o.pub:null;
   const wkNow=()=>weekInfo().key;
@@ -15474,13 +15467,12 @@ nav#subnav [data-tab="map"]{display:none!important}
   const urgOf=o=>{ const p=pubOf(o); return p?(p.urgW&&p.urgW.k===wkNow()?p.urgW.n:0):null; };
 
   /* 不在 OSE Console 里（单机预览）：示例训练家补上一份假的公开资料，页面才看得出样子 */
-  function fakePub(o,i){ const r=grRng(grHash('pub'+o.n)), tl=o.tl||10, best=Math.max(0,Math.round(tl/2.2+r()*12-4)), ids=[o.ace&&o.ace.id||25,...Array.from({length:7},()=>[1,4,7,25,39,52,133,143,147,151,175,183,196,197,248,280,359,371,443,448,470,471,570,700,778][Math.floor(r()*25)])];
+  function fakePub(o,i){ const r=grRng(grHash('pub'+o.n)), tl=o.tl||10, best=Math.max(0,Math.round(tl/2.2+r()*12-4));
     const tlist=TITLES.filter(t=>t[4]<=(tl>60?4:tl>40?3:tl>20?2:1)); const tt=tlist[Math.floor(r()*tlist.length)];
-    return {v:1,title:tt[0],titleN:tt[1],tower:best,towerW:{k:wkNow(),best:Math.round(best*r())},urgW:{k:wkNow(),n:Math.floor(r()*36)},dex:o.caught,shiny:o.shiny||0,ranch:ids.map((id,k)=>({id,lv:Math.max(5,Math.min(100,tl-k*3)),s:r()<.08?1:0})),fr:Math.floor(r()*8)}; }
+    return {v:1,title:tt[0],titleN:tt[1],tower:best,towerW:{k:wkNow(),best:Math.round(best*r())},urgW:{k:wkNow(),n:Math.floor(r()*36)},dex:o.caught,shiny:o.shiny||0}; }
   if(typeof RANKERS!=='undefined') RANKERS.forEach((o,i)=>{ if(!o.pub) o.pub=fakePub(o,i); });
   OTHERS.forEach((o,i)=>{ if(!SYNC()&&!o.pub) o.pub=fakePub(o,i); });
   const people=()=>{ const L=SYNC()?OTHERS:RANKERS; return L.map(o=>({...otherCard(o),uid:o.u||o.n})); };
-  const uidOf=o=>o.u||o.n;
 
   /* 训练家卡片：多一行称号 + 对战塔 */
   window.__cardX=()=>({ttl:myTitle(),tower:TW().best||0,urgW:urgWeek().n});   /* myCard() / otherCard() 会把这些并进去 */
@@ -15490,7 +15482,7 @@ nav#subnav [data-tab="map"]{display:none!important}
       return h.replace(/(<div class="tcr"><dt>性别<\/dt><dd>[\s\S]*?<\/dd><\/div>)/,`$1<div class="tcr w"><dt>称号</dt><dd>${tg}</dd></div>`).replace(/(<div class="tcr w"><dt>对战段位<\/dt><dd>[\s\S]*?<\/dd><\/div>)/,`$1<div class="tcr w"><dt>对战塔</dt><dd>${tw}</dd></div>`); }; }
   /* 训练家卡片页：称号墙，点一下佩戴 */
   { const _rc=rCard; rCard=function(){ _rc(); const host=document.querySelector('#main .panel'); if(!host) return; const cur=myTitle();
-      const el=document.createElement('div'); el.className='card'; el.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">称号</h2><span class="muted">已获得 ${TITLES.filter(t=>titleOK(t[0])).length} / ${TITLES.length}</span></div><div class="muted" style="margin-bottom:8px">达成条件就会得到称号。点一个佩戴，戴上的称号会显示在训练家卡片、主页，别人在排行榜和好友里也看得到。</div>
+      const el=document.createElement('div'); el.className='card'; el.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">称号</h2><span class="muted">已获得 ${TITLES.filter(t=>titleOK(t[0])).length} / ${TITLES.length}</span></div><div class="muted" style="margin-bottom:8px">达成条件就会得到称号。点一个佩戴，戴上的称号会显示在训练家卡片、主页，别人在排行榜里也看得到。</div>
         <div class="ttlg">${TITLES.map(t=>{ const ok=titleOK(t[0]); return `<button class="ttlc ${ok?'':'lock'} ${t[0]===cur?'on':''}" data-ttl="${t[0]}" ${ok?'':'disabled'} style="--tc:${TCOL[t[4]]}"><b>${t[1]}</b><small>${t[2]}</small>${t[0]===cur?'<em>佩戴中</em>':''}</button>`; }).join('')}</div>`;
       const first=host.children[1]; host.insertBefore(el,first||null);
       el.querySelectorAll('[data-ttl]').forEach(b=>b.onclick=()=>{ const k=b.dataset.ttl; if(!titleOK(k)) return; S.title=k; save(); toast('已佩戴称号「'+TT[k][1]+'」'); render(); }); }; }
@@ -15544,61 +15536,6 @@ nav#subnav [data-tab="map"]{display:none!important}
     document.querySelectorAll('[data-twp]').forEach(b=>b.onclick=()=>{ const u=+b.dataset.twp; if(twSel.includes(u)) twSel=twSel.filter(x=>x!==u); else if(twSel.length<TW_PICK) twSel.push(u); else { twSel.shift(); twSel.push(u); } rTower(); });
     const g=$('#twgo'); if(g) g.onclick=()=>twStart(); };
 
-  /* ---------- 好友：加好友、拜访牧场、送礼物 ---------- */
-  const VISIT_RW=50, VISIT_MAX=5, GIFT_DAY=3, GIFT_COINS=[100,500,1000];
-  const GIFT={rows:null,at:0,err:'',off:false};   /* off：后台还没有 gifts 接口 */
-  function giftLoad(force){ if(!SYNC()||GIFT.off) return; if(!force&&Date.now()-GIFT.at<60000) return; GIFT.at=Date.now();
-    fetch(api('gifts'),{credentials:'same-origin'}).then(r=>{ if(r.status===404){ GIFT.off=true; return null; } return r.ok?r.json():Promise.reject(r.status); }).then(j=>{ if(!j) return; GIFT.rows=j.gifts||[]; GIFT.err=''; if(tab==='friends') rFriends(); renderShell(); }).catch(e=>{ GIFT.err='读取失败（'+e+'）'; }); }
-  const post=(p,body)=>fetch(api(p),{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(async r=>({ok:r.ok,status:r.status,j:await r.json().catch(()=>({}))}));
-  { const _po=pendingOf; pendingOf=function(){ const c=_po(); try{ giftLoad(); c.friends=(GIFT.rows||[]).length; }catch(e){} return c; }; }
-  const isFr=u=>SO().fr.includes(u);
-  function frToggle(u,n){ const o=SO(); if(isFr(u)){ o.fr=o.fr.filter(x=>x!==u); toast(`已把 ${n} 移出好友`); } else { if(o.fr.length>=50) return toast('好友最多 50 位'); o.fr.push(u); toast(`已加 ${n} 为好友`); dlog('mon',`加了好友 ${n}`); } save(); }
-  function visit(d){ const o=SO(), p=pubOf(d)||{}, fr=isFr(d.uid); let msg='';
-    if(fr&&!o.vl.includes(d.uid)&&o.vl.length<VISIT_MAX){ o.vl.push(d.uid); o.visits=(o.visits||0)+1; give({coins:VISIT_RW}); msg=`今天第一次拜访 ${esc(d.n)} 的牧场，得到 ${VISIT_RW} 金币（今天 ${o.vl.length}/${VISIT_MAX}）`; dlog('reward',`拜访 ${d.n} 的牧场`); save(); if(SYNC()) post('visits',{to:d.uid}).catch(()=>{}); }
-    else if(fr) msg=o.vl.includes(d.uid)?'今天已经拜访过了':`今天的拜访奖励已经领满 ${VISIT_MAX} 次`;
-    else msg='加为好友后，每天拜访可以领金币';
-    const ranch=(p.ranch&&p.ranch.length?p.ranch:(d.team||[]).map(x=>({id:x.id,lv:x.lv,s:x.shiny?1:0}))).slice(0,10);
-    const spots=[[14,58],[30,70],[46,62],[62,72],[78,60],[22,40],[40,44],[58,42],[74,40],[88,74]];   /* 宝可梦图照原图大小、同一个比例缩放（Kris 2026-11-18：不再每只都同宽，拉鲁拉丝不会比卡比兽大） */
-    showRes({title:`${esc(d.n)} 的牧场`,body:`<div class="vis"><div class="visbg" style="background-image:url(${XART.farm})">${ranch.map((m,i)=>`<img class="vism" onload="this.style.width=Math.min(30,this.naturalWidth*.36)+'%';this.style.visibility='visible'" style="left:${spots[i][0]}%;top:${spots[i][1]}%;--d:${i*.37}s" src="${spfM({id:m.id},!!m.s)}" alt="${SP[m.id]?SP[m.id][0]:''}" title="${SP[m.id]?SP[m.id][0]:''} Lv${m.lv}">`).join('')}</div>
-      <div class="visinfo"><div class="row" style="gap:10px;align-items:center"><img alt="" src="data:image/png;base64,${TCIMG[d.hero]}" style="width:56px;height:56px;object-fit:contain;image-rendering:pixelated"><div><b style="font-size:16px">${esc(d.n)}</b> ${d.ttl?titleTag(d.ttl,d.ttlN,1):''}<div class="muted">训练家 Lv${d.tl} · ${rankText(d.rating||0)}</div></div></div>
-      <div class="row" style="margin-top:8px;flex-wrap:wrap"><span class="chip">图鉴 <b>${d.caught}</b></span><span class="chip">异色 <b>${d.shiny||0}</b></span><span class="chip">对战塔 <b>${d.tower==null?'—':'第 '+d.tower+' 层'}</b></span><span class="chip">本周紧急任务 <b>${d.urgW==null?'—':d.urgW}</b></span>${d.ci&&d.ci.farm?`<span class="chip">农场 <b>${d.ci.farm.n}</b> 块地</span>`:''}</div>
-      ${pubOf(d)?'':'<div class="muted" style="margin-top:6px">对方还没更新到新版本，牧场只显示对战阵容。</div>'}<div class="muted" style="margin-top:6px">${msg}</div></div></div>`,
-      actions:[[fr?'移出好友':'加为好友',()=>{ frToggle(d.uid,d.n); document.getElementById('gpop').hidden=true; if(tab==='friends') rFriends(); },fr?'alt':''],['送礼物',()=>{ document.getElementById('gpop').hidden=true; giftPop(d); },'',!SYNC()],['训练家卡片',()=>{ document.getElementById('gpop').hidden=true; showCardPop(d); },'alt']]}); if(tab==='friends') rFriends(); }
-  function giftPop(d){ const o=SO(); if(!SYNC()) return toast('送礼物要在 OSE Console 里才能用'); if(GIFT.off) return toast('后台还没开放送礼物，等 OSE Console 更新'); if(o.gn>=GIFT_DAY) return toast(`今天已经送了 ${GIFT_DAY} 份，明天再送`);
-    const bag=Object.keys(S.items||{}).filter(k=>S.items[k]>0&&ITEMS[k]&&!NOSELL.includes(k)&&!LEGIT(k)&&!(typeof RARE!=='undefined'&&RARE[k])).sort((a,b)=>S.items[b]-S.items[a]).slice(0,24);
-    let pick={coins:GIFT_COINS[0]};
-    const draw=()=>{ const el=document.querySelector('#gpop .gfg'); if(!el) return; el.querySelectorAll('[data-gc],[data-gi]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.gc&&pick.coins===+b.dataset.gc)||(b.dataset.gi&&pick.k===b.dataset.gi)))); };
-    showRes({title:`送礼物给 ${esc(d.n)}`,body:`<div class="muted">每天能送 ${GIFT_DAY} 份（今天还剩 ${GIFT_DAY-o.gn} 份）。送出去的金币、道具会从你这里扣掉，对方在「好友」里领取。</div><div class="gfg"><div class="muted" style="margin:8px 0 4px">金币</div><div class="row">${GIFT_COINS.map(c=>`<button class="btn alt" data-gc="${c}" ${S.coins<c?'disabled':''}>${coinIcon(16)} ${c}</button>`).join('')}</div>
-      <div class="muted" style="margin:10px 0 4px">或者一个道具</div><div class="gfit">${bag.map(k=>`<button data-gi="${k}" title="${ITEMS[k][0]}">${iImg(k,32)}<small>${ITEMS[k][0]}</small><em>×${S.items[k]}</em></button>`).join('')||'<span class="muted">背包里没有能送的道具</span>'}</div>
-      <div class="muted" style="margin:10px 0 4px">留言（可以不写）</div><input id="gfmsg" maxlength="40" placeholder="一起加油！" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inherit"></div>`,
-      actions:[['送出',()=>giftSend(d,pick)],['取消',()=>{ document.getElementById('gpop').hidden=true; },'alt']]});
-    document.querySelectorAll('#gpop [data-gc]').forEach(b=>b.onclick=()=>{ pick={coins:+b.dataset.gc}; draw(); });
-    document.querySelectorAll('#gpop [data-gi]').forEach(b=>b.onclick=()=>{ pick={k:b.dataset.gi}; draw(); }); draw(); }
-  function giftSend(d,pick){ const o=SO(), msg=(document.getElementById('gfmsg')||{}).value||'';
-    if(pick.coins&&S.coins<pick.coins) return toast('金币不够'); if(pick.k&&!(S.items[pick.k]>0)) return toast('这个道具没有了');
-    const body={to:d.uid,coins:pick.coins||0,items:pick.k?{[pick.k]:1}:{},msg:msg.slice(0,40)};
-    post('gifts/send',body).then(r=>{ if(r.status===404){ GIFT.off=true; return toast('后台还没开放送礼物，等 OSE Console 更新'); } if(!r.ok) return toast(r.status===429?'今天送得太多了':'送礼物失败（'+r.status+'）');
-      if(pick.coins) S.coins-=pick.coins; if(pick.k) S.items[pick.k]--; o.gn++; o.sent=(o.sent||0)+1; dlog('spend',`送给 ${d.n}：${pick.coins?pick.coins+' 金币':ITEMS[pick.k][0]}`); save(); document.getElementById('gpop').hidden=true; toast(`礼物送出了，${d.n} 下次打开「好友」就能领`); if(tab==='friends') rFriends(); renderShell(); }).catch(e=>toast('送礼物失败（'+e+'）')); }
-  function giftClaim(g){ post('gifts/claim',{id:g.id}).then(r=>{ if(!r.ok) return toast(r.status===409?'这份礼物已经领过了':'领取失败（'+r.status+'）');
-      GIFT.rows=(GIFT.rows||[]).filter(x=>x.id!==g.id); rwRun('收到礼物',()=>{ give({coins:g.coins||0,items:{...(g.items||{})}}); dlog('reward',`收到 ${g.fromName||'好友'} 的礼物`); return `${esc(g.fromName||'好友')} 送的礼物：${rtext({coins:g.coins||0,items:g.items||{}})}${g.msg?'（「'+esc(g.msg)+'」）':''}`; }); save(); rFriends(); renderShell(); }).catch(e=>toast('领取失败（'+e+'）')); }
-  const VIS={rows:null,at:0};
-  function visLoad(){ if(!SYNC()||VIS.off||Date.now()-VIS.at<60000) return; VIS.at=Date.now(); fetch(api('visits'),{credentials:'same-origin'}).then(r=>{ if(r.status===404){ VIS.off=true; return null; } return r.ok?r.json():null; }).then(j=>{ if(!j) return; VIS.rows=j.visits||[]; if(tab==='friends') rFriends(); }).catch(()=>{}); }
-  let frQ='';
-  window.rFriends=function(){ plLoad(); giftLoad(); visLoad(); const o=SO(), all=people(), frs=all.filter(d=>isFr(d.uid)), others=all.filter(d=>!isFr(d.uid)&&(!frQ||d.n.toLowerCase().includes(frQ.toLowerCase())));
-    const row=d=>`<div class="item frr"><img class="rk-h" alt="" src="data:image/png;base64,${TCIMG[d.hero]}"><div class="l" style="min-width:0;flex:1"><div style="min-width:0"><b>${esc(d.n)}</b> ${d.ttl?titleTag(d.ttl,d.ttlN,1):''}<div class="muted">训练家 Lv${d.tl} · 图鉴 ${d.caught} · 对战塔 ${d.tower==null?'—':d.tower+' 层'}${isFr(d.uid)&&o.vl.includes(d.uid)?' · 今天拜访过':''}</div></div></div><div class="row" style="gap:6px"><button class="btn" data-fv="${esc(d.uid)}">拜访牧场</button>${isFr(d.uid)?`<button class="btn alt" data-fg="${esc(d.uid)}" ${SYNC()&&!GIFT.off&&o.gn<GIFT_DAY?'':'disabled'}>送礼物</button>`:`<button class="btn alt" data-ff="${esc(d.uid)}">加好友</button>`}</div></div>`;
-    const gifts=GIFT.rows||[];
-    $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.farm})"></div><h2 class="xt">好友</h2><div class="muted">加别的训练家为好友，去他们的牧场看看。每天第一次拜访一位好友得 ${VISIT_RW} 金币（每天最多 ${VISIT_MAX} 位）；每天能给好友送 ${GIFT_DAY} 份礼物（金币或道具）。${SYNC()?'':'现在不在 OSE Console 里，下面是示例训练家，送礼物要在 OSE Console 里才能用。'}</div>
-      <div class="row" style="margin-top:8px"><span class="chip">好友 <b>${frs.length}</b></span><span class="chip">今天拜访 <b>${o.vl.length}</b> / ${VISIT_MAX}</span><span class="chip">今天送礼 <b>${o.gn}</b> / ${GIFT_DAY}</span></div></div>
-      ${SYNC()?`<div class="card"><h2>收到的礼物 ${gifts.length?`<span class="nbadge">${gifts.length}</span>`:''}</h2>${GIFT.off?'<div class="muted">后台还没开放送礼物，等 OSE Console 更新后就能收发礼物。</div>':gifts.length?`<div class="list">${gifts.map((g,i)=>`<div class="item"><div class="l"><div><b>${esc(g.fromName||'好友')}</b> 送你 ${rtextH({coins:g.coins||0,items:g.items||{}})}${g.msg?`<div class="muted">「${esc(g.msg)}」</div>`:''}</div></div><button class="btn" data-gcl="${i}">领取</button></div>`).join('')}</div>`:`<div class="muted">${GIFT.rows===null?'正在读取…':GIFT.err||'没有新礼物。'}</div>`}${VIS.rows&&VIS.rows.length?`<div class="muted" style="margin-top:8px">最近来拜访你的：${VIS.rows.slice(0,8).map(v=>esc(v.fromName||v.from)).join('、')}</div>`:''}</div>`:''}
-      <div class="card"><h2>我的好友</h2>${frs.length?`<div class="list">${frs.map(row).join('')}</div>`:'<div class="muted">还没有好友，在下面找训练家加好友。</div>'}</div>
-      <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">找训练家</h2><input id="frq" placeholder="搜名字" value="${esc(frQ)}" style="padding:7px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;width:180px"></div>${others.length?`<div class="list">${others.map(row).join('')}</div>`:`<div class="muted">${SYNC()&&PL.rows===null?'正在读取…':'没有找到训练家。'}</div>`}</div></section>`;
-    const byU=u=>all.find(d=>String(d.uid)===u);
-    document.querySelectorAll('[data-fv]').forEach(b=>b.onclick=()=>{ const d=byU(b.dataset.fv); if(d) visit(d); });
-    document.querySelectorAll('[data-ff]').forEach(b=>b.onclick=()=>{ const d=byU(b.dataset.ff); if(d){ frToggle(d.uid,d.n); rFriends(); } });
-    document.querySelectorAll('[data-fg]').forEach(b=>b.onclick=()=>{ const d=byU(b.dataset.fg); if(d) giftPop(d); });
-    document.querySelectorAll('[data-gcl]').forEach(b=>b.onclick=()=>{ const g=gifts[+b.dataset.gcl]; if(g) giftClaim(g); });
-    const q=$('#frq'); if(q) q.oninput=()=>{ frQ=q.value; const pos=q.selectionStart; rFriends(); const q2=$('#frq'); if(q2){ q2.focus(); q2.setSelectionRange(pos,pos); } }; };
-
   /* ---------- 排行榜：段位 / 图鉴 / 异色 / 对战塔 / 本周紧急任务 ---------- */
   const RKT=[['rating','段位',d=>d.rating||0,d=>rankText(d.rating||0)],['dex','图鉴',d=>d.caught||0,d=>`${d.caught||0} 种`],['shiny','异色',d=>d.shiny||0,d=>`${d.shiny||0} 种`],['tower','对战塔',d=>d.tower||0,d=>d.tower==null?'—':`第 ${d.tower} 层`],['urg','本周紧急任务',d=>d.urgW||0,d=>d.urgW==null?'—':`${d.urgW} 个`]];
   let rkTab=(()=>{ try{ return localStorage.getItem('ose.ranch.rk')||'rating'; }catch(e){ return 'rating'; } })();
@@ -15611,24 +15548,19 @@ nav#subnav [data-tab="map"]{display:none!important}
     document.querySelectorAll('[data-rkt]').forEach(b=>b.onclick=()=>{ rkTab=b.dataset.rkt; try{ localStorage.setItem('ose.ranch.rk',rkTab); }catch(e){} rRank(); }); };
 
   /* 页面路由：render 里那张表是写死的，这里补上新页面 */
-  { const _r=render; render=function(){ if(tab==='tower'||tab==='friends'){ try{ renderShell(); if((FEAT[tab]||0)>(S.tl||1)) return rLocked(); (tab==='tower'?rTower:rFriends)(); capLists(); polish(); save(); }catch(e){ console.error(e); $('#main').innerHTML='<section class="panel"><div class="card"><h2>这一页出错了</h2><div class="muted">页面：'+tab+'<br>错误：'+String(e&&e.message||e)+'</div></div></section>'; } try{ titleCheck(); }catch(e){} return; } const r=_r.apply(this,arguments); try{ titleCheck(); }catch(e){} return r; }; }
+  { const _r=render; render=function(){ if(tab==='tower'){ try{ renderShell(); if((FEAT[tab]||0)>(S.tl||1)) return rLocked(); rTower(); capLists(); polish(); save(); }catch(e){ console.error(e); $('#main').innerHTML='<section class="panel"><div class="card"><h2>这一页出错了</h2><div class="muted">页面：'+tab+'<br>错误：'+String(e&&e.message||e)+'</div></div></section>'; } try{ titleCheck(); }catch(e){} return; } const r=_r.apply(this,arguments); try{ titleCheck(); }catch(e){} return r; }; }
 
   { const _g=GSEC.rank; GSEC.rank=()=>_g()+[
     gBox(gH('对战塔','对战 → 对战塔，训练家 Lv'+FEAT.tower+' 开放'),`<ul class="gul"><li>从队伍里选 ${TW_PICK} 只上塔，一层一个训练家（3 只宝可梦），<b>层与层之间 HP 不回复</b>，倒下的不能再上场，3 只都倒下就结束。</li><li>对手第 1 层 Lv46，每层 +1 级，第 55 层到 Lv100；之后每层对手 HP 再加 4%，可以一直往上打。每 10 层是<b>塔主</b>：最后一只会太晶化，第 30 层起还会带神兽。</li><li>每天 ${TW_DAY} 次；中途可以「结束挑战」，已经拿到的奖励不会扣。最高层永久记录，排行榜和训练家卡片上都看得到。</li><li>奖励：每过一层有金币和星尘；第一次打到每个第 10 层有稀有道具和神奇糖果。</li></ul>`),
-    gBox(gH('称号'),`<p>达成条件就会得到称号（图鉴、异色、徽章、冠军、对战塔、段位、紧急任务、好友……一共 ${TITLES.length} 个）。到<b>训练家卡片</b>里点一个佩戴，会显示在训练家卡片、主页，别人在排行榜和好友里也看得到。</p>`),
-    gBox(gH('好友','社交 → 好友'),`<ul class="gul"><li>在「找训练家」里加好友，点「拜访牧场」看他的宝可梦、称号和纪录。</li><li>每天第一次拜访一位好友得 ${VISIT_RW} 金币，每天最多 ${VISIT_MAX} 位。</li><li>每天能给好友送 ${GIFT_DAY} 份礼物（金币或道具；传说道具、稀有道具和拍卖、交换不了的道具不能送），对方在「好友」里领取。送礼物要在 OSE Console 里才能用。</li></ul>`),
-    gBox(gH('排行榜','社交 → 排行榜'),`<p>可以按<b>段位、图鉴、异色、对战塔最高层、本周紧急任务</b>排名。本周紧急任务每周一重新算。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
+    gBox(gH('称号'),`<p>达成条件就会得到称号（图鉴、异色、徽章、冠军、对战塔、段位、紧急任务……一共 ${TITLES.length} 个）。到<b>训练家卡片</b>里点一个佩戴，会显示在训练家卡片、主页，别人在排行榜里也看得到。</p>`),
+    gBox(gH('排行榜','排行榜'),`<p>可以按<b>段位、图鉴、异色、对战塔最高层、本周紧急任务</b>排名。本周紧急任务每周一重新算。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
   const st=document.createElement('style'); st.textContent=`
 .ttl{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 10px;font:700 12.5px var(--sans);color:#fff;background:var(--tc);box-shadow:inset 0 -2px 0 #0002;white-space:nowrap;vertical-align:middle}.ttl::before{content:"★";font-size:11px;opacity:.85}.ttl.s{padding:1px 8px;font-size:11.5px}
 .ttlg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}.ttlc{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:2px solid var(--tc);border-radius:12px;background:#fff;padding:8px 10px;cursor:pointer;font:inherit;color:inherit}.ttlc b{color:var(--tc);font-size:14px}.ttlc small{color:var(--muted);font-size:12px}.ttlc.on{background:color-mix(in srgb,var(--tc) 14%,#fff)}.ttlc em{position:absolute;top:6px;right:8px;font-style:normal;font-size:11px;font-weight:800;color:var(--tc)}.ttlc.lock{border-color:var(--line);opacity:.55;cursor:default}.ttlc.lock b{color:var(--ink2)}
 .hmttl{margin:2px 0 3px}
 .twpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}.twm{display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid var(--line);border-radius:12px;background:#fff;padding:6px;cursor:pointer;font:inherit;color:inherit}.twm img{width:64px;height:64px;image-rendering:pixelated}.twm small{color:var(--muted)}.twm.on{border-color:var(--leaf);background:#eef6e6}.twm:disabled{opacity:.45;cursor:default}
 .twmile{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.twmile .chip.on{background:#e6f3dd;border-color:var(--leaf);color:var(--leaf)}
-.rktabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.rktabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font:700 13px var(--sans);color:var(--ink);cursor:pointer}.rktabs button[aria-selected=true]{background:var(--leaf);border-color:var(--leaf);color:#fff}
-.frr{gap:10px;align-items:center}.frr .rk-h{width:44px;height:44px}
-.vis{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;align-items:start}.visbg{position:relative;aspect-ratio:16/10;border-radius:14px;background:center/cover no-repeat;overflow:hidden}.vism{position:absolute;width:15%;visibility:hidden;transform:translate(-50%,-50%);image-rendering:pixelated;animation:visb 2.4s ease-in-out infinite;animation-delay:var(--d)}@keyframes visb{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,-58%)}}
-.gfit{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;max-height:210px;overflow:auto}.gfit button{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid var(--line);border-radius:10px;background:#fff;padding:5px 3px;cursor:pointer;font:inherit}.gfit small{font-size:11px;line-height:1.2;text-align:center}.gfit em{position:absolute;top:2px;right:5px;font-style:normal;font-size:11px;color:var(--muted)}.gfg [aria-pressed=true]{border-color:var(--leaf)!important;background:#eef6e6!important}
-@media(max-width:760px){.vis{grid-template-columns:1fr}}`;
+.rktabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.rktabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font:700 13px var(--sans);color:var(--ink);cursor:pointer}.rktabs button[aria-selected=true]{background:var(--leaf);border-color:var(--leaf);color:#fff}`;
   document.head.appendChild(st);
   setTimeout(()=>{ try{ if(S&&S.chosen){ renderShell(); render(); } }catch(e){} },0);
 })();
