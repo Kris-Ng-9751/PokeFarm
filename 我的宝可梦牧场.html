@@ -15917,8 +15917,8 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
     tw.style.left=sp.offsetLeft+'px'; tw.style.top=sp.offsetTop+'px'; tw.style.width=sp.offsetWidth+'px'; tw.style.height=sp.offsetHeight+'px'; host.appendChild(tw);
     tw.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:slideMs,easing:'linear'}); return tw; }
   const SLIDE=900;
-  function openStart(){ window.__opening=true; document.body.classList.add('opn-lock','opn-hm'); }
-  function openEnd(){ window.__opening=false; document.body.classList.remove('opn-lock','opn-hm','opn-hf'); }
+  function openStart(){ window.__opening=true; document.body.classList.add('opn-lock','opn-hm','opn-if','opn-im'); }   /* 血条框也等宝可梦出来才显示 */
+  function openEnd(){ window.__opening=false; document.body.classList.remove('opn-lock','opn-hm','opn-hf','opn-if','opn-im'); }
   async function openSeq(){ const st=(typeof D!=='undefined'&&D&&D.my&&!document.querySelector('#modal').hidden)?D:B, dbl=st&&st===D; if(!st) return openEnd();
     const alive=()=>(dbl?D===st:B===st)&&!document.querySelector('#modal').hidden;
     try{
@@ -15934,13 +15934,13 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
       if(!wild){ if(ftw){ ftw.animate([{transform:'none',opacity:1},{transform:'translateX(140%)',opacity:0}],{duration:380,easing:'ease-in',fill:'forwards'}); setTimeout(()=>ftw.remove(),400); await sleep(260); }
         const keys=dbl?[0,1].map(i=>['df'+i,st.fo[i]]).filter(x=>x[1]>=0):[['sf',st.fcur]], t=performance.now();
         keys.forEach(([k,v],i)=>{ ENT.act[k]={t0:t+i*350,v}; }); document.body.classList.remove('opn-hf'); entCheck();
-        await sleep(950+(keys.length-1)*350); if(!alive()) return;
+        await sleep(950+(keys.length-1)*350); if(!alive()) return; document.body.classList.remove('opn-if');
         for(const [k,v] of keys){ const f=dbl?D.foes[v]:st.foe; if(f) await cryP(f.id); if(!alive()) return; } }
-      else { await cryP(st.foe.id); if(!alive()) return; }
+      else { document.body.classList.remove('opn-if'); await cryP(st.foe.id); if(!alive()) return; }
       /* ③ 我方丢球，宝可梦出场，叫完 */
       const rel=trThrowNow(mtw), t=performance.now()+rel, mk=dbl?[0,1].map(i=>['dm'+i,st.my[i]]).filter(x=>x[1]>=0):[['sm',st.mon&&st.mon.uid]];
       mk.forEach(([k,v],i)=>{ ENT.act[k]={t0:t+i*350,v}; }); document.body.classList.remove('opn-hm'); entCheck();
-      await sleep(rel+950+(mk.length-1)*350); if(!alive()) return;
+      await sleep(rel+950+(mk.length-1)*350); if(!alive()) return; document.body.classList.remove('opn-im');
       for(const [k,v] of mk){ const m=dbl?(D.party[v]&&D.party[v].me):st.me; if(m) await cryP(m.id); if(!alive()) return; }
     }catch(e){ console.warn(e); } finally{ openEnd(); } }
   /* 开战时（有特效才做）：先把流程挂上，第一次画面先不放出场动画（entCheck 看 __openHold），等转场播完再一步一步来 */
@@ -15981,7 +15981,7 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
 #battle .gsp.trgone,#battle .ginfo.trgone{visibility:hidden}#battle .ginfo.trhide{animation:trhide .3s .3s forwards}@keyframes trhide{to{opacity:0;visibility:hidden}}
 #battle .trwin{position:absolute;z-index:3;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}#battle .trwin img{width:auto!important;height:100%!important;max-width:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}#battle .trwin>span{height:100%;display:flex;align-items:flex-end;justify-content:center}#battle .trwin>span img{height:100%!important}
 #battle .trwin.in{animation:trin .55s .45s cubic-bezier(.2,.8,.3,1) both}@keyframes trin{from{transform:translateX(70%);opacity:0}to{transform:none;opacity:1}}#battle .trwin.me img:not(.bk){transform:scaleX(-1)}   /* 没有背面图的我方训练家左右翻转，面朝对方 */#battle .trwin.me img.bk{max-width:none}#battle .trwin.me.in{animation-name:trinm}@keyframes trinm{from{transform:translateX(-70%);opacity:0}to{transform:none;opacity:1}}
-body.btwait #modal{visibility:hidden!important}body.opn-hm #battle .gsp.me,body.opn-hm #battle .gsp.dm0,body.opn-hm #battle .gsp.dm1,body.opn-hf #battle .gsp.foe,body.opn-hf #battle .gsp.df0,body.opn-hf #battle .gsp.df1{visibility:hidden}body.opn-lock #battle button{pointer-events:none;filter:grayscale(.6);opacity:.55}.btin{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:all}.btin::before{content:"";position:absolute;inset:0;z-index:2;background:#fff;opacity:0;animation:btfl .34s linear 2}@keyframes btfl{0%,100%{opacity:0}45%,55%{opacity:1}}
+body.btwait #modal{visibility:hidden!important}body.opn-hm #battle .gsp.me,body.opn-hm #battle .gsp.dm0,body.opn-hm #battle .gsp.dm1,body.opn-hf #battle .gsp.foe,body.opn-hf #battle .gsp.df0,body.opn-hf #battle .gsp.df1{visibility:hidden}body.opn-lock #battle button{pointer-events:none;filter:grayscale(.6);opacity:.55}#battle .garena .ginfo{transition:opacity .3s ease,transform .3s ease}body.opn-if #battle .ginfo.f,body.opn-if #battle .ginfo[class*=" df"]{opacity:0;transform:translateX(-40px)}body.opn-im #battle .ginfo.m,body.opn-im #battle .ginfo[class*=" dm"]{opacity:0;transform:translateX(40px)}.btin{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:all}.btin::before{content:"";position:absolute;inset:0;z-index:2;background:#fff;opacity:0;animation:btfl .34s linear 2}@keyframes btfl{0%,100%{opacity:0}45%,55%{opacity:1}}
 .btin i{position:absolute;z-index:1;background:#0b0d10;animation:btin .42s cubic-bezier(.4,0,.2,1) both}.btin.wild i{left:0;width:100%;height:12.6%}.btin.wild i:nth-child(odd){--f:-101%}.btin.wild i:nth-child(even){--f:101%}
 @keyframes btin{from{transform:translateX(var(--f))}to{transform:none}}
 ${[0,1,2,3,4,5,6,7].map(k=>`.btin i:nth-child(${k+1}){animation-delay:${(.68+k*.035).toFixed(3)}s}.btin.wild i:nth-child(${k+1}){top:${k*12.5}%}.btin.trainer i:nth-child(${k+1}){left:${k*12.5}%}.btin.boss i:nth-child(${k+1}){left:${k*19-26}%}`).join('')}
