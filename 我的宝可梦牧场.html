@@ -2427,7 +2427,7 @@ function startBattle(cfg){
   loadActive(); if(cfg.wx&&WXN[cfg.wx]){ B.wx=cfg.wx; B.log.push(`对方的 ${SP[B.foe.id][0]} 的特性：${WXN[cfg.wx][1]}！${WXN[cfg.wx][2]}`); }   /* 道馆重赛：开场天气 */
   /* 野外对战的随机天气（Kris 2026-11-02）：每场有 WILD_WX_P 的几率出现天气，出现时按战斗背景（野外区域）抽；月见山 / 山洞没有天气。沙暴 / 冰雹每回合会伤害非免疫的宝可梦，双方一样。只管有野外怪物的战斗（特效测试、变身测试没有 wid，不算） */
   if(cfg.kind==='wild'&&cfg.wid&&!cfg.wx&&Math.random()<WILD_WX_P){ const L=WILD_WX[battleBg(B)]||[]; if(L.length){ const w=L[Math.floor(Math.random()*L.length)]; if(WXN[w]){ B.wx=w; B.log.push(`野外的天气：${WXN[w][0]}。${WXN[w][2]}`); } } }
-  B.__wxStart=1; wxEnter(B.foe.id,false,B.foe); wxEnter(B.me.id,true,B.me); B.__wxStart=0; if(foes.length>1) B.log.push(`对方带了 ${foes.length} 只宝可梦，第一只是 ${SP[B.foe.id][0]}。`);
+  B.__wxStart=1; wxEnter(B.foe.id,false,B.foe); if(foes.length>1) B.log.push(`对方带了 ${foes.length} 只宝可梦，第一只是 ${SP[B.foe.id][0]}。`); B.log.push(`就决定是你了！${SP[B.me.id][0]}！`); wxEnter(B.me.id,true,B.me); B.__wxStart=0;   /* 我方派出也有字（Kris 2026-11-19） */
   $('#modal').hidden=false; bRender();
 }
 function btAllies(b){ const tm=b.cfg.team, N=tm.length+1, hit=b.hit; b.hit=0;
@@ -5644,7 +5644,7 @@ function startDouble(title,team,reward,rating,onWin,onLose,ckey,opts){
   D.used={}; D.gu={}; D.foeItems=opts&&opts.items?opts.items.slice():null;
   if(opts&&opts.gk){ const fs=D.foes; let ix=-1; for(let i=fs.length-1;i>=0;i--){ if((opts.gk!=='mega'||MEGA[fs[i].id])&&(opts.gk!=='dyn'||!NODYN.has(fs[i].id))){ ix=i; break; } } if(ix>=0) fs[ix].gm={k:opts.gk,t:opts.gk==='tera'&&opts.gt&&CHART[opts.gt]?opts.gt:null}; }
   else if(opts&&opts.gm) D.foes[D.foes.length-1].gm={k:opts.gm};
-  D.foes.forEach(f=>{ S.seen=S.seen||{}; S.seen[f.id]=1; }); B=null; D.__wxStart=1; D.fo.forEach(i=>wxEnter(D.foes[i].id,false,D.foes[i])); D.my.forEach(i=>wxEnter(D.party[i].me.id,true,D.party[i].me)); D.__wxStart=0; $('#modal').hidden=false; dRender(); }
+  D.foes.forEach(f=>{ S.seen=S.seen||{}; S.seen[f.id]=1; }); B=null; D.__wxStart=1; D.fo.forEach(i=>wxEnter(D.foes[i].id,false,D.foes[i])); D.log.push(`就决定是你了！${D.my.filter(i=>i>=0).map(i=>SP[D.party[i].me.id][0]).join('、')}！`); D.my.forEach(i=>wxEnter(D.party[i].me.id,true,D.party[i].me)); D.__wxStart=0; $('#modal').hidden=false; dRender(); }
 const dAlive=side=>(side==='m'?D.my:D.fo).map((i,s)=>[i,s]).filter(([i])=>i>=0&&(side==='m'?D.party[i].mh:D.foes[i].fh)>0);
 function dCur(){ return dAlive('m').find(([i,s])=>!D.sel.some(x=>x.slot===s)); }
 function dRender(){
@@ -8775,8 +8775,8 @@ const isWxLine=t=>{ const m=/的特性：([^！!]+)[！!]/.exec(t); return !!(m&
 function wxHoldSync(st){ const L=(st&&st.log)||[], n=L.filter(isWxLine).length, r=ABFX.wxr.get(st)||0; document.body.classList.toggle('wxhold',n>r);
   /* 战斗记录里的天气特性那一行也等发动了才显示（Kris 2026-11-19） */
   const host=document.querySelector('#battle .garena'), dbl=host&&host.classList.contains('dbl'); let k=0;
-  document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div').forEach(d=>{ if(isWxLine(d.textContent)){ d.classList.toggle('wxpend',k>=r); k++; } }); }
-{ const st=document.createElement('style'); st.textContent='#battle .gsc>div.wxpend{display:none}'; document.head.appendChild(st); }
+  document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div').forEach(d=>{ if(isWxLine(d.textContent)){ d.classList.toggle('wxpend',k>=r); k++; } else if(d.textContent.startsWith('就决定是你了！')) d.classList.add('goyou'); }); }
+{ const st=document.createElement('style'); st.textContent='#battle .gsc>div.wxpend{display:none}body.opn-hm #battle .gsc>div.goyou{display:none}'; document.head.appendChild(st); }
 /* 开场流程中（转场、进场、丢球）先不弹特性标签 / 能力箭头，等那一边的宝可梦出来、血条框出现了才弹（Kris 2026-11-18：日照的标签在转场时就跑出来了） */
 function abfxReady(foe){ if(!window.__opening) return entWait()<=0;   /* 平时也等精灵球出场动画放完 */ const c=document.body.classList; if(c.contains('btwait')||document.querySelector('.btin')) return false;
   if(foe?(c.contains('opn-hf')||c.contains('opn-if')):(c.contains('opn-hm')||c.contains('opn-im'))) return false; return entWait()<=0; }
