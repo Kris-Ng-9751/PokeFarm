@@ -15882,24 +15882,27 @@ const BGMA={"title":"SUQzBAAAAAABflRQRTEAAAANAAADR28gSWNoaW5vc2UAVFhYWAAAACEAAAN
 })();
 /* ===== 第十五阶段结束 ===== */
 /* ===== 第十六阶段（Kris 2026-11-18）：打赢训练家后，对方收回宝可梦、训练家本人上场 =====
-   对战 NPC、道馆（馆员和馆主）、四天王 / 冠军、传奇训练家：最后一只倒下、战斗结束时，对方的宝可梦被收回（红光缩小），
-   接着训练家的人物图从右边走进来，站在原本宝可梦的位置。人物图在开战时放进 B.cfg.av。 */
+   对战 NPC、道馆（馆员和馆主）、四天王 / 冠军、传奇训练家：最后一只倒下、战斗结束时，双方的宝可梦都被收回（红光缩小），
+   接着对方训练家从右边、我方训练家从左边走进来，站在原本宝可梦的位置。对方的人物图在开战时放进 B.cfg.av，我方用自己的训练家形象。 */
 (function(){
   const won=()=>{ const b=typeof B!=='undefined'?B:null; if(!b||!b.over||!b.cfg||!b.cfg.av||b.cfg.kind==='wild'||b.caughtOK) return false; const fs=b.foes&&b.foes.length?b.foes:[b.foe]; return fs.every(f=>f&&(f.fh!=null?f.fh:1)<=0); };
-  function apply(){ if(!won()) return; const b=B, host=document.querySelector('#battle .garena'), sp=host&&host.querySelector('.gsp.foe'); if(!host||!sp||host.querySelector('.trwin')) return;
-    const first=!b.__trWin; b.__trWin=1;
-    const tw=document.createElement('div'); tw.className='trwin'+(first?' in':''); tw.innerHTML=b.cfg.av; tw.setAttribute('aria-hidden','true');
+  /* 一边：宝可梦收回（红光缩小）、血条框收起、训练家走进来站在宝可梦的位置。side：'foe' 对方 / 'me' 我方 */
+  function side(host,k,html,first){ const sp=host.querySelector('.gsp.'+k); if(!sp||!html) return; const tw=document.createElement('div'); tw.className='trwin '+k+(first?' in':''); tw.innerHTML=html; tw.setAttribute('aria-hidden','true');
     tw.style.left=sp.offsetLeft+'px'; tw.style.top=sp.offsetTop+'px'; tw.style.width=sp.offsetWidth+'px'; tw.style.height=sp.offsetHeight+'px';
     if(first){ sp.classList.add('trcall'); setTimeout(()=>sp.classList.add('trgone'),480); } else sp.classList.add('trgone');
-    host.appendChild(tw); const fi=document.querySelector('#battle .ginfo.f'); if(fi) fi.classList.add(first?'trhide':'trgone'); }   /* 对方的血条框也收起来 */
+    host.appendChild(tw); const fi=document.querySelector('#battle .ginfo.'+(k==='foe'?'f':'m')); if(fi) fi.classList.add(first?'trhide':'trgone'); }
+  function apply(){ if(!won()) return; const b=B, host=document.querySelector('#battle .garena'); if(!host||host.querySelector('.trwin')) return;
+    const first=!b.__trWin; b.__trWin=1; let hero=null; try{ hero=myCard().hero; }catch(e){}
+    side(host,'foe',b.cfg.av,first);
+    side(host,'me',hero&&TCIMG[hero]?`<img src="data:image/png;base64,${TCIMG[hero]}" alt="">`:'',first); }   /* 我方：自己的训练家形象（Kris 2026-11-18） */
   const mo=new MutationObserver(()=>{ try{ apply(); }catch(e){} });
   const arm=()=>{ const h=document.getElementById('battle'); if(h&&!h.__trw){ h.__trw=1; mo.observe(h,{childList:true,subtree:true}); } }; arm(); setInterval(arm,1500);
   const st=document.createElement('style'); st.textContent=`
-#battle .gsp.foe.trcall .gs{animation:trcall .48s ease-in forwards}@keyframes trcall{0%{filter:none;transform:none;opacity:1}35%{filter:brightness(1.6) sepia(1) saturate(6) hue-rotate(-30deg);transform:none;opacity:1}100%{filter:brightness(2) sepia(1) saturate(8) hue-rotate(-30deg);transform:scale(.05) translateY(40%);opacity:0}}
-#battle .gsp.foe.trgone,#battle .ginfo.f.trgone{visibility:hidden}#battle .ginfo.f.trhide{animation:trhide .3s .3s forwards}@keyframes trhide{to{opacity:0;visibility:hidden}}
+#battle .gsp.trcall .gs{animation:trcall .48s ease-in forwards}@keyframes trcall{0%{filter:none;transform:none;opacity:1}35%{filter:brightness(1.6) sepia(1) saturate(6) hue-rotate(-30deg);transform:none;opacity:1}100%{filter:brightness(2) sepia(1) saturate(8) hue-rotate(-30deg);transform:scale(.05) translateY(40%);opacity:0}}
+#battle .gsp.trgone,#battle .ginfo.trgone{visibility:hidden}#battle .ginfo.trhide{animation:trhide .3s .3s forwards}@keyframes trhide{to{opacity:0;visibility:hidden}}
 #battle .trwin{position:absolute;z-index:3;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}#battle .trwin img{width:auto!important;height:100%!important;max-width:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}#battle .trwin>span{height:100%;display:flex;align-items:flex-end;justify-content:center}#battle .trwin>span img{height:100%!important}
-#battle .trwin.in{animation:trin .55s .45s cubic-bezier(.2,.8,.3,1) both}@keyframes trin{from{transform:translateX(70%);opacity:0}to{transform:none;opacity:1}}
-@media (prefers-reduced-motion:reduce){#battle .trwin.in,#battle .gsp.foe.trcall .gs{animation:none}}`;
+#battle .trwin.in{animation:trin .55s .45s cubic-bezier(.2,.8,.3,1) both}@keyframes trin{from{transform:translateX(70%);opacity:0}to{transform:none;opacity:1}}#battle .trwin.me.in{animation-name:trinm}@keyframes trinm{from{transform:translateX(-70%);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){#battle .trwin.in,#battle .gsp.trcall .gs{animation:none}}`;
   document.head.appendChild(st);
 })();
 /* ===== 第十六阶段结束 ===== */
