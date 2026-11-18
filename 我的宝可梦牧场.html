@@ -5654,7 +5654,7 @@ function dRender(){
   else if(cur&&d.pm===null&&menu==='bag'){ const DI=['heal','healp','revive','pp','xatk','xdef','xspd']; dAsk=`${SP[d.party[cur[0]].me.id][0]} 要用什么道具？（第 ${actSlot+1} 只）`; right=dMain('bag'); dPop=dPopBox('背包',`<div class="gmoves bag">${BI.map(([k,,t])=>{ const ok=biOK(k), n=S.items[k]||0, sup=DI.includes(t); return `<button class="gb mv" data-d="i:${k}" ${(ok&&n>0&&sup)?'':'disabled'}><b>${iImg(k,22)} ${ITEMS[k][0]} ×${n}</b><small>${!ok?biNeed(k):sup?ITEMS[k][1]:'双打里暂时不能用'}</small></button>`; }).join('')}</div>`); }
   else if(cur&&d.pm===null&&menu==='party'){ dAsk=`${SP[d.party[cur[0]].me.id][0]} 要换成哪一只？（第 ${actSlot+1} 只）`; right=dMain('party'); dPop=dPopBox('宝可梦',`<div class="gparty">${d.party.map((p,i)=>{ const q=Math.max(0,Math.round(100*p.mh/p.mx)), on=d.my.includes(i); return `<button class="gpm ${on?'cur':''} ${p.mh<=0?'down':''}" data-d="sw:${i}" ${(on||p.mh<=0)?'disabled':''}><img src="${spfM(p.me,p.real.shiny)}" alt=""><span><b>${SP[p.me.id][0]}</b> Lv${p.me.lv}${on?' · 出战中':''}<span class="ghp s"><i class="${q>50?'g':q>20?'y':'r'}" style="width:${q}%"></i></span><small>${Math.max(0,p.mh)}/${p.mx}</small></span></button>`; }).join('')}</div><div class="muted" style="margin-top:6px">换人会用掉这只的这回合</div>`); }
   else if(cur){ const [pi]=cur, p=d.party[pi];
-    if(d.pm===null){ dAsk=`${SP[p.me.id][0]} 用什么招式？（第 ${actSlot+1} 只）`; dLeft=`<div class="gleft"><div class="gmoves">${p.mvs.map((id,i)=>{ const s=dShown(p,i,p.zOn); return `<button class="gb mv" data-d="mv:${i}" ${p.pp[i]>0?'':'disabled'}><b>${s.name}${SIG[id]?' <span class="tag r4">专属</span>':''}${gemTag(p.me,s)}</b><small>${s.type} · ${catName(s.id)}${s.pow?(window.MVNOTE&&MVNOTE[s.id]&&!s.tag||s.id===447||s.id===67?' · 威—':' · 威'+s.pow):''} · PP ${p.pp[i]}/${MV[id][4]}${s.tag?' · '+s.tag:''}</small></button>`; }).join('')}</div><div class="gim">${dGimHtml(p)}</div></div>`; right=dMain('fight'); }
+    if(d.pm===null){ dAsk=`${SP[p.me.id][0]} 用什么招式？（第 ${actSlot+1} 只）`; dLeft=`<div class="gleft"><div class="gmoves">${p.mvs.map((id,i)=>{ const s=dShown(p,i,p.zOn); return `<button class="gb mv" data-d="mv:${i}" ${p.pp[i]>0?'':'disabled'}><b>${s.name}${SIG[id]?' <span class="tag r4">专属</span>':''}${gemTag(p.me,s)}</b><small>${s.type} · ${catName(s.id)}${s.pow?(window.MVNOTE&&MVNOTE[s.id]&&!s.tag||s.id===447||s.id===67?' · 威—':' · 威'+s.pow):''} · PP ${p.pp[i]}/${MV[id][4]}${s.tag?' · '+s.tag:''}${!s.tag&&SPR_ALL.has(+s.id)?' · 打全场（含搭档）':!s.tag&&SPR_OPP.has(+s.id)?' · 打对方两只':''}</small></button>`; }).join('')}</div><div class="gim">${dGimHtml(p)}</div></div>`; right=dMain('fight'); }
     else { dAsk='打谁？点上面的对手，或者点下面的按钮'; right=`<div class="gmenu gmain">${dAlive('f').map(([fi,fs])=>`<button class="gb mv" data-d="tg:${fs}"><b>${SP[d.foes[fi].id][0]}</b><small>HP ${d.foes[fi].fh}/${d.foes[fi].fx}</small></button>`).join('')}<button class="gb" data-d="back"><span class="gbi tri">◀</span><span>重选招式</span></button></div>`; } }
   if(!cur&&!d.over) right=`<div class="muted">……</div>`;
   const dots=`<span class="muted" style="font-size:12px">对方还剩 ${d.foes.filter(f=>f.fh>0).length} 只 · 我方还剩 ${d.party.filter(x=>x.mh>0).length} 只</span>`;
@@ -5666,19 +5666,36 @@ function dRender(){
 const _dRender=dRender;
 dRender=function(){ const d=D; if(d&&d.beats&&d.beats.length&&!d.busy){ const bs=d.beats; d.beats=null; return dReplay(d,bs); } if(d&&!d.busy) d.beats=null; return _dRender.apply(this,arguments); };
 function dBeat(as,asl,ds,dsl){ const d=D; if(!d.beats) return; d.beats.push({as,asl,ds,dsl,n:d.log.length,pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:[...d.my],fo:[...d.fo]}); }
+/* 特效程序里写死的「#battle .gsp.me / .gsp.foe / #bme / #bfoe」，双打放特效时暂时改指到这一拍的两只精灵 */
+function dMapSet(M){ window.__dmap=M||null; }
+(function(){ const R=s=>{ const M=window.__dmap; if(!M||typeof s!=='string'||!D) return s; return s.replace(/\.gsp\.me(?![\w-])/g,'.gsp.'+M.me).replace(/\.gsp\.foe(?![\w-])/g,'.gsp.'+M.foe).replace(/#bme(?![\w-])/g,'#battle .gsp.'+M.me).replace(/#bfoe(?![\w-])/g,'#battle .gsp.'+M.foe); };
+  for(const P of [Document.prototype,Element.prototype]){ const q=P.querySelector, qa=P.querySelectorAll; P.querySelector=function(x){ return q.call(this,R(x)); }; P.querySelectorAll=function(x){ return qa.call(this,R(x)); }; } })();
 function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shift,menu:d.menu}; d.over=null; d.shift=null; d.menu='main';
   let prev=d.hp0||{pm:bs[0].pm,fh:bs[0].fh}; d.hp0=null;   /* 血条先保持出招前的样子，打中、闪完再扣（Kris 2026-11-04） */
   const show=(e,hp)=>{ const r={pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:d.my,fo:d.fo,log:d.log};
     d.party.forEach((p,k)=>p.mh=hp.pm[k]!=null?hp.pm[k]:e.pm[k]); d.foes.forEach((f,k)=>f.fh=hp.fh[k]!=null?hp.fh[k]:e.fh[k]); d.my=[...e.my]; d.fo=[...e.fo]; d.log=r.log.slice(0,e.n);
     _dRender();
     d.party.forEach((p,k)=>p.mh=r.pm[k]); d.foes.forEach((f,k)=>f.fh=r.fh[k]); d.my=r.my; d.fo=r.fo; d.log=r.log; };
-  const step=()=>{ if(D!==d) return; if(i>=bs.length){ d.busy=false; Object.assign(d,st); return _dRender(); }
+  const step=()=>{ if(D!==d){ dMapSet(null); return; } if(i>=bs.length){ dMapSet(null); d.busy=false; Object.assign(d,st); return _dRender(); }
     const e=bs[i++], hp0=prev, same=e.pm.every((v,k)=>v===hp0.pm[k])&&e.fh.every((v,k)=>v===hp0.fh[k]);
     show(e,hp0); { const w=entWait(); if(w>0&&e.as!=null){ i--; return setTimeout(step,w); } }
-    prev={pm:e.pm,fh:e.fh}; if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,prev); },560);
-    const a=document.querySelector(`#battle .gsp.d${e.as}${e.asl}`); if(a){ a.classList.remove('lunge'); void a.offsetWidth; a.classList.add('lunge'); }
-    setTimeout(()=>{ if(D!==d) return; const x=document.querySelector(`#battle .gsp.d${e.ds}${e.dsl}`); if(x){ x.classList.remove('hit'); void x.offsetWidth; x.classList.add('hit'); } },260);
-    setTimeout(step,same?860:1000); };
+    prev={pm:e.pm,fh:e.fh};
+    const a=document.querySelector(`#battle .gsp.d${e.as}${e.asl}`), fromMe=e.as==='m', tg=(e.tgs&&e.tgs.length?e.tgs:[[e.ds,e.dsl,1]]);
+    /* 双打招式特效（Kris 2026-11-18）：和单打放同一套特效。特效程序找的是「我方 / 对方」精灵，这里把它们暂时对到这一拍出招和挨打的那两只（dMapSet）；范围招式对每只目标各放一次 */
+    const fm=fxOn()&&e.mv!=null?((e.z&&FXF['z:'+e.z])?'z:'+e.z:(FXDUR[e.mv]?e.mv:null)):null, fd=fm&&FXDUR[fm];
+    if(!fd){ if(a){ a.classList.remove('lunge'); void a.offsetWidth; a.classList.add('lunge'); }
+      if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,prev); },560);
+      setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl])=>{ const x=document.querySelector(`#battle .gsp.d${s}${sl}`); if(x){ x.classList.remove('hit'); void x.offsetWidth; x.classList.add('hit'); } }); },260);
+      return setTimeout(step,same?860:1000); }
+    const mvn=MV[e.mv]?MV[e.mv][0]:'', isMax=!!(e.z&&/^(超)?极巨/.test(e.z)), contact=!e.z&&((e.cat==='ph'&&!NOCONTACT.has(mvn))||(e.cat==='sp'&&SPCONTACT.has(mvn)));
+    const mapTo=([s,sl])=>dMapSet(fromMe?{me:'dm'+e.asl,foe:'d'+s+sl}:{foe:'df'+e.asl,me:'d'+s+sl});
+    mapTo(tg[0]);
+    if(a){ a.classList.remove('lunge','charge'); void a.offsetWidth; if(contact&&!isMax) setTimeout(()=>{ if(D===d){ mapTo(tg[0]); fxDash(a,fromMe,Math.max(140,fd.hit-120),fd.hold||140); } },100); else a.classList.add(isMax||e.cat!=='ph'?'charge':'lunge'); }
+    if(MV[e.mv]) fxTint(MV[e.mv][1],fd.total);
+    setTimeout(()=>{ if(D!==d) return; tg.forEach(t=>{ mapTo(t); fxPlay(fm,fromMe); }); },180);
+    setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl,mm])=>{ const n=e.cat==='st'?0:blinkN(mm); if(n) blink(`#battle .gsp.d${s}${sl}`,n); }); },fd.hit+180);
+    if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,prev); },fd.total+180);
+    setTimeout(step,fd.total+420); };
   step(); }
 /* 双打的天气特性：和单打一样，出场就改天气，沙暴 / 冰雹每回合结束时伤害场上所有不免疫的宝可梦 */
 function dWxEnd(){ const d=D, w=d.wx; if(w!=='sand'&&w!=='hail') return; const imm=w==='sand'?['岩石','地面','钢']:['冰'], pn=WXN[w][0], hurt=o=>o.tera?!imm.includes(o.tera):!imm.some(t=>hasTy(o,t)); let any=0;
@@ -5712,11 +5729,11 @@ function dFoeGim(f){ const d=D, g=f.gm; if(!g||g.used) return; g.used=1; const n
   else if(g.k==='dyn'){ f.dyn=3; f.fx=Math.floor(f.fx*1.5); f.fh=Math.floor(f.fh*1.5); d.log.push(`对方的 ${nm} ${GMX[f.id]?'超极巨化了':'巨大化了'}！HP 变成 1.5 倍，技能变成极巨招式（3 回合）`); }
   else if(g.k==='tera'){ f.tera=g.t||SP[f.id][2]; d.log.push(`对方的 ${nm} 太晶化了！变成 ${f.tera} 属性，${f.tera} 系技能威力 ×2`); }
   else if(g.k==='z'){ f.zNow=1; d.log.push(`对方的 ${nm} 摆出了 Z 力量的姿势！`); } }
-function dFoeSh(f,mv){ if(f.zNow){ f.zNow=0; const best=f.fmv.map(plain).sort((x,y)=>y.pow-x.pow)[0]; D.log.push('对方全身充满了 Z 力量！'); return {...best,name:ZN[best.type],pow:zPow(best.pow),acc:101}; }
-  const base=plain(mv); return f.dyn>0&&base.pow>0?{...base,name:gmxName(f.id,base.type),pow:gmxPow(f.id,base.type,base.pow),acc:101}:base; }
+function dFoeSh(f,mv){ if(f.zNow){ f.zNow=0; const best=f.fmv.map(plain).sort((x,y)=>y.pow-x.pow)[0]; D.log.push('对方全身充满了 Z 力量！'); return {...best,name:ZN[best.type],pow:zPow(best.pow),acc:101,tag:'Z招式'}; }
+  const base=plain(mv); return f.dyn>0&&base.pow>0?{...base,name:gmxName(f.id,base.type),pow:gmxPow(f.id,base.type,base.pow),acc:101,tag:gmxOn(f.id,base.type)?'超极巨招式':'极巨招式'}:base; }
 const gemTag=(me,s)=>me&&me.gem&&GEMS[me.gem]&&GEMS[me.gem]===s.type&&s.pow>0&&!me.gemUsed?` <span class="tag gemt" title="携带${ITEMS[me.gem][0]}：这场战斗第一次使出${s.type}属性的攻击招式，威力 ×1.3">${iImg(me.gem,14)}宝石 ×1.3</span>`:'';   /* 招式上标出宝石加成（Kris 2026-10-30） */
 const gemHit=(att,sh)=>{ if(!att||att.gemUsed||!sh.pow||GEMS[att.gem]!==sh.type) return 0; att.gemUsed=1; return 1; };
-function dHit(att,def,sh,mine,nm){ if(def.prot){ D.log.push(`${nm} 使用了 ${sh.name}，但是对方守住了`); return 0; } if(sh.acc<=100&&Math.random()*100>=sh.acc*(abOf(att)===14?1.3:1)*stgMul(att,'acc')/stgMul(def,'eva')){ D.log.push(`${nm} 使用了 ${sh.name}，但是没有命中`); return 0; } const r=dmg(att,def,sh); if(r.d&&gemHit(att,sh)){ r.d=Math.floor(r.d*1.3); D.log.push(`${ITEMS[att.gem][0]}的力量提高了 ${sh.name} 的威力！`); } { const dh=SC2.hp(def); if(def.endure&&r.d>=dh) r.d=Math.max(0,dh-1); } if(mine&&D.xatk) r.d=Math.floor(r.d*1.5); if(!mine&&D.xdef) r.d=r.d?Math.max(1,Math.floor(r.d*.67)):0; D.log.push(`${nm} 使用了 ${sh.name}，造成 ${r.d} 点伤害`+(r.hits>1?`（连续命中 ${r.hits} 次）`:'')+(r.m>1?'（效果拔群！）':r.m===0?'（没有效果）':r.m<1?'（效果不好）':'')); applySec(SC2,att,def,sh,r.d,SC2.hp(def)-r.d>0); abAfterHit(SC2,att,def,sh,r,SC2.hp(def)-r.d>0); return r.d; }
+function dHit(att,def,sh,mine,nm){ if(def.prot){ if(D.__hl) D.__hl.push([def,0]); D.log.push(`${nm} 使用了 ${sh.name}，但是对方守住了`); return 0; } if(sh.acc<=100&&Math.random()*100>=sh.acc*(abOf(att)===14?1.3:1)*stgMul(att,'acc')/stgMul(def,'eva')){ if(D.__hl) D.__hl.push([def,0]); D.log.push(`${nm} 使用了 ${sh.name}，但是没有命中`); return 0; } const r=dmg(att,def,sh); if(D.__hl) D.__hl.push([def,r.m]); if(r.d&&gemHit(att,sh)){ r.d=Math.floor(r.d*1.3); D.log.push(`${ITEMS[att.gem][0]}的力量提高了 ${sh.name} 的威力！`); } { const dh=SC2.hp(def); if(def.endure&&r.d>=dh) r.d=Math.max(0,dh-1); } if(mine&&D.xatk) r.d=Math.floor(r.d*1.5); if(!mine&&D.xdef) r.d=r.d?Math.max(1,Math.floor(r.d*.67)):0; D.log.push(`${nm} 使用了 ${sh.name}，造成 ${r.d} 点伤害`+(r.hits>1?`（连续命中 ${r.hits} 次）`:'')+(r.m>1?'（效果拔群！）':r.m===0?'（没有效果）':r.m<1?'（效果不好）':'')); applySec(SC2,att,def,sh,r.d,SC2.hp(def)-r.d>0); abAfterHit(SC2,att,def,sh,r,SC2.hp(def)-r.d>0); return r.d; }
 function dTurn(){
   const d=D, acts=[]; d.turns++; d.beats=[];
   d.sel.forEach(x=>{ if(x.sw!==undefined){ const old=d.party[d.my[x.slot]], nw=d.party[x.sw]; if(!nw||nw.mh<=0||d.my.includes(x.sw)){ d.log.push('换人失败了。'); return; } dRevertDyn(old); d.my[x.slot]=x.sw; d.part.add(x.sw); d.log.push(`${SP[old.me.id][0]}，回来！去吧，${SP[nw.me.id][0]}！`); wxEnter(nw.me.id,true,nw.me); }
@@ -5741,11 +5758,14 @@ function dTurn(){
     const A=a.side==='m'?att.me:att, T=tside==='m'?d.party[tgt].me:d.foes[tgt], nm=(a.side==='m'?'':'对方的 ')+SP[A.id][0];
     if(a.side==='m'){ const k=att.mvs.indexOf(a.mv); if(k>=0){ att.pp[k]--; if(D.fo.some(i=>D.foes[i]&&abOf(D.foes[i])===46)&&att.pp[k]>0) att.pp[k]--; } }
     let sh; if(a.side==='m'){ const k=att.mvs.indexOf(a.mv); sh=dShown(att,k<0?0:k,a.z); if(a.z&&sh.tag==='Z招式'){ d.gu[att.real.uid]='z'; d.log.push(`${SP[att.me.id][0]} 全身充满了 Z 力量！`); } } else sh=dFoeSh(att,a.mv);
-    let dm=0; window.__nx=sh; if(canAct(SC2,A)){ if(sh.pow===0&&MVS[sh.id]) useStatus(SC2,A,T,sh,a.side==='m'); else dm=dHit(A,T,sh,a.side==='m',nm); }
+    let dm=0; window.__nx=sh; D.__hl=[]; const act=canAct(SC2,A); if(act){ if(sh.pow===0&&MVS[sh.id]) useStatus(SC2,A,T,sh,a.side==='m'); else dm=dHit(A,T,sh,a.side==='m',nm); }
     if(tside==='f'){ const f=d.foes[tgt]; f.fh=Math.max(0,f.fh-dm); if(f.fh<=0){ d.log.push(`对方的 ${SP[f.id][0]} 倒下了！`); d.xp+=f.lv*9+10; d.fo[tslot]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(tslot); } }
     else { const p=d.party[tgt]; p.mh=Math.max(0,p.mh-dm); if(p.mh<=0){ d.log.push(`${SP[p.me.id][0]} 倒下了。`); let nx=-1; for(let i=0;i<d.party.length;i++){ if(d.party[i].mh>0&&!d.my.includes(i)){ nx=i; break; } } if(nx>=0){ d.my[tslot]=nx; d.part.add(nx); d.log.push(`去吧，${SP[d.party[nx].me.id][0]}！`); wxEnter(d.party[nx].me.id,true,d.party[nx].me); } else d.my[tslot]=-1; } }
     if(a.side==='f'&&att.dyn>0){ att.dyn--; if(att.dyn===0){ att.fx=maxhp(att); att.fh=att.fh>0?Math.max(1,Math.min(att.fx,Math.ceil(att.fh/1.5))):0; d.log.push('对方的极巨化结束了。'); } }
-    dBeat(a.side,a.slot,tside,tslot);
+    dBeat(a.side,a.slot,tside,tslot); { const e=d.beats&&d.beats[d.beats.length-1];   /* 这一拍出的招式和打中的每一只，回放时放特效用（Kris 2026-11-18） */
+      if(e&&act){ const where=o=>{ const pi=d.party.findIndex(p=>p.me===o); if(pi>=0) return ['m',d.my.indexOf(pi)]; const fi=d.foes.indexOf(o); return fi>=0?['f',d.fo.indexOf(fi)]:null; };
+        const hl=(D.__hl||[]).map(([o,m])=>{ const w=where(o); return w&&w[1]>=0?[w[0],w[1],m]:null; }).filter(Boolean);
+        e.mv=sh.id; e.z=sh.tag?sh.name:null; e.cat=sh.pow>0?(SPECIAL.has(sh.id)?'sp':'ph'):'st'; e.tgs=hl.length?hl:[[tside,tslot,sh.pow>0?0:1]]; } D.__hl=null; }
     if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length) { dWin(); break; }
     if(!dAlive('m').length){ d.log.push('队伍全部倒下了。战败，没有惩罚，休息一下就好。'); d.over='lose'; if(d.onLose) d.onLose(); break; } }
   d.party.forEach(p=>{ if(p.dyn>0){ p.dyn--; if(p.dyn===0){ p.mx=maxhp(p.me); p.mh=p.mh>0?Math.max(1,Math.min(p.mx,Math.ceil(p.mh/1.5))):0; d.log.push(`${SP[p.me.id][0]} 极巨化结束了，变回原来的大小。`); } } });
@@ -5779,7 +5799,7 @@ $('#battle').addEventListener('click',e=>{ if(!D) return; if(D.busy) return; con
   if(m==='back'){ D.pm=null; return dRender(); }
   if(m.startsWith('menu:')){ D.menu=m.slice(5); D.pm=null; if(D.menu==='fight'){ D.menu='fight'; } return dRender(); }
   if(m.startsWith('sw:')||m.startsWith('i:')){ const c=dCur(); if(!c) return; D.sel.push(m.startsWith('sw:')?{slot:c[1],sw:+m.slice(3)}:{slot:c[1],item:m.slice(2)}); D.menu='main'; D.pm=null; if(dCur()) return dRender(); return dTurn(); }
-  if(m.startsWith('mv:')){ D.pm=+m.slice(3); if(dAlive('f').length===1) return dPick(dAlive('f')[0][1]); return dRender(); }
+  if(m.startsWith('mv:')){ D.pm=+m.slice(3); { const c=dCur(), p=c&&D.party[c[0]], sh=p&&dShown(p,D.pm,p.zOn); if(sh&&!sh.tag&&isSpread(sh.id)&&dAlive('f').length) return dPick(dAlive('f')[0][1]); }   /* 范围招式不用选目标，直接打全部（Kris 2026-11-18） */ if(dAlive('f').length===1) return dPick(dAlive('f')[0][1]); return dRender(); }
   if(m.startsWith('tg:')) dPick(+m.slice(3)); });
 function dPick(tg){ const [pi,slot]=dCur(), p=D.party[pi]; D.sel.push({slot,mv:p.mvs[D.pm],tg,z:!!p.zOn}); p.zOn=false; D.pm=null; D.menu='main'; if(dCur()) dRender(); else dTurn(); }
 
@@ -6943,6 +6963,7 @@ gBox(gH('性格培育','培育中心第二页'),`<p>把<b>一只宝可梦</b>和
   gBox(gH('伤害是怎么算的'),`<ul class="gul"><li><b>物理 / 特殊</b>：物理招式用攻击打防御，特殊招式用特攻打特防（技能旁边写着）。</li><li><b>本系加成</b>：用和自己属性相同的技能，伤害 ×1.5；太晶化后同属性 ×2。</li><li><b>克制</b>：效果拔群 ×2，效果不好 ×0.5，没有效果 ×0（比如一般系打幽灵系）。</li><li><b>速度</b>：速度快的先出手。</li></ul>`+`<div class="row" style="gap:6px">${[['火','草'],['水','火'],['电','水'],['草','水'],['地面','电']].map(([a,d])=>`<span class="chip">${gTy(a)} → ${gTy(d)} ×2</span>`).join('')}</div>`),
   gBox(gH('天气'),gTable(['天气','谁会开','效果'],[['大雨',[382,186,279],'水 ×1.5，火 ×0.5'],['大晴天',[383,38,324],'火 ×1.5，水 ×0.5'],['沙暴',[248,450,526],'每回合伤害非岩石、地面、钢'],['冰雹',[460],'每回合伤害非冰'],['乱流',[384],'飞行不怕冰、电、岩石'],['强烈的大雨 / 大日照',[10077,10078],'原始回归后开启；火 / 水技能无效；盖不掉']].map(([n,ids,e])=>[n,ids.map(i=>gSp(i,40)).join(''),e]))),
   gBox(gH('招式的追加效果'),`<ul class="gul"><li><b>追加效果</b>：很多招式有机会让对手灼伤、麻痹、中毒、睡着、冰冻、畏缩，或者升降能力（比如贝壳刃有时降低防御、流水旋舞一定提高自己的速度）。能力变化在名字旁边的标签里看得到。</li><li><b>反作用 / 吸取</b>：波动冲这类招式自己也会受伤；活活气泡这类招式会回复造成伤害的一半。</li><li><b>击中要害</b>：伤害 ×1.5。有的招式一定击中要害（如水流连打），水波刀、气旋攻击这类「容易击中要害」的有 1/8 的机会。</li><li><b>换人招式</b>：快速折返打中后，自己回来、换另一只上场。</li><li><b>特性</b>：战斗里会自动发动，见「培育 → 特性」。</li></ul>`),
+  gBox(gH('2v2 双打'),`<p>双方各派 2 只上场。单体招式要选打哪一只；<b>范围招式</b>（招式下面写着「打对方两只」或「打全场（含搭档）」）不用选目标，按下去就直接打：「打对方两只」打对方场上两只（岩崩、热风、暴风雪……），「打全场」连自己的搭档也会打到（地震、冲浪、放电……）。同时打到 2 个以上目标时，每个目标的伤害 ×0.75。Z 招式和极巨招式都是单体。招式特效和单打一样，范围招式会在每个目标身上各放一次。</p>`),
   gBox(gH('变化招式和异常状态'),`<p>不直接造成伤害的变化招式，单打和双打的规则一样：</p><ul class="gul"><li><b>能力等级</b>：攻击、防御、特攻、特防、速度，每项 −6 到 +6；命中和闪避也有等级。+1 是 ×1.5，+2 是 ×2，每多一级再加 ×0.5；命中、闪避每级 ±1/3。变化显示在名字旁边的标签里；换人下场后能力变化清掉；「黑雾」把双方所有能力变化都清掉。</li><li><b>回复</b>：按最大 HP 的比例回复（满血时会失败）。「睡觉」回满 HP，但会睡着 2 回合。</li><li><b>守住 / 挺住</b>：先制度 +4，一定先出手。守住挡掉这一回合对手的招式；挺住不挡，但这回合受到致命伤害时会留 1 HP。连着用，第二次起成功率只有 1/3。</li><li><b>天气</b>：变化招式也能开天气，持续 5 回合（效果见上面的「天气」）。</li><li><b>反射壁 / 光墙 / 极光幕</b>：张开的一方，物理 / 特殊 / 两种伤害减半，持续 5 回合，战斗顶部有标签显示剩几回合。</li></ul>`+gTable(['异常状态','效果'],[['睡眠','睡 1–3 回合，睡着时不能行动，醒来自动恢复'],['麻痹','速度减半；每回合有 25% 动不了'],['灼伤','每回合扣最大 HP 的 1/16；物理招式伤害减半'],['中毒','每回合扣最大 HP 的 1/8'],['剧毒','每回合扣的比例越来越大：1/16、2/16、3/16……最多 15/16'],['冰冻','动不了；每回合有 20% 的机会融化'],['混乱','持续 2–5 回合；每回合有 1/3 的机会打到自己'],['寄生种子','每回合扣最大 HP 的 1/8']])+`<p class="muted">一只宝可梦同时只会有一种异常状态（睡眠 / 麻痹 / 灼伤 / 中毒 / 剧毒 / 冰冻），混乱和寄生种子可以另外叠加。异常状态换人也不会消失。<b>不会中的情况</b>：电系不会麻痹、火系不会灼伤、毒系和钢系不会中毒、冰系不会冰冻、草系不会被种寄生种子；有些特性也免疫。双打里异常状态的伤害最多把 HP 扣到 1，不会因此倒下。</p><p>出手顺序：先看招式的先制度，再看速度。守住类 +4，电光一闪、飞水手里剑 +1，神速 +2；报复、巴投这类是负的，会后出手。</p>`),
   gBox(gH('野外刷新'),`<p>「冒险 → 野外」每小时整点刷新一批，每批只有 4–6 个区域有宝可梦；稀有度和等级这样定：</p><ul class="gul"><li><b>稀有度</b>：和抽卡一样，普通 70% · 稀有 22% · 超稀有 8%。</li><li><b>等级</b>：在这个形态的最低等级到最高等级之间随机。最低 = 进化成这一形态的等级（至少 Lv5），最高 = 进化成下一形态的等级 − 1，不再进化的最高 Lv100。比如小火龙 Lv5–15、火恐龙 Lv16–35、喷火龙 Lv36–100。亲密度进化按 Lv20、道具和交换进化按 Lv25 算；传说宝可梦的等级是固定的。</li></ul>`),
   gBox(gH('捕捉'),`<p>在野外打赢后选精灵球去捕捉；不想打的野生宝可梦，点「无视」它就自己走开，从列表里消失。捕获率 = 稀有度的基础捕获率 × 球的倍率。球有 34 种：</p><div class="row" style="gap:4px">${['ball','b_great','b_ultra','b_master','b_dive','b_net','b_quick','b_timer','b_dusk','b_heal','b_luxury','b_beast'].map(k=>gIt(k,30)).join('')}</div>`)].join(''),
@@ -9320,7 +9341,7 @@ const SPR_ALL=new Set([57, 89, 120, 153, 222, 435, 436, 482, 485, 523, 545, 570,
 const isSpread=id=>SPR_ALL.has(+id)||SPR_OPP.has(+id);
 { const _dm=dmg; dmg=function(a,d,sh){ const r=_dm.apply(this,arguments); if(sh&&sh._spr&&r&&r.d>0) return {...r,d:Math.max(1,Math.floor(r.d*.75))}; return r; }; }
 function dSprApply(o,dm){ if(!(dm>0)) return; const h=hold2(o); if(!h) return; const isP=D.party.includes(h), hp=isP?h.mh:h.fh; if(hp<=0) return; if(dm>=hp) xKO(SC2,o); else if(isP) h.mh=hp-dm; else h.fh=hp-dm; }
-{ const _dh=dHit; dHit=function(A,T,sh,mine,nm){ if(!D||!sh||sh._spr||sh._sprIn||!isSpread(sh.id)) return _dh.apply(this,arguments);
+{ const _dh=dHit; dHit=function(A,T,sh,mine,nm){ if(!D||!sh||sh._spr||sh._sprIn||sh.tag||!isSpread(sh.id)) return _dh.apply(this,arguments);   /* Z 招式、极巨招式都是单体 */
     const opp=mine?dAlive('f').map(([fi])=>D.foes[fi]):dAlive('m').map(([pi])=>D.party[pi].me);
     const ally=SPR_ALL.has(+sh.id)?(mine?dAlive('m').map(([pi])=>D.party[pi].me):dAlive('f').map(([fi])=>D.foes[fi])).filter(o=>o!==A):[];
     const others=[...opp,...ally].filter(o=>o!==T);
