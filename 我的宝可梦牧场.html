@@ -8719,7 +8719,7 @@ function abTurnEnd2(C,list){ list.forEach(o=>{ if(!o||C.hp(o)<=0) return; const 
 { const _e2=statEnd2; statEnd2=function(){ const r=_e2.apply(this,arguments); try{ if(D&&!D.over) abTurnEnd2(SC2,[...dAlive('m').map(([pi])=>D.party[pi].me),...dAlive('f').map(([fi])=>D.foes[fi])]); }catch(e){} return r; }; }
 
 /* 特性发动的画面：看信息栏新出现的行，找出是谁的特性、谁的能力升降 */
-const ABFX={seen:new WeakMap(),shown:new WeakMap()}, ABNSET=new Set(Object.values(ABN).map(x=>x[0]));
+const ABFX={seen:new WeakMap(),shown:new WeakMap(),wxr:new WeakMap()}, ABNSET=new Set(Object.values(ABN).map(x=>x[0]));
 function abfxSprite(foe,name){ const h=document.querySelector('#battle .garena'); if(!h) return null;
   if(!h.classList.contains('dbl')) return document.querySelector(foe?'#bfoe':'#bme');
   for(let i=0;i<2;i++){ const id=foe?(D.fo[i]>=0?D.foes[D.fo[i]].id:0):(D.my[i]>=0?D.party[D.my[i]].me.id:0); if(id&&SP[id][0]===name) return h.querySelector(`.gsp.d${foe?'f':'m'}${i} img`); }
@@ -8742,14 +8742,19 @@ function abfxLine(t){ const acts=[]; let m=t.match(/(对方的 )?([^\s，。！�
   for(const s of t.matchAll(ABST)) acts.push(['st',{foe:!!s[1],name:s[2],up:s[5]==='提升',n:s[4]==='极大幅'?3:s[4]==='大幅'?2:1}]);
   if(/提升到了最大/.test(t)) acts.push(['st',{foe:owner.foe,name:owner.name,up:true,n:3}]);
   return acts; }
-function abfxVs(st,dbl,ownerFoe){ if(!dbl) return ownerFoe?'u'+(B.mon&&B.mon.uid):'f'+B.fcur+':'+(B.foe&&B.foe.id);   /* 对手是谁：换了对手才会再弹 */
-  return ownerFoe?D.my.filter(i=>i>=0).map(i=>D.party[i].real.uid).sort().join(','):D.fo.filter(i=>i>=0).sort().join(','); }
-function abfxCheck(){ if(!fxOn()) return; const host=document.querySelector('#battle .garena'); if(!host) return; const dbl=host.classList.contains('dbl'), st=dbl?D:B; if(!st) return;
+function abfxCheck(){ const host=document.querySelector('#battle .garena'); if(!fxOn()||!host){ document.body.classList.remove('wxhold'); return; } const dbl=host.classList.contains('dbl'), st=dbl?D:B; if(!st) return;
+  wxHoldSync(st);
   const lines=[...document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div')].map(x=>x.textContent), seen=ABFX.seen.get(st)||0; ABFX.seen.set(st,lines.length); if(lines.length<=seen) return;
-  let k=0; const w0=entWait(); lines.slice(seen).forEach(t=>abfxLine(t).forEach(([ty,a])=>{ if(ty==='ban'){ const key=`${a.foe?'f':'m'}|${a.name}|${a.ab}|${abfxVs(st,dbl,a.foe)}`, set=ABFX.shown.get(st)||new Set(); ABFX.shown.set(st,set); if(set.has(key)) return; set.add(key); }   /* 特性名的标签：同一局里同一只、面对同样的对手只弹一次（Kris 2026-10-31） */
-    const dl=w0+k*260; k++; const run=()=>{ if(!abfxReady(a.foe)) return setTimeout(run,150); const img=abfxSprite(a.foe,a.name); if(!img) return; if(ty==='ban') abfxBanner(img,a.ab,a.foe); else abfxStat(img,a.up,a.n); }; setTimeout(run,dl); })); }
+  let k=0; const w0=entWait(); lines.slice(seen).forEach(t=>abfxLine(t).forEach(([ty,a])=>{ let show=true, wx=false;
+    if(ty==='ban'){ wx=WXABN.has(a.ab); const key=`${a.foe?'f':'m'}|${a.name}|${a.ab}`, set=ABFX.shown.get(st)||new Set(); ABFX.shown.set(st,set); if(set.has(key)) show=false; else set.add(key); }   /* 特性名的标签：同一局里同一只宝可梦只弹一次（Kris 2026-11-18：换了对手也不再弹） */
+    if(!show&&!wx) return;
+    const dl=w0+k*260; k++; const run=()=>{ if(!abfxReady(a.foe)) return setTimeout(run,150); if(wx){ ABFX.wxr.set(st,(ABFX.wxr.get(st)||0)+1); wxHoldSync(st); } if(!show) return; const img=abfxSprite(a.foe,a.name); if(!img) return; if(ty==='ban') abfxBanner(img,a.ab,a.foe); else abfxStat(img,a.up,a.n); }; setTimeout(run,dl); })); }
+/* 带天气特性的宝可梦（Kris 2026-11-18）：天气特效和「天气」标签等它完全出来、特性发动那一刻才换。
+   战斗记录里每有一行「xx 的特性：日照！」这类天气特性，还没轮到它（宝可梦还没完全出来）就先把天气画面藏起来（body.wxhold） */
+const WXABN=new Set(Object.values(WXN).map(x=>x[1]));
+function wxHoldSync(st){ const L=(st&&st.log)||[], n=L.filter(t=>{ const m=/的特性：([^！!]+)[！!]/.exec(t); return m&&WXABN.has(m[1]); }).length; document.body.classList.toggle('wxhold',n>(ABFX.wxr.get(st)||0)); }
 /* 开场流程中（转场、进场、丢球）先不弹特性标签 / 能力箭头，等那一边的宝可梦出来、血条框出现了才弹（Kris 2026-11-18：日照的标签在转场时就跑出来了） */
-function abfxReady(foe){ if(!window.__opening) return true; const c=document.body.classList; if(c.contains('btwait')||document.querySelector('.btin')) return false;
+function abfxReady(foe){ if(!window.__opening) return entWait()<=0;   /* 平时也等精灵球出场动画放完 */ const c=document.body.classList; if(c.contains('btwait')||document.querySelector('.btin')) return false;
   if(foe?(c.contains('opn-hf')||c.contains('opn-if')):(c.contains('opn-hm')||c.contains('opn-im'))) return false; return entWait()<=0; }
 { const _ss4=sizeSprites; sizeSprites=function(){ const r=_ss4.apply(this,arguments); try{ abfxCheck(); }catch(e){} return r; }; }
 
@@ -16003,7 +16008,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
 #battle .gsp.trgone,#battle .ginfo.trgone{visibility:hidden}#battle .ginfo.trhide{animation:trhide .3s .3s forwards}@keyframes trhide{to{opacity:0;visibility:hidden}}
 #battle .trwin{position:absolute;z-index:3;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}#battle .trwin img{width:auto!important;height:100%!important;max-width:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}#battle .trwin>span{height:100%;display:flex;align-items:flex-end;justify-content:center}#battle .trwin>span img{height:100%!important}
 #battle .trwin.in{animation:trin .55s .45s cubic-bezier(.2,.8,.3,1) both}@keyframes trin{from{transform:translateX(70%);opacity:0}to{transform:none;opacity:1}}#battle .trwin.me img:not(.bk){transform:scaleX(-1)}   /* 没有背面图的我方训练家左右翻转，面朝对方 */#battle .trwin.me img.bk{max-width:none}#battle .trwin.me.in{animation-name:trinm}@keyframes trinm{from{transform:translateX(-70%);opacity:0}to{transform:none;opacity:1}}
-body.btwait #modal{visibility:hidden!important}body.opn-if #battle .wxtag{visibility:hidden}body.opn-if #battle .garena[class*="wx-"]::before,body.opn-if #battle .garena[class*="wx-"]::after{opacity:0!important}body.opn-hm #battle .gsp.me,body.opn-hm #battle .gsp.dm0,body.opn-hm #battle .gsp.dm1,body.opn-hf #battle .gsp.foe,body.opn-hf #battle .gsp.df0,body.opn-hf #battle .gsp.df1{visibility:hidden}body.opn-lock #battle button{pointer-events:none;filter:grayscale(.6);opacity:.55}#battle .garena .ginfo{transition:opacity .3s ease,transform .3s ease}body.opn-if #battle .ginfo.f,body.opn-if #battle .ginfo[class*=" df"]{opacity:0;transform:translateX(-40px)}body.opn-im #battle .ginfo.m,body.opn-im #battle .ginfo[class*=" dm"]{opacity:0;transform:translateX(40px)}.btin{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:all}.btin::before{content:"";position:absolute;inset:0;z-index:2;background:#fff;opacity:0;animation:btfl .34s linear 2}@keyframes btfl{0%,100%{opacity:0}45%,55%{opacity:1}}
+body.btwait #modal{visibility:hidden!important}body.wxhold #battle .wxtag{visibility:hidden}body.wxhold #battle .garena[class*="wx-"]::before,body.wxhold #battle .garena[class*="wx-"]::after{opacity:0!important}body.opn-hm #battle .gsp.me,body.opn-hm #battle .gsp.dm0,body.opn-hm #battle .gsp.dm1,body.opn-hf #battle .gsp.foe,body.opn-hf #battle .gsp.df0,body.opn-hf #battle .gsp.df1{visibility:hidden}body.opn-lock #battle button{pointer-events:none;filter:grayscale(.6);opacity:.55}#battle .garena .ginfo{transition:opacity .3s ease,transform .3s ease}body.opn-if #battle .ginfo.f,body.opn-if #battle .ginfo[class*=" df"]{opacity:0;transform:translateX(-40px)}body.opn-im #battle .ginfo.m,body.opn-im #battle .ginfo[class*=" dm"]{opacity:0;transform:translateX(40px)}.btin{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:all}.btin::before{content:"";position:absolute;inset:0;z-index:2;background:#fff;opacity:0;animation:btfl .34s linear 2}@keyframes btfl{0%,100%{opacity:0}45%,55%{opacity:1}}
 .btin i{position:absolute;z-index:1;background:#0b0d10;animation:btin .42s cubic-bezier(.4,0,.2,1) both}.btin.wild i{left:0;width:100%;height:12.6%}.btin.wild i:nth-child(odd){--f:-101%}.btin.wild i:nth-child(even){--f:101%}
 @keyframes btin{from{transform:translateX(var(--f))}to{transform:none}}
 ${[0,1,2,3,4,5,6,7].map(k=>`.btin i:nth-child(${k+1}){animation-delay:${(.68+k*.035).toFixed(3)}s}.btin.wild i:nth-child(${k+1}){top:${k*12.5}%}.btin.trainer i:nth-child(${k+1}){left:${k*12.5}%}.btin.boss i:nth-child(${k+1}){left:${k*19-26}%}`).join('')}
