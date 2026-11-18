@@ -1339,7 +1339,7 @@ const unlockText=k=>{ const b=BI.find(x=>x[0]===k); return b&&!biOK(k)?biNeed(k)
 const TABS=[['diary','日记'],['ranch','主页'],['team','队伍'],['box','我的宝可梦'],['daily','签到 / 任务'],['cm','委托任务'],['urg','紧急任务'],['wk','周挑战'],['nursery','培育中心'],['gacha','珍宝阁'],['wild','野外'],['arena','对战'],['gym','道馆'],['e4','四天王'],['legend','传奇训练家'],['bag','背包'],['craft','制作'],['shop','商场'],['dex','图鉴'],['lab','图鉴研究所'],['pr','PR 奖励'],['card','训练家卡片'],['farm','农场'],['explore','地图探索'],['sq','特别任务'],['ms','里程碑'],['mine','矿洞'],['fish','钓鱼池'],['fossil','化石复原'],['boss','世界 Boss'],['auction','拍卖'],['trade','交换'],['map','全地图'],['rank','排行榜'],['guide','游玩指南'],['devtools','开发者工具'],['devfx','技能特效']];
 let tab='ranch';
 /* 14 个分页分成 5 组：上面一排是大类，有子页的再显示第二排（Kris 2026-10-24） */
-const GROUPS=[['home','牧场',['ranch','map','farm','mine','fish','fossil','nursery']],['mons','宝可梦',['team','box','dex','lab']],['daily','每日',['daily','cm','urg','sq','ms','gacha','pr','diary']],['adv','冒险',['wild','explore','boss']],['battle','对战',['arena','wk','gym','e4','legend']],['rank','社交',['rank']],['items','背包',['bag','craft']],['shop','商场',['shop','auction','trade']],['guide','指南',['guide']],['dev','开发者',['devtools','devfx']]];
+const GROUPS=[['home','牧场',['ranch','map','farm','mine','fish','fossil','nursery']],['mons','宝可梦',['team','box','dex','lab']],['daily','每日',['daily','cm','urg','sq','ms','pr','diary']],['gacha','珍宝阁',['gacha']],['adv','冒险',['wild','explore','boss']],['battle','对战',['arena','wk','gym','e4','legend']],['rank','社交',['rank']],['items','背包',['bag','craft']],['shop','商场',['shop','auction','trade']],['guide','指南',['guide']],['dev','开发者',['devtools','devfx']]];
 const TABNAME=Object.fromEntries(TABS);
 let cardFrom='ranch';
 const groupOf=t=>GROUPS.find(g=>g[2].includes(t))||GROUPS[0];
@@ -1355,6 +1355,7 @@ const PXI={home:['#d8473a','#f4efdc','#8a5a2b','#8fd0ee',['00011000','00111100',
  shop:['#d8473a','#f4efdc','#8a5a2b','#f2b632',['01111110','11111111','21212121','03333330','03344330','03344330','03344330','03344330']],
  rank:['#ffe27a','#a8740a','#ffffff','#6b4a1f',['01111110','31133112','10311121','01311120','00112200','00012000','00011000','04444440']],
  guide:['#3b82c4','#f4efdc','#1f4a7a','#f2b632',['33333330','31111130','31222130','31222130','31222130','31111130','34444330','03333300']],
+ gacha:['#4a2a7a','#b27cf0','#ffffff','#f2b632',['00000000','00111100','01322310','11111111','12222221','01222210','00122100','00011000']],
  dev:['#51604b','#d9d3b8','#22302a','#f2b632',['00400400','04444440','43122134','41222214','41222214','43122134','04444440','00400400']]};
 const pxIcon=k=>{ const d=PXI[k]; if(!d) return '•'; let r=''; d[4].forEach((row,y)=>[...row].forEach((c,x)=>{ if(c!=='0') r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${d[c-1]}"/>`; })); return `<svg class="pxi" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`; };
 /* 红圈数字：派遣完成（探索 / 矿洞 / 农场成熟）和没领的奖励（签到、每日任务、委托、特别任务）。大类上是子页数字之和 */
@@ -6208,8 +6209,8 @@ const XART={"guide":"data:image/webp;base64,UklGRhqtAABXRUJQVlA4IA6tAAAQBgKdASr4
 .gbody{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}.gbody.one{grid-template-columns:1fr}.gleft>.card,.gleft>.gcards{margin-bottom:12px}.gleft .gcards{display:grid;grid-template-columns:1fr!important;gap:12px}.gleft .evc .evrow{flex-wrap:wrap}
 .gpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.gpt{display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 6px}.gpt b{font-size:14px}.gpt small{color:var(--muted);background:#f1ede0;border-radius:999px;padding:1px 10px;font-size:12px}.gpi{display:inline-flex}.gtyi{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:14px}
 @media(max-width:1000px){.card.gh{grid-template-columns:1fr}.gbody{grid-template-columns:1fr}}
-/* 每日里各分页的标题框一样高（Kris 2026-11-18）；窄画面（珍宝阁改成上下排）和手机版维持原样 */
-@media(min-width:1001px){#main .card.ckh,#main .card.gh2{height:150px;min-height:0;box-sizing:border-box}#main .card.ckh{display:flex;flex-direction:column;justify-content:center}#main .card.ckh>.xin{max-width:56%}}.prs{margin-top:8px;color:#fff;font-weight:600;font-size:16px;text-shadow:0 1px 3px #0007}
+/* 每日里各分页的标题框一样高（Kris 2026-11-18）；窄画面和手机版维持原样 */
+@media(min-width:1001px){#main .card.ckh{height:150px;min-height:0;box-sizing:border-box}#main .card.ckh{display:flex;flex-direction:column;justify-content:center}#main .card.ckh>.xin{max-width:56%}}.prs{margin-top:8px;color:#fff;font-weight:600;font-size:16px;text-shadow:0 1px 3px #0007}
 .prgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;margin-bottom:14px}.prgrid>.card{margin:0}
 .prh2{display:flex;align-items:center;gap:10px;margin:0 0 8px!important}.prh2>span{display:inline-flex}
 .prbind{margin:12px 0 0;gap:10px}.prac{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 14px}.prgi{display:inline-flex}
