@@ -15919,11 +15919,12 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
     tw.animate([{transform:'none',opacity:1},{transform:'translateX(-120%)',opacity:0}],{duration:520,delay:T0+rel+260,easing:'ease-in',fill:'forwards'});
     setTimeout(()=>tw.remove(),T0+rel+820); host.__thr=now+T0+rel; return rel; };
   /* 进入对战的转场（Kris 2026-11-18）：像 GBA 一样先闪两下白光，黑条扫过整个画面，再淡出露出战场；
-     这段时间对战音乐先开始播，宝可梦出场、训练家丢球都等转场播完。野生：横条；训练家：竖条＋精灵球；馆主 / 四天王 / 传奇训练家 / 世界 Boss：斜条＋精灵球 */
+     转场前半段后面看到的是原本的页面（对战画面先藏起来），黑条盖满后才换成对战画面；这段时间对战音乐先开始播，宝可梦出场、训练家丢球都等转场播完。野生：横条；训练家：竖条＋精灵球；馆主 / 四天王 / 传奇训练家 / 世界 Boss：斜条＋精灵球 */
   const INTRO=1900;   /* 闪光 0～0.7 秒，黑条 0.7～1.25 秒扫满，全黑停一下，1.5 秒开始淡出 */ window.__btIntroEnd=0;
   function btIntro(kind){ if(!fxOn()) return; const old=document.querySelector('.btin'); if(old) old.remove();
     const el=document.createElement('div'); el.className='btin '+kind; el.setAttribute('aria-hidden','true'); el.innerHTML='<i></i>'.repeat(8)+(kind!=='wild'?`<b>${iImg('ball',96)}</b>`:''); document.body.appendChild(el);
-    window.__btIntroEnd=performance.now()+INTRO; setTimeout(()=>el.classList.add('out'),INTRO-400); setTimeout(()=>el.remove(),INTRO+120);
+    window.__btIntroEnd=performance.now()+INTRO; document.body.classList.add('btwait'); setTimeout(()=>document.body.classList.remove('btwait'),1380);   /* 黑条盖满之前，后面看到的还是原本的页面；全黑了才换成对战画面（Kris 2026-11-18） */
+    setTimeout(()=>el.classList.add('out'),INTRO-400); setTimeout(()=>{ el.remove(); document.body.classList.remove('btwait'); },INTRO+120);
     setTimeout(()=>{ if(window.__bgmSync) __bgmSync(); },0); }
   const kindOf=cfg=>{ if(!cfg||cfg.kind==='wild') return 'wild'; const t=cfg.tag||''; return /^(道馆挑战|道馆重赛|四天王|冠军战|四天王重赛|传奇训练家)$/.test(t)||/^世界 Boss/.test(t)?'boss':'trainer'; };
   /* 转场要在真正开打时才播：有「出战队伍」窗的话，等玩家按「出战」才播（Kris 2026-11-18） */
@@ -15939,7 +15940,7 @@ const TRBK={red:{st:0,rel:3},leaf:{st:0,rel:3},brendan:{st:3,rel:2},may:{st:3,re
 #battle .gsp.trgone,#battle .ginfo.trgone{visibility:hidden}#battle .ginfo.trhide{animation:trhide .3s .3s forwards}@keyframes trhide{to{opacity:0;visibility:hidden}}
 #battle .trwin{position:absolute;z-index:3;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}#battle .trwin img{width:auto!important;height:100%!important;max-width:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}#battle .trwin>span{height:100%;display:flex;align-items:flex-end;justify-content:center}#battle .trwin>span img{height:100%!important}
 #battle .trwin.in{animation:trin .55s .45s cubic-bezier(.2,.8,.3,1) both}@keyframes trin{from{transform:translateX(70%);opacity:0}to{transform:none;opacity:1}}#battle .trwin.me img:not(.bk){transform:scaleX(-1)}   /* 没有背面图的我方训练家左右翻转，面朝对方 */#battle .trwin.me img.bk{max-width:none}#battle .trwin.me.in{animation-name:trinm}@keyframes trinm{from{transform:translateX(-70%);opacity:0}to{transform:none;opacity:1}}
-.btin{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:all}.btin::before{content:"";position:absolute;inset:0;z-index:2;background:#fff;opacity:0;animation:btfl .34s linear 2}@keyframes btfl{0%,100%{opacity:0}45%,55%{opacity:1}}
+body.btwait #modal{visibility:hidden!important}.btin{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:all}.btin::before{content:"";position:absolute;inset:0;z-index:2;background:#fff;opacity:0;animation:btfl .34s linear 2}@keyframes btfl{0%,100%{opacity:0}45%,55%{opacity:1}}
 .btin i{position:absolute;z-index:1;background:#0b0d10;animation:btin .42s cubic-bezier(.4,0,.2,1) both}.btin.wild i{left:0;width:100%;height:12.6%}.btin.wild i:nth-child(odd){--f:-101%}.btin.wild i:nth-child(even){--f:101%}
 @keyframes btin{from{transform:translateX(var(--f))}to{transform:none}}
 ${[0,1,2,3,4,5,6,7].map(k=>`.btin i:nth-child(${k+1}){animation-delay:${(.68+k*.035).toFixed(3)}s}.btin.wild i:nth-child(${k+1}){top:${k*12.5}%}.btin.trainer i:nth-child(${k+1}){left:${k*12.5}%}.btin.boss i:nth-child(${k+1}){left:${k*19-26}%}`).join('')}
