@@ -5686,15 +5686,16 @@ function dZone(M,fn){ const z0=DZM, p0=window.__dmap; DZM=M; window.__dmap=M; tr
   EventTarget.prototype.addEventListener=function(t,cb,o){ return ael.call(this,t,(DZM&&typeof cb==='function')?wrap(cb,DZM):cb,o); }; })();
 (function(){ const R=s=>{ const M=window.__dmap; if(!M||typeof s!=='string'||!D) return s; return s.replace(/\.gsp\.me(?![\w-])/g,'.gsp.'+M.me).replace(/\.gsp\.foe(?![\w-])/g,'.gsp.'+M.foe).replace(/#bme(?![\w-])/g,'#battle .gsp.'+M.me).replace(/#bfoe(?![\w-])/g,'#battle .gsp.'+M.foe); };
   for(const P of [Document.prototype,Element.prototype]){ const q=P.querySelector, qa=P.querySelectorAll; P.querySelector=function(x){ return q.call(this,R(x)); }; P.querySelectorAll=function(x){ return qa.call(this,R(x)); }; } })();
+{ const _dt=dTurn; dTurn=function(){ if(D) D.__slot0={my:[...D.my],fo:[...D.fo]}; return _dt.apply(this,arguments); }; }   /* 记下这回合开始时场上是谁，回放第一拍用 */
 function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shift,menu:d.menu}; d.over=null; d.shift=null; d.menu='main';
   let prev=d.hp0||{pm:bs[0].pm,fh:bs[0].fh}; d.hp0=null;   /* 血条先保持出招前的样子，打中、闪完再扣（Kris 2026-11-04） */
-  const show=(e,hp)=>{ const r={pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:d.my,fo:d.fo,log:d.log};
-    d.party.forEach((p,k)=>p.mh=hp.pm[k]!=null?hp.pm[k]:e.pm[k]); d.foes.forEach((f,k)=>f.fh=hp.fh[k]!=null?hp.fh[k]:e.fh[k]); d.my=[...e.my]; d.fo=[...e.fo]; d.log=r.log.slice(0,e.n);
+  const show=(e,hp,pre)=>{ const r={pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:d.my,fo:d.fo,log:d.log}, sl=pre||e;   /* pre：出招前场上是谁（被打倒的那只先留在场上挨完这一招、放完特效，才换下去） */
+    d.party.forEach((p,k)=>p.mh=hp.pm[k]!=null?hp.pm[k]:e.pm[k]); d.foes.forEach((f,k)=>f.fh=hp.fh[k]!=null?hp.fh[k]:e.fh[k]); d.my=[...sl.my]; d.fo=[...sl.fo]; d.log=r.log.slice(0,e.n);
     _dRender(); dSemiPaint(e.sv);
     d.party.forEach((p,k)=>p.mh=r.pm[k]); d.foes.forEach((f,k)=>f.fh=r.fh[k]); d.my=r.my; d.fo=r.fo; d.log=r.log; };
   const step=()=>{ if(D!==d){ dMapSet(null); return; } if(i>=bs.length){ dMapSet(null); d.busy=false; Object.assign(d,st); return dRender(); }
     const e=bs[i++], hp0=prev, same=e.pm.every((v,k)=>v===hp0.pm[k])&&e.fh.every((v,k)=>v===hp0.fh[k]);
-    show(e,hp0); { const w=entWait(); if(w>0&&e.as!=null){ i--; return setTimeout(step,w); } }
+    const pre=i>=2?bs[i-2]:(d.__slot0||null); show(e,hp0,pre&&pre.my&&pre.fo?pre:null); { const w=entWait(); if(w>0&&e.as!=null){ i--; return setTimeout(step,w); } }   /* 双打（Kris 2026-11-18）：以前一招打倒对手时，那只在特效放之前就从画面消失，特效找不到目标就整个没放 */
     prev={pm:e.pm,fh:e.fh};
     const a=document.querySelector(`#battle .gsp.d${e.as}${e.asl}`), fromMe=e.as==='m', tg=(e.tgs&&e.tgs.length?e.tgs:[[e.ds,e.dsl,1]]);
     /* 双打招式特效（Kris 2026-11-18）：和单打放同一套特效。特效程序找的是「我方 / 对方」精灵，这里把它们暂时对到这一拍出招和挨打的那两只（dMapSet）；范围招式对每只目标各放一次 */
