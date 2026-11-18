@@ -89,11 +89,11 @@ body{background:radial-gradient(900px 500px at 50% 30%,var(--bg1),var(--bg2) 70%
   var drawB=function(){ sndb.innerHTML=ICON(!!SND.bgm); sndb.setAttribute('aria-pressed',SND.bgm?'true':'false'); sndb.setAttribute('aria-label',SND.bgm?'关掉音乐':'打开音乐'); };
   var keep=function(){ try{ var o=JSON.parse(localStorage.getItem(KEY)||'{}'); o.bgm=SND.bgm; localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} };
   var startWA=function(){ var C=window.AudioContext||window.webkitAudioContext; if(!C) return startEl(); ac=ac||new C(); gain=ac.createGain(); gain.gain.value=SND.vol*.6; gain.connect(ac.destination);
-    fetch('title.mp3').then(function(r){ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(function(ab){ return new Promise(function(res,rej){ ac.decodeAudioData(ab,res,rej); }); }).then(function(b){
+    fetch('bgm/title.mp3').then(function(r){ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(function(ab){ return new Promise(function(res,rej){ ac.decodeAudioData(ab,res,rej); }); }).then(function(b){
       var sr=b.sampleRate, sS=Math.round(LS*sr), eS=Math.min(b.length,Math.round(LE*sr)), xf=Math.round(.12*sr);
       for(var c=0;c<b.numberOfChannels;c++){ var d=b.getChannelData(c); for(var i=0;i<xf;i++){ var k=i/xf, at=eS-xf+i; d[at]=d[at]*(1-k)+d[sS-xf+i]*k; } }
       if(!SND.bgm||!playing) return; src=ac.createBufferSource(); src.buffer=b; src.loop=true; src.loopStart=LS; src.loopEnd=LE; src.connect(gain); src.start(); }).catch(function(){ startEl(); }); };
-  var startEl=function(){ if(el) return el.play().catch(function(){}); el=new Audio('title.mp3'); el.volume=Math.min(1,SND.vol*.6); el.addEventListener('timeupdate',function(){ if(el.currentTime>=LE) el.currentTime=LS+(el.currentTime-LE); }); el.addEventListener('ended',function(){ el.currentTime=LS; el.play().catch(function(){}); }); el.play().catch(function(){}); };
+  var startEl=function(){ if(el) return el.play().catch(function(){}); el=new Audio('bgm/title.mp3'); el.volume=Math.min(1,SND.vol*.6); el.addEventListener('timeupdate',function(){ if(el.currentTime>=LE) el.currentTime=LS+(el.currentTime-LE); }); el.addEventListener('ended',function(){ el.currentTime=LS; el.play().catch(function(){}); }); el.play().catch(function(){}); };
   var play=function(){ if(playing||!SND.bgm) return; playing=true; tip.classList.remove('on'); if(location.protocol==='file:') return startEl(); if(ac&&ac.state==='suspended') ac.resume(); startWA(); };
   var stop=function(fade){ playing=false; if(src&&gain){ try{ var t=ac.currentTime; gain.gain.setValueAtTime(gain.gain.value,t); gain.gain.linearRampToValueAtTime(0,t+(fade||.2)); src.stop(t+(fade||.2)+.02); }catch(e){} src=null; } if(el){ el.pause(); } };
   drawB(); if(SND.bgm) tip.classList.add('on');
