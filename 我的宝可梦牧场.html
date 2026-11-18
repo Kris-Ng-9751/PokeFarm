@@ -15881,21 +15881,21 @@ const BGMA={"battle":"SUQzBAAAAAACClRQRTEAAAANAAADR28gSWNoaW5vc2UAVFhYWAAAACEAAA
       document.addEventListener('click',e=>{ if(!p.hidden&&!e.target.closest('.sndpop,.sndbtn')){ p.hidden=true; btnSync(); } }); }
     unlock(); const b=document.querySelector('#hmtop .sndbtn'), r=b?b.getBoundingClientRect():{right:innerWidth-16,bottom:60};
     p.style.top=(r.bottom+8)+'px'; p.style.right=Math.max(8,innerWidth-r.right)+'px';
-    const row=(k,n,sub)=>`<label class="sndr"><span><b>${n}</b><small>${sub}</small></span><input type="checkbox" data-snd="${k}" ${SND[k]?'checked':''}><i></i></label>`;
-    p.innerHTML=`<b class="sndh">声音</b>${row('bgm','背景音乐','牧场一首；各种对战和胜利用 GBA 原曲')}${row('sfx','音效','按钮、出招、打中、捕捉、升级')}${row('cry','宝可梦叫声','出场和捕捉成功时')}
-      <label class="sndv"><span>音量</span><input type="range" min="0" max="100" value="${Math.round(SND.vol*100)}" data-sndv aria-label="音量"></label><div class="muted" style="font-size:12px">设定记在这台设备上。</div>`;
+    const row=(k,n)=>`<label class="sndr"><span><b>${n}</b></span><input type="checkbox" data-snd="${k}" ${SND[k]?'checked':''}><i></i></label>`;
+    p.innerHTML=`<b class="sndh">声音</b>${row('bgm','背景音乐')}${row('sfx','音效')}${row('cry','宝可梦叫声')}
+      <label class="sndv"><span>音量</span><input type="range" min="0" max="100" value="${Math.round(SND.vol*100)}" data-sndv aria-label="音量"></label>`;   /* 只留开关和音量，说明文字拿掉（Kris 2026-11-18） */
     p.hidden=false;
     p.querySelectorAll('[data-snd]').forEach(c=>c.onchange=()=>{ SND[c.dataset.snd]=c.checked?1:0; keep(); vols(); bgmSync(); btnSync(); if(c.dataset.snd==='sfx'&&c.checked) sfx('coin'); if(c.dataset.snd==='cry'&&c.checked) cry(25); });
     const v=p.querySelector('[data-sndv]'); v.oninput=()=>{ SND.vol=v.value/100; keep(); vols(); }; v.onchange=()=>sfx('tap');
     btnSync(); }
   { const _rs=renderShell; renderShell=function(){ const r=_rs.apply(this,arguments); try{ btnSync(); }catch(e){} return r; }; }
   setTimeout(()=>{ try{ btnSync(); }catch(e){} },0);
-  { const _g=GSEC.start; GSEC.start=()=>_g()+[gBox(gH('声音'),`<p>右上角的喇叭按钮可以分别开关<b>背景音乐</b>（牧场一首；野生宝可梦、训练家、道馆馆主 / 四天王 / 传奇训练家、世界 Boss 的对战和胜利各用 GBA 原曲）、<b>音效</b>（按钮、出招、打中、捕捉、升级、领奖励）和<b>宝可梦叫声</b>（出场和捕捉成功时），也能调音量。一开始音效和叫声是开的、音乐是关的；设定记在这台设备上。浏览器规定要先点一下画面才会出声。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
+  { const _g=GSEC.start; GSEC.start=()=>_g()+[gBox(gH('声音'),`<p>右上角的喇叭按钮可以分别开关<b>背景音乐</b>（牧场一首；野生宝可梦、训练家、道馆馆主 / 四天王 / 传奇训练家、世界 Boss 的对战和胜利各用 GBA 原曲）、<b>音效</b>（按钮、出招、打中、捕捉、升级、领奖励）和<b>宝可梦叫声</b>（宝可梦出场时），也能调音量。一开始三样都是开的；设定记在这台设备上。浏览器规定要先点一下画面才会出声。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
 
   const st=document.createElement('style'); st.textContent=`
 .sndbtn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-left:auto;border:1px solid var(--line);border-radius:999px;background:var(--card,#fff);color:var(--ink2,#666);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}.sndbtn:hover{color:var(--leaf)}.sndbtn+.langbtn{margin-left:8px!important}
 .sndpop{position:fixed;z-index:60;width:270px;background:var(--card,#fffdf6);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px #0003;padding:12px 14px;display:flex;flex-direction:column;gap:10px}.sndpop[hidden]{display:none}.sndh{font:400 17px var(--pix)}
-.sndr{display:flex;align-items:center;gap:10px;cursor:pointer}.sndr span{flex:1;display:flex;flex-direction:column}.sndr small{color:var(--muted);font-size:12px}.sndr input{position:absolute;opacity:0;pointer-events:none}.sndr i{flex:0 0 auto;width:40px;height:22px;border-radius:999px;background:#cfd5c6;position:relative;transition:background .15s}.sndr i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0003;transition:left .15s}.sndr input:checked+i{background:var(--leaf)}.sndr input:checked+i::after{left:21px}.sndr input:focus-visible+i{outline:2px solid var(--leaf);outline-offset:2px}
+.sndr{display:flex;align-items:center;gap:10px;cursor:pointer}.sndr span{flex:1;display:flex;flex-direction:column}.sndr input{position:absolute;opacity:0;pointer-events:none}.sndr i{flex:0 0 auto;width:40px;height:22px;border-radius:999px;background:#cfd5c6;position:relative;transition:background .15s}.sndr i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0003;transition:left .15s}.sndr input:checked+i{background:var(--leaf)}.sndr input:checked+i::after{left:21px}.sndr input:focus-visible+i{outline:2px solid var(--leaf);outline-offset:2px}
 .sndv{display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px}.sndv input{flex:1;accent-color:var(--leaf)}`;
   document.head.appendChild(st);
 })();
