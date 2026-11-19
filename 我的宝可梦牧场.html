@@ -275,6 +275,12 @@ code{font-family:ui-monospace,monospace;background:#eee9cf;padding:0 4px;border-
 .topbar>nav#nav:last-of-type{padding-bottom:8px}
 nav#nav{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:6px;scrollbar-width:none}nav#nav::-webkit-scrollbar,nav#subnav::-webkit-scrollbar{display:none}nav#nav::-webkit-scrollbar{display:none}
 nav#nav button{font:400 15px var(--pix);letter-spacing:.04em;padding:8px 16px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+/* 有待处理的大分类：按钮闪烁（金色光圈 + 底色），代替数字 */
+nav#nav button.pend,.hmnav button.pend{animation:navpend 1.6s ease-in-out infinite}
+nav#nav button.pend[aria-selected=true],.hmnav button.pend[aria-selected=true]{animation-name:navpendon}
+@keyframes navpend{0%,100%{box-shadow:0 0 0 0 #f2b63200}50%{background:#fff3c4;border-color:#f2b632;box-shadow:0 0 0 3px #f2b63266}}
+@keyframes navpendon{0%,100%{box-shadow:0 0 0 0 #f2b63200}50%{box-shadow:0 0 0 3px #f2b632aa}}
+@media(prefers-reduced-motion:reduce){nav#nav button.pend,.hmnav button.pend{animation:none;border-color:#f2b632;box-shadow:0 0 0 2px #f2b63299}}
 nav#subnav{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:2px;border-bottom:1px solid var(--line);scrollbar-width:none}nav#subnav::-webkit-scrollbar{display:none}
 nav#subnav[hidden]{display:none!important}
 nav#subnav button{font:500 13.5px var(--sans);border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:var(--ink2);padding:7px 12px;margin-bottom:-1px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
@@ -772,7 +778,6 @@ aside.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column
 .side nav#nav button:hover{background:rgba(255,255,255,.08)}
 .side nav#nav button[aria-selected=true]{background:var(--gold);color:#2a2410;box-shadow:0 6px 16px -8px rgba(242,182,50,.8)}
 .side .ni{width:24px;text-align:center;font-size:18px;line-height:1}
-.side .nbadge{margin-left:auto}
 .content{min-width:0;padding:24px 34px 56px;display:flex;flex-direction:column;gap:14px}
 nav#subnav{border:0;background:rgba(31,42,28,.07);padding:4px;border-radius:12px;gap:4px;width:fit-content;max-width:100%}
 nav#subnav button{border:0;border-radius:9px;padding:7px 14px;color:var(--ink2)}
@@ -798,7 +803,6 @@ aside.side .backlink[hidden]{display:none}
  .side nav#nav{position:fixed;inset:auto 0 0 0;z-index:30;flex-direction:row;justify-content:space-around;gap:0;padding:4px 6px calc(4px + env(safe-area-inset-bottom));background:var(--night);box-shadow:0 -6px 18px -8px rgba(0,0,0,.5)}
  .side nav#nav button{flex-direction:column;gap:1px;width:auto;flex:1;font-size:11.5px;padding:6px 2px;align-items:center;text-align:center;letter-spacing:0}
  .side nav#nav button[aria-selected=true]{box-shadow:none}
- .side .nbadge{position:absolute;top:1px;right:14%;margin:0}
  .content{padding:14px 14px 92px}
 }
 
@@ -1540,12 +1544,15 @@ function pendingOf(){ const now=Date.now(), c={}; try{ const t=today(), dq=S.qda
 /* 金币、星尘随时同步（Kris 2026-10-26）：花钱后不用换页面或刷新，侧边栏的数字马上变 */
 function walletSync(){ const c=document.querySelectorAll('#wallet .tres .chip b'); if(c.length<2||typeof S==='undefined'||!S) return; const a=String(S.coins), z=String(S.stars); if(c[0].textContent!==a) c[0].textContent=a; if(c[1].textContent!==z) c[1].textContent=z; }
 setInterval(()=>{ try{ walletSync(); }catch(e){} },300);
+/* 闪烁的按钮按同一个时钟对齐：重画、复制到主页上方那排，都不会从头闪，几个按钮一起闪 */
+function pendPhase(el){ if(el) el.querySelectorAll('.pend').forEach(b=>b.style.animationDelay=-(performance.now()%1600)+'ms'); }
 function renderShell(){
   { const bl=document.getElementById('backlink'); if(bl) bl.hidden=!window.__POKEFARM_SYNC; }   /* 「回到 OSE Console」放在侧边栏最下面，只在 Console 里显示（Kris 2026-10-27） */
   { const h=HEROES.find(x=>x[0]===S.hero)||HEROES[0], tl=S.tl||1, need=tl<100?tneed(tl):1, pct=tl<100?Math.min(100,(S.tx||0)/need*100):100;
     $('#wallet').innerHTML=`<button type="button" class="tprof${tab==='card'?' on':''}" id="tchip" title="点开训练家卡片" aria-label="训练家卡片，训练家等级 ${tl}"><img src="data:image/png;base64,${TCIMG[h[0]]}" alt=""><span class="tinfo"><b>${CONSOLE_USER.name}</b><span class="tlv">训练家 Lv <em>${tl}</em></span><span class="bar txp"><i style="width:${pct}%"></i></span><small>${tl<100?`${S.tx||0} / ${need} 经验`:'已满级'}</small></span></button><div class="tres"><span class="chip" title="金币">${coinIcon(18)} <b>${S.coins}</b></span><span class="chip" title="星尘">${starIcon(18)} <b>${S.stars}</b></span></div>`; }
   const g=tab==='card'?['','',[]]:groupOf(tab), wildN=S.wild?wildField().length:0, PEND=pendingOf(); PENDSIG=JSON.stringify(PEND);
-  $('#nav').innerHTML=GROUPS.filter(x=>x[0]!=='dev'||!window.__POKEFARM_SYNC).map(([k,n,ts])=>`<button role="tab" aria-selected="${k===g[0]}" data-grp="${k}"><span class="ni" aria-hidden="true">${pxIcon(k)}</span><span class="nl">${n}</span>${(()=>{ const x=ts.reduce((a,t)=>a+(PEND[t]||0),0)+(k==='adv'?wildN:0); return x?`<span class="nbadge" aria-label="${x} 项待处理">${x}</span>`:''; })()}</button>`).join('');
+  $('#nav').innerHTML=GROUPS.filter(x=>x[0]!=='dev'||!window.__POKEFARM_SYNC).map(([k,n,ts])=>`${(()=>{ const x=ts.reduce((a,t)=>a+(PEND[t]||0),0)+(k==='adv'?wildN:0);   /* 上面这排不显示数字，有待处理的按钮闪烁（Kris 2026-11-19） */
+    return `<button role="tab" aria-selected="${k===g[0]}" data-grp="${k}"${x?` class="pend" aria-description="有 ${x} 项待处理"`:''}><span class="ni" aria-hidden="true">${pxIcon(k)}</span><span class="nl">${n}</span></button>`; })()}`).join(''); pendPhase($('#nav'));
   const sub=$('#subnav'); sub.hidden=g[2].length<2;
   /* 会出现数字的分页：没有数字时也先留一个空位，数字出现 / 消失时分页条不会跳（Kris 2026-11-19） */
   sub.innerHTML=g[2].length<2?'':g[2].map(k=>{ const bossN=k==='boss'?(S.bosses||[]).length+(PARTY.invites||[]).length+(PEND.boss||0):0;
@@ -15637,7 +15644,7 @@ nav#subnav [data-tab="map"]{display:none!important}
 
 
 .hmtop[hidden]{display:none}@media(max-width:860px){aside.side{display:none!important}.content{padding:0 12px 24px}.hmtop{flex-wrap:wrap;gap:8px 10px;margin:0 -12px 12px;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px}.hmlogo span{display:block!important}.hmlogo small{display:none}.hmlogo b{font-size:17px}.hmlogo svg{width:32px;height:32px}.hmtop .tbsync{order:1}.hmtop .tbback{order:1;padding:4px 10px;font-size:12px}.hmtop .mnbtn{order:2;margin-left:auto}.hmtop .hmnav{order:3;flex:1 0 100%;margin:0 -12px;padding:2px 12px 2px;width:auto;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important}.hmtop .hmnav button{padding:7px 12px;font-size:13.5px}.hmtop .hmnav .ni{display:inline-flex!important}}   /* 手机版（Kris 2026-11-18）：拿掉底部图标和旧的深色训练家栏，跟电脑一样用顶部标题栏，大类按钮左右滑 */.tbsync{font-size:12px;color:var(--muted);white-space:nowrap}.tbsync:empty{display:none}.tbback{flex:0 0 auto;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font:600 13px var(--sans);color:var(--ink2);text-decoration:none;background:#fff}.tbback[hidden]{display:none}
-.hmnav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}.hmnav button{position:relative;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:9px 16px;font:700 14.5px var(--sans);color:var(--ink);cursor:pointer;box-shadow:0 1px 3px #0001}.hmnav button:hover{border-color:var(--leaf)}.hmnav button[aria-selected=true]{background:var(--leaf);border-color:var(--leaf);color:#fff}.hmnav .ni svg{width:20px;height:20px}.hmnav .nbadge{margin-left:2px}
+.hmnav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}.hmnav button{position:relative;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:9px 16px;font:700 14.5px var(--sans);color:var(--ink);cursor:pointer;box-shadow:0 1px 3px #0001}.hmnav button:hover{border-color:var(--leaf)}.hmnav button[aria-selected=true]{background:var(--leaf);border-color:var(--leaf);color:#fff}.hmnav .ni svg{width:20px;height:20px}
 @media(max-width:1250px){.hm{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hm>.hmmid{grid-column:1/-1;order:-1}}
 @media(max-width:760px){.hm{grid-template-columns:1fr}.hmgo{grid-template-columns:1fr}}`;
   document.head.appendChild(st);
@@ -15706,7 +15713,7 @@ nav#subnav [data-tab="map"]{display:none!important}
   }
   window.hmNavSync=function(){ let tb=document.getElementById('hmtop'); const ct=document.querySelector('.wrap.shell>.content'); if(!tb&&ct){ tb=document.createElement('div'); tb.id='hmtop'; tb.className='hmtop'; tb.innerHTML='<button type="button" class="hmlogo" title="回到主页"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="#fff" stroke="#2a2a2a" stroke-width="3"/><path d="M3 24a21 21 0 0 1 42 0z" fill="#e5463b" stroke="#2a2a2a" stroke-width="3"/><path d="M3 24h42" stroke="#2a2a2a" stroke-width="3"/><circle cx="24" cy="24" r="7" fill="#fff" stroke="#2a2a2a" stroke-width="3"/><circle cx="24" cy="24" r="3" fill="#fff" stroke="#bbb" stroke-width="1.5"/><path d="M11 15a14 14 0 0 1 9-6" stroke="#fff" stroke-opacity=".55" stroke-width="3" fill="none" stroke-linecap="round"/></svg><span><b>我的宝可梦牧场</b><small>训练家 · 冒险 · 收集 · 对战</small></span></button><nav class="hmnav" id="hmnav" aria-label="主选单"></nav><span class="tbsync" id="tbsync" aria-live="polite"></span><a class="tbback" id="tbback" href="/" target="_top" hidden>← 返回 OSE Console</a>'; { const o=document.getElementById('syncst'); if(o) tb.querySelector('#tbsync').textContent=o.textContent; } ct.insertBefore(tb,ct.firstChild); tb.querySelector('.hmlogo').onclick=()=>{ if(S&&S.chosen) go('ranch'); }; }
     if(tb) tb.hidden=false; { const bl=document.getElementById('backlink'), tb2=document.getElementById('tbback'); if(bl&&tb2){ tb2.hidden=bl.hidden; tb2.href=bl.getAttribute('href')||'/'; } }
-    const hn=document.getElementById('hmnav'), src=document.getElementById('nav'); if(!hn||!src) return; if(hn.childElementCount&&hn.__src===src.innerHTML) return; hn.__src=src.innerHTML; hn.innerHTML=src.innerHTML; setTimeout(()=>{ const on=hn.querySelector('[aria-selected=true]'); if(on&&hn.scrollWidth>hn.clientWidth) hn.scrollLeft=Math.max(0,on.offsetLeft-hn.clientWidth/2+on.offsetWidth/2); },0); hn.querySelectorAll('[data-grp]').forEach(b=>{ b.removeAttribute('role'); b.onclick=()=>{ const o=document.querySelector('#nav [data-grp="'+b.dataset.grp+'"]'); if(o) o.click(); }; }); };
+    const hn=document.getElementById('hmnav'), src=document.getElementById('nav'); if(!hn||!src) return; if(hn.childElementCount&&hn.__src===src.innerHTML) return; hn.__src=src.innerHTML; hn.innerHTML=src.innerHTML; pendPhase(hn); setTimeout(()=>{ const on=hn.querySelector('[aria-selected=true]'); if(on&&hn.scrollWidth>hn.clientWidth) hn.scrollLeft=Math.max(0,on.offsetLeft-hn.clientWidth/2+on.offsetWidth/2); },0); hn.querySelectorAll('[data-grp]').forEach(b=>{ b.removeAttribute('role'); b.onclick=()=>{ const o=document.querySelector('#nav [data-grp="'+b.dataset.grp+'"]'); if(o) o.click(); }; }); };
   { const _rd=render; render=function(){ const r=_rd.apply(this,arguments); document.body.classList.toggle('onhome',!!(S&&S.chosen)&&(tab==='ranch'||tab==='map')); return r; }; }
   setInterval(()=>{ try{ hmNavSync(); }catch(e){} },1000);
   addEventListener('resize',()=>{ try{ hmNavSync(); }catch(e){} });
