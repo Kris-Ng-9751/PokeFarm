@@ -16017,7 +16017,7 @@ const BGMA={"fish":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   let JING=0;
   let JSRC=null;
   window.__jingle=(n,ms,o)=>{ try{ return jingle(n,ms,o); }catch(e){ return false; } };   /* 给别的部分用（获得徽章的窗口） */
-  function jingle(name,ms,o){ o=o||{}; if(!SND.sfx||!live()||typeof BGMA==='undefined'||!BGMA[name]) return false; if(!o.force&&performance.now()<JING) return true; JING=performance.now()+ms;
+  function jingle(name,ms,o){ o=o||{}; if(!SND.sfx||!live()||typeof BGMA==='undefined'||!BGMA[name]) return false; if(!o.force&&performance.now()<JING) return true; JING=performance.now()+ms; if(window.__sndDebug) (window.__sndLog=window.__sndLog||[]).push('j:'+name);
     musLoad(name).then(b=>{ if(!b) return; const t=AC.currentTime, s=AC.createBufferSource(), g=AC.createGain(); s.buffer=b; g.gain.value=o.vol||.7; s.connect(g); g.connect(musBus());
       if(o.force&&JSRC){ try{ JSRC.g.gain.setValueAtTime(JSRC.g.gain.value,t); JSRC.g.gain.linearRampToValueAtTime(0,t+.06); JSRC.s.stop(t+.08); }catch(e){} }   /* 新的小曲要马上放：前一首先停（Kris 2026-11-19：连续领奖励） */
       JSRC={s,g}; s.onended=()=>{ if(JSRC&&JSRC.s===s) JSRC=null; }; s.start(t+.02,o.off||0);
@@ -16118,7 +16118,16 @@ const BGMA={"fish":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   { const _ev=evolve; evolve=function(m,to){ const before=m&&m.id, r=_ev.apply(this,arguments); if(m&&m.id!==before&&m.id===to){ if(SND.sfx&&live()&&typeof BGMA!=='undefined'&&BGMA.evolved){ JHOLD=true; bgmStop(); filePlay('evolved'); clearTimeout(evolve.__t); evolve.__t=setTimeout(()=>{ JHOLD=false; bgmSync(); },6200); } } return r; }; }
   /* 领奖励（Kris 2026-11-19）：签到、任务、委托、探索、矿洞、钓鱼、化石复原、研究……所有「领取」都放 GBA「得到了道具」的小曲（背景音乐先压下去）；
      农场亲手收获放「得到树果」的小曲（下面；自动种植在背后收获的不放） */
-  const getItem=()=>{ jingle('item',2400,{force:1}); };   /* 每次领都要响：前一首没放完就切过来 */
+  const getItem=()=>{ jingle('item',2400,{force:1}); };
+  /* 抽卡（Kris 2026-11-20）：抽到神兽 / 幻兽放「捕获成功」，抽到传说道具放「得到道具」；等那张卡翻出来（每张晚 0.11 秒）才放。自选、开宝箱不算抽卡 */
+  { let lastPl=null; const _sr=showRes; showRes=function(o){ const r=_sr.apply(this,arguments); try{
+      const t=String(o&&o.title||''), el=document.getElementById('gpop'); if(/自选/.test(t)||!el) return r; const cards=[...el.querySelectorAll('.pulls .pull.dc.rv')]; if(!cards.length) return r;
+      let ix=-1, k=null;
+      if(/抽宝可梦|活动·神兽|活动·幻兽/.test(t)){ if(lastPull===lastPl) return r; lastPl=lastPull; ix=lastPull.findIndex(p=>SP[p.id]&&SP[p.id][10]>=2); k='caught'; }   /* 同一次抽的结果弹窗重画，不再放 */
+      else if(/道具/.test(t)){ ix=cards.findIndex(c=>c.classList.contains('r4')); k='item'; }   /* 道具卡 r4 = 「传说」那一档 */
+      if(ix<0) return r; const still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setTimeout(()=>{ if(!el.hidden) jingle(k,k==='caught'?5900:2400,{force:1}); },still?0:ix*110+350);
+    }catch(e){} return r; }; }   /* 每次领都要响：前一首没放完就切过来 */
   { const _rw=rwRun; rwRun=function(){ RWING=true; LVPEND=false; let r; try{ r=_rw.apply(this,arguments); }finally{ RWING=false; }
       if(r!==false){ getItem(); if(LVPEND) setTimeout(()=>jingle('levelup',4500,{force:1}),2450); } else if(LVPEND) jingle('levelup',4500); LVPEND=false; return r; }; }
   { let hv=0; document.addEventListener('click',e=>{ if(e.target&&e.target.closest&&e.target.closest('[data-harv]')) hv=performance.now(); },true);
