@@ -297,26 +297,72 @@ nav#subnav button[aria-selected=true]{color:var(--leaf);border-bottom-color:var(
 .list.capped{max-height:min(72vh,820px);overflow-y:auto;padding-right:4px;overscroll-behavior:contain}
 .list.hidedone>.isdone{display:none}
 .list.capped::-webkit-scrollbar,#dgrid::-webkit-scrollbar{width:8px}.list.capped::-webkit-scrollbar-thumb,#dgrid::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
-/* ---- 训练家卡片（Kris 2026-10-24）---- */
-.tcard{--tc:#4f9d58;--tc2:#2f6b34;--tcl:#e4f4dc;border-radius:16px;border:4px solid var(--tc2);background:linear-gradient(135deg,var(--tcl),#fff 60%,var(--tcl));padding:14px;box-shadow:0 4px 0 var(--tc2),0 8px 18px #0002;max-width:760px}
-.tcard.s1{--tc:#d0925a;--tc2:#8a5326;--tcl:#f6e2cf}.tcard.s2{--tc:#c4ccd4;--tc2:#6f7b88;--tcl:#e9edf1}.tcard.s3{--tc:#f0cf5a;--tc2:#a37d10;--tcl:#fbf0c4}.tcard.s4{--tc:#72c6f2;--tc2:#2a78a8;--tcl:#dcf1fc}
-.tcard.s5{--tc:#e85d9a;--tc2:#7a3fa8;--tcl:#fbe4f1;background:linear-gradient(135deg,#ffe3ec,#e5f3ff 35%,#fff7cc 65%,#e9e0ff)}
-.tchead{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:3px solid var(--tc2);padding-bottom:8px;margin-bottom:10px;flex-wrap:wrap}
-.tchead b.t{font:18px var(--pix);color:var(--tc2);letter-spacing:.06em}
-.tcstars{font-size:22px;letter-spacing:3px;color:#c9c3a8}.tcstars .on{color:#f2b632;text-shadow:0 1px 0 #8a5a00}
-.tcbody{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px}
-.tcpic{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--tc);border:3px solid var(--tc2);border-radius:10px;padding:8px}
-.tcpic img.hero{width:120px;height:120px;object-fit:contain;image-rendering:pixelated;background:#ffffff66;border-radius:6px}
-.tcav{display:flex;align-items:center;gap:6px;font:14px var(--pix);color:#fff;text-shadow:0 1px 2px #0007}.tbar{display:inline-block;width:110px;height:9px;border-radius:5px;background:#0002;vertical-align:middle;overflow:hidden}.tbar i{display:block;height:100%;background:var(--tc2)}
-.tcav i{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82c4,#8a63d2);color:#fff;font:700 16px var(--sans);display:inline-flex;align-items:center;justify-content:center;border:2px solid #fff;text-shadow:none;font-style:normal}
-.tcrows{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;font-size:14px;align-content:start}
-.tcrows dt{color:var(--tc2);font-weight:700;white-space:nowrap}.tcrows dd{margin:0;font-variant-numeric:tabular-nums}
-.tcbadges{margin-top:12px;border-top:2px dashed var(--tc2);padding-top:10px;display:flex;flex-direction:column;gap:6px}
-.tcbadges .rg{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.tcbadges .rg>span.n{width:64px;font-size:12.5px;color:var(--ink2);flex:none}
-.tcbadges .bdg{width:30px;height:30px}
+/* ---- 训练家卡片（Kris 2026-11-19 改成两页：正面 / 背面）：深蓝底的卡片，标题栏按星星换颜色（0 绿、1 铜、2 银、3 金、4 蓝、5 彩虹） ---- */
+.tcard{--tc:#4f9d58;--tc2:#2f6b34;--bg:#1c2038;--tile:#262b48;--ln:#363d66;--tx:#eef0fb;--mu:#9aa1c8;container-type:inline-size;border-radius:16px;border:3px solid var(--tc2);background:var(--bg);color:var(--tx);overflow:hidden;box-shadow:0 4px 0 var(--tc2),0 10px 22px #0003;max-width:760px}
+.tcard.s1{--tc:#d0925a;--tc2:#8a5326}.tcard.s2{--tc:#aab4c0;--tc2:#5f6b78}.tcard.s3{--tc:#e8c24a;--tc2:#9a740c}.tcard.s4{--tc:#5cb8ec;--tc2:#23709e}.tcard.s5{--tc:#e85d9a;--tc2:#7a3fa8}
+.tc-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:linear-gradient(100deg,var(--tc2),var(--tc));border-bottom:3px solid #0003}
+.tcard.s5 .tc-hd{background:linear-gradient(100deg,#7a3fa8,#e85d9a 40%,#f2b632 70%,#5cb8ec)}
+.tc-t{font:400 19px var(--pix);letter-spacing:.08em;color:#fff;text-shadow:2px 2px 0 #0005}
+.tcstars{font-size:20px;letter-spacing:2px;color:#0004}.tcstars .on{color:#ffd54a;text-shadow:0 1px 0 #8a5a00}
+.tc-seg{margin-left:auto;display:inline-flex;padding:3px;border-radius:10px;background:#141729;box-shadow:inset 0 0 0 1px #ffffff1a}
+.tc-seg button{font:400 15px var(--pix);letter-spacing:.06em;color:#aab0d4;background:none;border:0;border-radius:7px;padding:5px 14px;cursor:pointer}
+.tc-seg button[aria-pressed=true]{background:#e2484c;color:#fff;box-shadow:inset 0 -3px 0 #0003}
+.tc-seg button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.tc-pgs{padding:14px}.tc-pgs.flip{animation:tcflip .38s ease-in-out}
+@keyframes tcflip{0%{transform:perspective(1100px) rotateY(0)}45%,55%{transform:perspective(1100px) rotateY(90deg)}100%{transform:perspective(1100px) rotateY(0)}}
+.tc-top{display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px}
+.tc-por{display:flex;flex-direction:column;gap:6px}
+.tc-stage{position:relative;height:178px;border-radius:12px;border:1px solid var(--ln);background:radial-gradient(circle at 50% 72%,#3a4174,#232848 70%);overflow:hidden}
+.tc-stage::after{content:'';position:absolute;left:12%;right:12%;bottom:10px;height:12px;border-radius:50%;background:#0004}
+.tc-pt{position:absolute;right:-6px;bottom:14px;width:72%;max-width:150px;aspect-ratio:1;object-fit:contain;image-rendering:pixelated;opacity:.92;filter:drop-shadow(0 4px 0 #0003)}
+.tc-hero{position:absolute;left:8%;bottom:10px;height:88%;max-height:150px;object-fit:contain;image-rendering:pixelated;z-index:1;filter:drop-shadow(2px 4px 0 #0004)}
+.tc-ptn{display:flex;align-items:center;justify-content:center;gap:4px;font-size:13px;color:var(--mu);text-align:center;flex-wrap:wrap}.tc-ptn b{color:var(--tx)}
+.tc-info{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tc-nm{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.tc-nm>b{font:400 26px/1.15 var(--pix);color:#fff;overflow-wrap:anywhere}
+.tc-lv{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--mu)}
+.tc-lvb{font:400 15px var(--pix);color:#ffd54a}
+.tc-xp{flex:1;min-width:70px;height:9px;border-radius:5px;background:#12152a;overflow:hidden;box-shadow:inset 0 0 0 1px var(--ln)}.tc-xp i{display:block;height:100%;background:linear-gradient(#8ce0ff 0 40%,#3fb0e8 40%)}
+.tc-dex{display:flex;align-items:center;gap:12px;background:var(--tile);border:1px solid var(--ln);border-radius:12px;padding:10px 12px}
+.tc-ring{flex:none;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#e2484c calc(var(--p)*1%),#3a4170 0)}
+.tc-ring b{width:48px;height:48px;border-radius:50%;background:var(--tile);display:grid;place-items:center;font:400 14px var(--pix);color:#fff}
+.tc-dn{display:block;font-size:15px}.tc-dn em{font:400 20px var(--pix);font-style:normal;color:#fff}
+.tc-dsub{display:block;font-size:12.5px;color:#f2cf62;margin-top:2px}.tc-dsub i{font-style:normal}
+.tc-tls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.tc-tl{background:var(--tile);border:1px solid var(--ln);border-radius:10px;padding:7px 10px;min-width:0}
+.tc-tl small{display:block;font-size:11.5px;color:var(--mu)}.tc-tl b{display:block;font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-h{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--ln)}
+.tc-h b{font:400 16px var(--pix);color:#c9cdea;letter-spacing:.06em}.tc-h span{font:400 13px var(--pix);color:var(--mu)}
+.tc-pg>.tc-h:first-child{margin-top:0;padding-top:0;border-top:0}
+.tc-team{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.tc-m{position:relative;aspect-ratio:1/1.08;border-radius:12px;background:radial-gradient(circle at 50% 55%,#323a6a,var(--tile) 70%);border:1px solid var(--ln);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
+.tc-m img{width:78%;aspect-ratio:1;object-fit:contain;image-rendering:pixelated}
+.tc-m b{font:400 12px var(--pix);color:#dfe2f6;margin-top:-4px}
+.tc-m .tc-sh{position:absolute;top:3px;right:6px;font-style:normal;color:#ffd54a;font-size:14px}
+.tc-m.e{background:var(--tile);opacity:.45}
+.tc-m.e::before{content:'';width:34%;aspect-ratio:1;border-radius:50%;border:3px solid #4a5284;background:linear-gradient(transparent 44%,#4a5284 44% 56%,transparent 56%)}
+.tc-bw{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tc-rg,.tc-rd{background:var(--tile);border:1px solid var(--ln);border-radius:12px;padding:8px 10px;min-width:0}
+.tc-rg.full{box-shadow:inset 0 0 0 1px #f2cf6266}
+.tc-rgh{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:5px}.tc-rgh b{font-size:13.5px;font-weight:600}.tc-rgh span{font:400 12px var(--pix);color:var(--mu)}
+.tc-rg.full .tc-rgh span{color:#f2cf62}
+.tc-bd{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px}.tc-bd>*{width:100%;max-width:32px;height:auto;aspect-ratio:1;justify-self:center}.tc-bd .bdg img{width:100%;height:100%;object-fit:contain}.tc-bd .badge{font-size:9px}
+.tc-rds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tc-rb{display:block;height:9px;border-radius:5px;background:#12152a;overflow:hidden}.tc-rb i{display:block;height:100%;border-radius:5px}
+.tc-ss{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tc-s{display:flex;align-items:center;gap:8px;background:var(--tile);border:1px solid var(--ln);border-radius:12px;padding:9px 10px;min-width:0}
+.tc-si{flex:none;width:36px;height:36px;display:grid;place-items:center}.tc-si .ii{image-rendering:pixelated}
+.tc-sv{min-width:0}.tc-sv small{display:block;font-size:12px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tc-sv b{display:block;font:400 17px/1.25 var(--pix);color:#fff;overflow-wrap:anywhere}.tc-sv em{font-style:normal;font-size:12px;color:var(--mu);margin-left:5px}
+.tc-sn{display:block;font-size:11.5px;color:var(--mu);margin-top:1px}
+.tc-vs{font:italic 400 17px var(--pix);color:#ffd54a;-webkit-text-stroke:1px #b03030;text-shadow:2px 2px 0 #b03030;letter-spacing:-.04em}
+.tc-shi{font-style:normal;font-size:26px;color:#ffd54a;text-shadow:0 0 6px #ffd54a88}
+.tc-pi{width:40px;height:40px;object-fit:contain;image-rendering:pixelated}
+.tc-note{margin:12px 0 0;font-size:12px;color:var(--mu)}
+@container (max-width:560px){.tc-top{grid-template-columns:132px minmax(0,1fr);gap:10px}.tc-stage{height:150px}.tc-tls,.tc-ss{grid-template-columns:repeat(2,minmax(0,1fr))}.tc-bw{grid-template-columns:minmax(0,1fr)}.tc-nm>b{font-size:21px}}
+@container (max-width:420px){.tc-pgs{padding:10px}.tc-top{grid-template-columns:minmax(0,1fr)}.tc-por{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center}.tc-stage{height:128px}.tc-ptn{justify-content:flex-start;text-align:left}.tc-team{gap:5px}.tc-s{padding:8px}.tc-si{width:30px}.tc-hd{padding:8px 10px}.tc-t{font-size:16px}.tcstars{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.tc-pgs.flip{animation:none}}
 .heroes{display:flex;flex-wrap:wrap;gap:8px}.heroes button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;font-size:11.5px;color:var(--ink2);font-family:var(--sans)}.heroes button img{width:54px;height:54px;object-fit:contain;image-rendering:pixelated}.heroes button[aria-pressed=true]{border-color:var(--leaf);background:#e6f2d8;color:var(--leaf);font-weight:700}
 .stars-list{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:13.5px}.stars-list li{display:flex;gap:8px;align-items:baseline}.stars-list .k{width:22px;flex:none;text-align:center}.stars-list .done{color:var(--leaf);font-weight:700}.stars-list .pg{color:var(--ink2);font-size:12.5px;margin-left:auto;font-variant-numeric:tabular-nums}
-@media(max-width:560px){.tcbody{grid-template-columns:1fr}.tcpic{flex-direction:row;justify-content:center}.tcpic img.hero{width:96px;height:96px}}
 
 .evogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}.evob{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 6px;border:2px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font-family:var(--sans);color:var(--ink)}.evob small{color:var(--ink2)}.evob.on{border-color:var(--leaf);background:#e6f2d8}.evob.dim{opacity:.55}
 .ii{vertical-align:middle;image-rendering:pixelated;flex:none}
@@ -898,14 +944,8 @@ table{border-collapse:separate;border-spacing:0}th{text-align:left;font-weight:5
 .evc .en{font:22px var(--pix)}
 @media(max-width:560px){.evc .evrow{flex-direction:column;text-align:center}}
 .gcards:has(>.evc){margin-bottom:12px}
-/* 矿洞体力条：.tbar 的颜色只在训练家卡片里有定义，这里用通用的 .bar */
+/* 矿洞体力条：用通用的 .bar */
 .bar.mbar{width:160px;height:12px;flex:none}.bar.mbar i{background:var(--grass2);transition:width .3s}
-/* 训练家卡片的资料分左右两列：宽的行占满一行，成对的并排 */
-.tcrows{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 22px;align-content:start}
-.tcr{display:flex;gap:8px;align-items:baseline;min-width:0}.tcr.w{grid-column:1/-1}.tcr dt{flex:none}.tcr dd{min-width:0}
-.tcr:not(.w){flex-direction:column;align-items:flex-start;gap:0}.tcr:not(.w) dt{font-size:12px}.tcr:not(.w) dd .muted{display:block}
-.tcr.w dd{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px}.tcr.w dd .tbar{flex:none}
-@media(max-width:560px){.tcrows{grid-template-columns:minmax(0,1fr)}}
 /* 培育：果树 / 果实选择、可学习的 TM 列表 */
 .md-feed{display:flex;gap:10px;align-items:center;width:100%;margin-bottom:2px}
 .md-feed .ftree{flex:none;width:52px;height:52px;display:flex;align-items:center;justify-content:center;background:#eef3da;border:1px solid var(--line);border-radius:10px}
@@ -916,16 +956,6 @@ table{border-collapse:separate;border-spacing:0}th{text-align:left;font-weight:5
 .md-tm{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;padding-right:4px;overscroll-behavior:contain}
 .md-tmr{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:6px 8px;background:#fff}
 .md-tmr .ty{font-size:11px;font-weight:600;color:#fff;border-radius:4px;padding:0 6px}.md-tmr .tmi{flex:none;display:flex}
-/* 王牌宝可梦：徽章右边的空位，卡片窄的时候排到下面 */
-.tcard{container-type:inline-size}
-.tcbw{display:grid;grid-template-columns:minmax(0,1fr) 168px;gap:14px;align-items:start}
-.tcbl{display:flex;flex-direction:column;gap:6px;min-width:0}
-.tcace{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding:8px 8px 10px;border:3px solid var(--tc2);border-radius:14px;background:linear-gradient(160deg,#fff,var(--tcl))}
-.tcace .aceh{font:13px var(--pix);color:var(--tc2);letter-spacing:.06em}
-.tcace img{width:132px;height:132px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 5px rgba(0,0,0,.2))}
-.tcace b{font-size:15px}.tcace .acelv{font:15px var(--pix);color:var(--tc2)}
-.tcace .tys{display:flex;gap:4px;justify-content:center;margin-top:2px}.tcace .tys i{font-style:normal;font-size:11px;color:#fff;border-radius:999px;padding:0 9px;line-height:18px}
-@container (max-width:600px){.tcbw{grid-template-columns:minmax(0,1fr)}.tcace{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:2px 12px}.tcace .aceh{width:100%}}
 /* 对战里的捕获标记：只有捕获过的种类才有 */
 .cmark{display:inline-flex;vertical-align:-2px;margin-left:4px}
 /* 对方要派出下一只时的提问弹窗：显示对方下一只，问要不要更换宝可梦 */
@@ -4789,7 +4819,7 @@ $('#battle').addEventListener('click',e=>{ if(e.target.matches&&e.target.matches
   if(!B) return;
   if(B.busy) return;
   if(m==='done'){ S.mons=S.mons.filter(x=>!x.test); if(B.cfg.kind==='wild'&&(B.over==='catch'||(B.over==='end'&&B.fh<=0))) S.wild=S.wild.filter(w=>w.wid!==B.cfg.wid); const nx=B.over==='end'&&B.fh<=0?B.cfg.next:null; B=null; $('#modal').hidden=true; if(nx) return nx(); return render(); }   /* 连战：赢了就接下一场 */
-  if(m==='ball'){ const key=B.ball||'ball'; if(monCnt()>=MON_CAP) return toast(capMsg()); if(!(S.items[key]>0)) return; S.items[key]--; const bn=ITEMS[key][0]; const p=catchP(B,key); S.cb=0; const ok=Math.random()<p, b0=B; B.busy=true;
+  if(m==='ball'){ const key=B.ball||'ball'; if(monCnt()>=MON_CAP) return toast(capMsg()); if(!(S.items[key]>0)) return; S.items[key]--; lifeAdd('ball'); const bn=ITEMS[key][0]; const p=catchP(B,key); S.cb=0; const ok=Math.random()<p, b0=B; B.busy=true;
     return catchAnim(key,ok,()=>{ if(B!==b0) return; B.busy=false;
     if(ok){ const f=B.foe; const nm={uid:S.nuid++,id:f._oid||f.id,lv:f.lv,exp:0,shiny:!!f.shiny,g:f.g,ball:key}; if(key==='b_friend') nm.fr=200; if(key==='b_luxury') nm.fr=20; if(key!=='b_heal'){ const r=B.fx>0?B.fh/B.fx:1; if(r<1) nm.hpr=Math.max(.01,r); if(f.sta) nm.sta=f.sta==='tox'?'psn':f.sta; }   /* 抓到的时候剩多少 HP、什么异常状态就带过来（治愈球回满） */ S.mons.push(nm); S.stats.caught++; prog('caught'); B.log.push(tgain(5)); B.log.push(`${bn}摇了三下……捕捉成功！${SP[f.id][0]} 加入了牧场。`); S.wild=S.wild.filter(w=>w.wid!==B.cfg.wid); B.over='end'; B.caughtOK=1; } else { B.log.push(`${bn}打开了，它挣脱了！`); if(Math.random()<fleeP(B)){ B.log.push(`${SP[B.foe.id][0]} 逃走了……`); S.wild=S.wild.filter(w=>w.wid!==B.cfg.wid); B.over='end'; B.fled=1; } } bRender(); if(B&&B.caughtOK){ const f=document.querySelector('#bfoe'); if(f) f.style.visibility='hidden'; }
     if(B&&B.fled){ const f=document.querySelector('#bfoe'); if(f){ try{ f.animate([{transform:'translateX(0)',opacity:1},{transform:'translateX(-8%) translateY(-6%)',opacity:1,offset:.2},{transform:'translateX(60%)',opacity:0}],{duration:700,fill:'forwards',composite:'add'}); }catch(e){} setTimeout(()=>{ if(f) f.style.visibility='hidden'; },700); } } }); }   /* 逃走：往后一跳、跑出画面 */
@@ -6733,7 +6763,7 @@ function rBoss(){
   bindParty();
   document.querySelectorAll('[data-bsh]').forEach(x=>x.onclick=()=>bossShareClaim(+x.dataset.bsh));
   document.querySelectorAll('[data-bfight]').forEach(x=>x.onclick=()=>{ const b=S.bosses[+x.dataset.bfight]; if(b) fightChoose(bossT(b)); });
-  document.querySelectorAll('[data-bcatch]').forEach(x=>x.onclick=()=>{ const b=S.bosses[+x.dataset.bcatch]; if(!b||!b.def||b.tries<=0) return; if(monCnt()>=MON_CAP) return toast(capMsg()); b.tries--; const p=bossBase(b)*(S.cb?1.5:1); S.cb=0;
+  document.querySelectorAll('[data-bcatch]').forEach(x=>x.onclick=()=>{ const b=S.bosses[+x.dataset.bcatch]; if(!b||!b.def||b.tries<=0) return; if(monCnt()>=MON_CAP) return toast(capMsg()); b.tries--; lifeAdd('ball'); const p=bossBase(b)*(S.cb?1.5:1); S.cb=0;
     if(Math.random()<p){ const m={uid:S.nuid++,id:b.id,lv:b.lv,exp:0,shiny:b.shiny,g:b.g,ball:'b_premier'}; S.mons.push(m); S.stats.caught++; prog('caught'); (S.bossGone=S.bossGone||{})[b.key]=1; S.bosses=S.bosses.filter(y=>y!==b); toast(`捕捉成功！${SP[b.id][0]} Lv${b.lv} 加入了牧场；`+tgain(b.lv)); }
     else if(b.tries<=0){ (S.bossGone=S.bossGone||{})[b.key]=1; S.bosses=S.bosses.filter(y=>y!==b); toast(`机会用完了，${SP[b.id][0]} 逃走了……`); } else toast(`它挣脱了！还剩 ${b.tries} 次机会`);
     save(); rBoss(); renderShell(); });
@@ -6746,23 +6776,61 @@ const OTHERS=[{rating:1180,n:'Kwang Ming',hero:'brendan',tl:42,tx:300,coins:1523
 let cardView='me';
 const pStr=sec=>{ const m=Math.floor(sec/60); return `${Math.floor(m/60)} 小时 ${String(m%60).padStart(2,'0')} 分`; };
 function starsOf(d){ const gyms=TR.regions.reduce((a,r)=>a+r.gyms.length,0); const c=[d.champ>=1,d.caught>=1025,d.badgeN>=gyms,d.legend>=TR.legend.length,d.shiny>=100]; return Math.min(5,c.filter(Boolean).length+(d.dbg||0)); }
-/* 王牌宝可梦：放在徽章右边的空位（卡片窄的时候排到徽章下面） */
-function aceHtml(a){ if(!a||!SP[a.id]) return ''; const ty=[SP[a.id][2],SP[a.id][8]].filter(Boolean);
-  return `<div class="tcace"><div class="aceh">王牌宝可梦</div><img src="${spf(a.id,a.shiny)}" alt="${SP[a.id][0]}"><b>${a.shiny?'✨':''}${SP[a.id][0]}</b><div class="acelv">Lv ${a.lv}</div><div class="tys">${ty.map(x=>`<i style="background:${TYC[x]||'#aaa'}">${x}</i>`).join('')}</div></div>`; }
+/* ---------- 训练家卡片改成两页（Kris 2026-11-19，参考他给的图）：上面切换「正面 / 背面」
+   正面：主角和伙伴（王牌宝可梦）、名字、称号、训练家等级、图鉴完成度、基本资料、队伍、各地区徽章
+   背面：各地区图鉴进度、战斗统计、收藏统计、牧场（农场 / 矿洞 / 探索）
+   战斗次数、扔出的球、捕获、Boss 战、进化、孵化、交换以前没有记录，从这一版开始记在 S.life；胜利（S.wins）一直都有 ---------- */
+const REGDEX=[[1,151],[152,251],[252,386],[387,493],[494,649],[650,721],[722,809],[810,905],[906,1025]], REGC=['#e0484a','#e0b43a','#4caf6a','#6c74e0','#9aa0b8','#3f96e0','#ee8a3a','#b45cd0','#d8487a'];
+const LEGN=(()=>{ let n=0; for(let i=1;i<=1025;i++) if(SP[i]&&SP[i][10]>=2) n++; return n; })();   /* 传说 + 幻之宝可梦的种数 */
+function lifeAdd(k,n){ const l=S.life=S.life||{}; l[k]=(l[k]||0)+(n||1); }
+if(!S.life) S.life=S.chosen?{bt:S.wins||0,since:today()}:{};   /* 旧存档：战斗次数先按胜利次数算，其余从今天开始记 */
+/* 卡片要的统计：自己的现算；存档时也放进公开资料（S.pub.card），别人看你的卡片时读这份 */
+function cardX(){ const dex=Object.keys(S.dex||{}).map(Number).filter(i=>i<=1025), top=S.mons.reduce((a,m)=>!a||m.lv>a.lv?m:a,null);
+  return {life:{...S.life,win:S.wins||0},team:(S.team||[]).map(mon).filter(Boolean).slice(0,6).map(m=>({id:m.id,lv:m.lv,shiny:!!m.shiny})),rdex:REGDEX.map(([a,b])=>dex.filter(i=>i>=a&&i<=b).length),
+    mons:S.mons.length,shOwn:S.mons.filter(m=>m.shiny).length,leg:dex.filter(i=>SP[i]&&SP[i][10]>=2).length,top:top?{id:top.id,lv:top.lv,shiny:!!top.shiny}:null}; }
+let tcSide='f';   /* 自己的卡片记住看到哪一面；别人的卡片每次从正面开始 */
 function cardHtml(d){
-  const h=HEROES.find(x=>x[0]===d.hero)||HEROES[0], st=starsOf(d), ci=d.ci;
-  const wall=TR.regions.map((r,ri)=>{ const got=r.gyms.filter((g,i)=>d.has(ri+'-'+i)).length; return `<div class="rg"><span class="n">${r.region_zh} ${got}/${r.gyms.length}</span>${r.gyms.map((g,i)=>badgeIcon(g,d.has(ri+'-'+i),ri,i)).join('')}</div>`; }).join('');
-  return `<div class="tcard s${st}"><div class="tchead"><b class="t">TRAINER CARD</b><span class="tcstars" aria-label="${st} 颗星">${[0,1,2,3,4].map(i=>`<span class="${i<st?'on':''}">★</span>`).join('')}</span></div>
-    <div class="tcbody"><div class="tcpic"><img class="hero" alt="" src="data:image/png;base64,${TCIMG[h[0]]}"><div class="tcav"><b>训练家 Lv ${d.tl}</b></div></div>
-    <dl class="tcrows"><div class="tcr"><dt>名字</dt><dd>${d.n}</dd></div><div class="tcr"><dt>性别</dt><dd>${h[1]}</dd></div>
-      <div class="tcr w"><dt>训练家等级</dt><dd>Lv ${d.tl}　<span class="tbar"><i style="width:${d.tl>=100?100:Math.round(100*d.tx/tneed(d.tl))}%"></i></span> <span class="muted">${d.tl>=100?'已满级':`${d.tx} / ${tneed(d.tl)}`}</span></dd></div>
-      <div class="tcr w"><dt>对战段位</dt><dd>${rankText(d.rating||0)}</dd></div>
-      <div class="tcr w"><dt>金钱（P）</dt><dd>₱ ${d.coins.toLocaleString()}　<span class="muted">星尘 ${d.stars.toLocaleString()}</span></dd></div>
-      <div class="tcr w"><dt>图鉴</dt><dd>见到 ${d.seen} · 捉到 ${d.caught}${d.shiny!==undefined?` · 异色 ${d.shiny}`:''}</dd></div>
-      ${ci?`<div class="tcr w"><dt>宝可梦</dt><dd>拥有 ${ci.owned} 只　<span class="muted">队伍 ${ci.teams} 个</span></dd></div>`:''}
-      <div class="tcr"><dt>游戏时间</dt><dd ${d.me?'id="tcplay"':''}>${d.me?playStr():pStr(d.play)}</dd></div><div class="tcr"><dt>冒险开始</dt><dd>${d.start}</dd></div></dl></div>
-    <div class="tcbadges"><div class="tcbw"><div class="tcbl"><b>徽章</b>${wall}</div>${aceHtml(d.ace)}</div></div></div>`; }
-const myCard=()=>({me:1,n:CONSOLE_USER.name,hero:S.hero,tl:S.tl||1,tx:S.tx||0,coins:S.coins,stars:S.stars,seen:new Set([...Object.keys(S.seen||{}),...Object.keys(S.dex||{})].filter(i=>+i<=1025)).size,caught:Object.keys(S.dex||{}).filter(i=>+i<=1025).length,play:S.play,start:S.start,rating:(S.pvp&&S.pvp.rating)||0,has:k=>!!S.badges[k],badgeN:Object.keys(S.badges||{}).length,champ:champCount(),legend:Object.keys(S.legendBeat||{}).length,shiny:Object.keys(S.dexS||{}).filter(i=>+i<=1025).length,dbg:S.dbgStar||0,ci:cardInfo(),ace:myAce(),...(window.__cardX?__cardX():{})});
+  const h=HEROES.find(x=>x[0]===d.hero)||HEROES[0], st=starsOf(d), ci=d.ci, c=d.card||{}, L=new Proxy(c.life||{},{get:(o,k)=>o[k]!=null?o[k]:d.card?0:null}),   /* 有卡片资料时没记到的算 0；旧版本的别人显示「—」 */ side=d.me?tcSide:'f', a=[d.ace,c.team&&c.team[0]].find(x=>x&&SP[x.id])||null;   /* 伙伴：王牌宝可梦，没设就用队伍第一只 */
+  const E=t=>String(t==null?'':t).replace(/[&<>"]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[x])), N=v=>v==null?'—':Number(v).toLocaleString();
+  const tile=(k,v,id)=>`<div class="tc-tl"><small>${k}</small><b${id?` id="${id}"`:''}>${v}</b></div>`;
+  const stat=(ic,k,v,sub,note)=>`<div class="tc-s"><span class="tc-si">${ic}</span><div class="tc-sv"><small>${k}</small><b>${v}${sub?`<em>${sub}</em>`:''}</b>${note?`<small class="tc-sn">${note}</small>`:''}</div></div>`;
+  const pct=Math.floor(100*Math.min(1025,d.caught||0)/1025), ttl=d.ttl&&typeof titleTag==='function'?titleTag(d.ttl,d.ttlN,1):'';
+  const tw=d.tower==null?'—':d.tower?`第 ${d.tower} 层`:'还没挑战', xp=d.tl>=100?100:Math.round(100*(d.tx||0)/tneed(d.tl));
+  const tm=c.team||[], gyms=TR.regions.reduce((s,r)=>s+r.gyms.length,0);
+  const team=Array.from({length:6},(_,i)=>{ const m=tm[i]; return m&&SP[m.id]?`<div class="tc-m" title="${E(SP[m.id][0])} Lv${m.lv}">${m.shiny?'<i class="tc-sh" aria-label="异色">✦</i>':''}<img src="${spf(m.id,m.shiny)}" alt="${E(SP[m.id][0])}"><b>${m.lv}</b></div>`:'<div class="tc-m e" aria-hidden="true"></div>'; }).join('');
+  const badges=TR.regions.map((r,ri)=>{ const got=r.gyms.filter((g,i)=>d.has(ri+'-'+i)).length; return `<div class="tc-rg${got>=r.gyms.length?' full':''}"><div class="tc-rgh"><b>${r.region_zh}</b><span>${got} / ${r.gyms.length}</span></div><div class="tc-bd">${r.gyms.map((g,i)=>badgeIcon(g,d.has(ri+'-'+i),ri,i)).join('')}</div></div>`; }).join('');
+  const regs=REGDEX.map((g,i)=>{ const tot=g[1]-g[0]+1, n=c.rdex?c.rdex[i]:null; return `<div class="tc-rd"><div class="tc-rgh"><b>${TR.regions[i]?TR.regions[i].region_zh:''}</b><span>${n==null?'—':n} / ${tot}</span></div><span class="tc-rb"><i style="width:${n?Math.round(100*n/tot):0}%;background:${REGC[i]}"></i></span></div>`; }).join('');
+  const win=L.win!=null?L.win:null, bt=L.bt!=null?Math.max(L.bt,win||0):null, top=c.top&&SP[c.top.id]?c.top:null;
+  const pin=s=>`<img class="tc-pi" src="${spf(s.id,s.shiny)}" alt="">`, trophy='<svg viewBox="0 0 16 16" width="30" height="30" aria-hidden="true" shape-rendering="crispEdges"><path fill="#f6c84a" d="M4 2h8v1h2v3h-1v1h-1v1h-1v1H9v2h2v1h1v2H4v-2h1v-1h2V9H5V8H4V7H3V6H2V3h2z"/><path fill="#fff2b0" d="M5 3h1v4H5z"/><path fill="#b8862a" d="M3 4h1v1H3zM12 4h1v1h-1zM5 12h6v1H5z"/></svg>';
+  const old=!d.me&&!d.card;
+  const front=`<div class="tc-top">
+      <div class="tc-por"><div class="tc-stage">${a?`<img class="tc-pt" src="${spf(a.id,a.shiny)}" alt="">`:''}<img class="tc-hero" src="data:image/png;base64,${TCIMG[h[0]]}" alt="${h[2]}${h[1]}主角"></div>
+        <div class="tc-ptn">${a?`${iImg('ball',16)}伙伴：<b>${a.shiny?'✦':''}${E(SP[a.id][0])}</b> <span>Lv${a.lv}</span>`:'<span>还没有王牌宝可梦</span>'}</div></div>
+      <div class="tc-info"><div class="tc-nm"><b>${E(d.n)}</b>${ttl}</div>
+        <div class="tc-lv"><span class="tc-lvb">训练家 Lv ${d.tl}</span><span class="tc-xp"><i style="width:${xp}%"></i></span><small>${d.tl>=100?'已满级':`${N(d.tx||0)} / ${N(tneed(d.tl))}`}</small></div>
+        <div class="tc-dex"><span class="tc-ring" style="--p:${pct}"><b>${pct}%</b></span><div><b class="tc-dn">已捕获 <em>${N(d.caught)}</em> / 1025</b><span class="tc-dsub"><i>✦</i> 异色 ${N(d.shiny)} 种 · 见过 ${N(d.seen)} 种</span></div></div></div></div>
+    <div class="tc-tls">${tile('冒险开始',E(d.start))}${tile('游戏时间',d.me?playStr():pStr(d.play),d.me?'tcplay':'')}${tile('对战段位',rankText(d.rating||0))}${tile('对战塔',tw)}${tile('金钱',`₱ ${N(d.coins)}`)}${tile('星尘',N(d.stars))}</div>
+    <div class="tc-h"><b>队伍</b><span>${tm.length} / 6</span></div><div class="tc-team">${team}</div>
+    <div class="tc-h"><b>徽章</b><span>${d.badgeN} / ${gyms}</span></div><div class="tc-bw">${badges}</div>`;
+  const back=`<div class="tc-h"><b>各地区图鉴</b><span>${N(d.caught)} / 1025</span></div><div class="tc-rds">${regs}</div>
+    <div class="tc-h"><b>战斗</b></div><div class="tc-ss">
+      ${stat('<i class="tc-vs">VS</i>','战斗',N(bt))}${stat(trophy,'胜利',N(win),bt?`${Math.round(100*win/bt)}%`:'')}${stat(iImg('ball',30),'扔出的球',N(L.ball))}
+      ${stat(iImg('b_ultra',30),'捕获',N(L.cat))}${stat(iImg('b_beast',30),'Boss 战胜利',N(L.bossW),L.boss!=null?`/ ${N(L.boss)}`:'')}${stat(top?pin(top):iImg('candy',30),'最高等级',top?E(SP[top.id][0]):'—',top?`Lv${top.lv}`:'')}</div>
+    <div class="tc-h"><b>收藏</b></div><div class="tc-ss">
+      ${stat(iImg('b_premier',30),'宝可梦',N(c.mons),'只')}${stat('<i class="tc-shi">✦</i>','异色宝可梦',N(c.shOwn),'只')}${stat(iImg('b_master',30),'传说 / 幻之',N(c.leg),`/ ${LEGN}`)}
+      ${stat(iImg('i83',30),'进化',N(L.evo))}${stat(`<img src="${EGGIMG}" alt="" width="28" height="28" style="image-rendering:pixelated">`,'孵化的蛋',N(L.egg))}${stat(iImg('link',30),'交换',N(L.trade))}</div>
+    ${ci?`<div class="tc-h"><b>牧场</b></div><div class="tc-ss">${stat(iImg('br_oran',30),'农场',`${ci.farm.n} / ${ci.farm.max}`,'块地',`地力合计 ${ci.farm.soil}`)}${stat(iImg('i81',30),'矿洞',`第 ${ci.mine.depth} 层`,'',`矿工队 ${ci.mine.crews} 支`)}${stat(iImg('b_dive',30),'探索',`${ci.ex.maps} / ${ci.ex.total}`,'张地图',`探索队 ${ci.ex.teams} 支`)}</div>`:''}
+    ${d.me&&L.since?`<p class="tc-note">战斗、扔出的球、捕获、Boss 战、进化、孵化、交换从 ${E(L.since)} 开始记录（以前的游戏没有记这些）；胜利是全部的。</p>`:old?'<p class="tc-note">这位训练家还没更新到新版本，显示「—」的资料要等他再玩一次才有。</p>':''}`;
+  return `<div class="tcard s${st}" data-side="${side}"${d.me?' data-me="1"':''}><div class="tc-hd"><b class="tc-t">TRAINER CARD</b><span class="tcstars" aria-label="${st} 颗星">${[0,1,2,3,4].map(i=>`<span class="${i<st?'on':''}">★</span>`).join('')}</span>
+    <span class="tc-seg" role="group" aria-label="切换卡片的面"><button type="button" data-tcs="f" aria-pressed="${side==='f'}">正面</button><button type="button" data-tcs="b" aria-pressed="${side==='b'}">背面</button></span></div>
+    <div class="tc-pgs"><div class="tc-pg tc-f"${side==='f'?'':' hidden'}>${front}</div><div class="tc-pg tc-b"${side==='b'?'':' hidden'}>${back}</div></div></div>`; }
+/* 切换正面 / 背面：卡片翻一下（减少动态效果时直接换） */
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-tcs]'); if(!b) return; const cd=b.closest('.tcard'), s=b.dataset.tcs; if(!cd||cd.dataset.side===s) return;
+  cd.dataset.side=s; if(cd.dataset.me) tcSide=s; cd.querySelectorAll('[data-tcs]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tcs===s)));
+  const pg=cd.querySelector('.tc-pgs'), swap=()=>{ cd.querySelector('.tc-f').hidden=s!=='f'; cd.querySelector('.tc-b').hidden=s!=='b'; };
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches) return swap();
+  pg.classList.remove('flip'); void pg.offsetWidth; pg.classList.add('flip'); clearTimeout(cd.__ft); cd.__ft=setTimeout(swap,170); setTimeout(()=>pg.classList.remove('flip'),380); });
+const myCard=()=>({me:1,n:CONSOLE_USER.name,hero:S.hero,tl:S.tl||1,tx:S.tx||0,coins:S.coins,stars:S.stars,seen:new Set([...Object.keys(S.seen||{}),...Object.keys(S.dex||{})].filter(i=>+i<=1025)).size,caught:Object.keys(S.dex||{}).filter(i=>+i<=1025).length,play:S.play,start:S.start,rating:(S.pvp&&S.pvp.rating)||0,has:k=>!!S.badges[k],badgeN:Object.keys(S.badges||{}).length,champ:champCount(),legend:Object.keys(S.legendBeat||{}).length,shiny:Object.keys(S.dexS||{}).filter(i=>+i<=1025).length,dbg:S.dbgStar||0,ci:cardInfo(),ace:myAce(),card:cardX(),...(window.__cardX?__cardX():{})});
 const myAce=()=>{ const P=S.pvp||{}, ms=(P.team||[]).map(mon).filter(Boolean), m=mon(P.ace)||ms[ms.length-1]; return m?{id:m.id,lv:m.lv,shiny:m.shiny}:null; };
 const otherCard=o=>({...o,ace:o.ace||(o.team&&o.team.length?o.team[o.team.length-1]:null),has:k=>{ const [ri,gi]=k.split('-').map(Number); return gi<o.reg[ri]; },badgeN:o.reg.reduce((a,b)=>a+b,0),...(window.__ocX?__ocX(o):{})});
 /* 训练家卡片上的农场 / 矿洞 / 探索资料：自己的卡片现算；存档里也存一份（S.ci），别人看你的卡片时读这份 */
@@ -6828,7 +6896,7 @@ function mkClaim(){ mkPost('claim').then(r=>{ if(!r.ok) return; const its=r.j.it
   S.auc.hist=S.auc.hist.slice(-10); S.trade.hist=S.trade.hist.slice(-10); save(); renderShell(); mkLoad(true); }); }
 setInterval(()=>{ if(!LIVE()||document.hidden||!S.chosen) return; MK.n++; if(tab==='auction'||tab==='trade'||MK.n%12===0) mkLoad(); },5000);
 const botOk=o=>{ const r=tgVal(o.want)/Math.max(1,tgVal(o.give)); return r>=.7&&r<=1.6; };
-setInterval(()=>{ if(!LIVE()||!MK.trade||document.hidden) return; MK.trade.filter(t=>t.mine&&Date.now()-t.at>900000&&botOk(t)).slice(0,1).forEach(t=>{ mkPost('trade/bot',{id:t.id}).then(r=>{ if(!r.ok) return; giveGoods(r.j.want); const w=pickA(NPCN); const tx=`${w} 接受了你的交换：你给 ${tgText(r.j.give).replace(/<[^>]*>/g,'')}，换到 ${r.j.want.type==='item'?ITEMS[r.j.want.k][0]+' ×'+r.j.want.n:SP[r.j.want.id][0]+' Lv'+r.j.want.lv}`; S.trade.hist.push(tx); S.trade.hist=S.trade.hist.slice(-10); toast(tx); save(); mkLoad(true); renderShell(); }); }); },20000);
+setInterval(()=>{ if(!LIVE()||!MK.trade||document.hidden) return; MK.trade.filter(t=>t.mine&&Date.now()-t.at>900000&&botOk(t)).slice(0,1).forEach(t=>{ mkPost('trade/bot',{id:t.id}).then(r=>{ if(!r.ok) return; giveGoods(r.j.want); const w=pickA(NPCN); const tx=`${w} 接受了你的交换：你给 ${tgText(r.j.give).replace(/<[^>]*>/g,'')}，换到 ${r.j.want.type==='item'?ITEMS[r.j.want.k][0]+' ×'+r.j.want.n:SP[r.j.want.id][0]+' Lv'+r.j.want.lv}`; lifeAdd('trade'); S.trade.hist.push(tx); S.trade.hist=S.trade.hist.slice(-10); toast(tx); save(); mkLoad(true); renderShell(); }); }); },20000);
 let aucForm={k:'',n:1,p:100,d:30,b:-1};
 function itemPop(keys,cb){ const pop=$('#mpick'); let r=-1;
   const draw=()=>{ const L=keys.filter(k=>r<0||itemRar(k)===r);
@@ -6903,7 +6971,7 @@ function rTrade(){
     if(o.real){ const pm=payMon(o.want), pay=pm?{type:'mon',id:pm.id,lv:pm.lv,shiny:!!pm.shiny}:undefined; b.disabled=true;
       return mkPost('trade/accept',{id:o.tid,pay}).then(r=>{ if(!r.ok){ b.disabled=false; toast(r.status===404?'这条交换已经被别人接了':r.status===409?'你的东西不符合对方的要求':'交换失败（'+r.status+'）'); return mkLoad(true); }
         if(pm){ if(pm.held) equip(pm,null); if(pm.ms&&typeof equipMS==='function') equipMS(pm,null); S.mons=S.mons.filter(x=>x.uid!==pm.uid); fixTeam(); } else takeGoods(o.want); giveGoods(r.j.give);
-        const tx=`和 ${o.who} 交换：给出 ${pm?SP[pm.id][0]+' Lv'+pm.lv:ITEMS[o.want.k][0]+' ×'+o.want.n}，换到 ${o.give.type==='item'?ITEMS[o.give.k][0]+' ×'+o.give.n:SP[o.give.id][0]+' Lv'+o.give.lv}`; S.trade.hist.push(tx); S.trade.hist=S.trade.hist.slice(-10); toast('交换成功'); save(); renderShell(); mkLoad(true); rTrade(); }); } takeGoods(o.want); giveGoods(o.give); S.trade.hist.push(`和 ${o.who} 交换：给出 ${o.want.n>1||1?ITEMS[o.want.k][0]+' ×'+o.want.n:''}，换到 ${o.give.type==='item'?ITEMS[o.give.k][0]+' ×'+o.give.n:SP[o.give.id][0]+' Lv'+o.give.lv}`); S.trade.hist=S.trade.hist.slice(-10); S.trade.offers.splice(S.trade.offers.indexOf(o),1); toast('交换成功'); save(); rTrade(); renderShell(); });
+        const tx=`和 ${o.who} 交换：给出 ${pm?SP[pm.id][0]+' Lv'+pm.lv:ITEMS[o.want.k][0]+' ×'+o.want.n}，换到 ${o.give.type==='item'?ITEMS[o.give.k][0]+' ×'+o.give.n:SP[o.give.id][0]+' Lv'+o.give.lv}`; lifeAdd('trade'); S.trade.hist.push(tx); S.trade.hist=S.trade.hist.slice(-10); toast('交换成功'); save(); renderShell(); mkLoad(true); rTrade(); }); } takeGoods(o.want); giveGoods(o.give); lifeAdd('trade'); S.trade.hist.push(`和 ${o.who} 交换：给出 ${o.want.n>1||1?ITEMS[o.want.k][0]+' ×'+o.want.n:''}，换到 ${o.give.type==='item'?ITEMS[o.give.k][0]+' ×'+o.give.n:SP[o.give.id][0]+' Lv'+o.give.lv}`); S.trade.hist=S.trade.hist.slice(-10); S.trade.offers.splice(S.trade.offers.indexOf(o),1); toast('交换成功'); save(); rTrade(); renderShell(); });
   $('#tpost').onclick=()=>{ rd(); let give,want;
     if(tf.gt==='item'){ if(!tf.gk||(S.items[tf.gk]||0)<tf.gn) return toast('道具数量不够'); give={type:'item',k:tf.gk,n:tf.gn}; }
     else { const m=mon(+tf.gm); if(!m||!tradeable(m)) return toast('选一只能交换的宝可梦（不在队伍、不在探索中）'); give={type:'mon',id:m.id,lv:m.lv,shiny:m.shiny,uid:m.uid}; }
@@ -6914,7 +6982,7 @@ function rTrade(){
     S.trade.mine.push({mid:Date.now(),give,want}); toast('已发布，等别的训练家来换'); save(); rTrade(); renderShell(); };
   document.querySelectorAll('[data-tcx]').forEach(b=>b.onclick=()=>{ const o=S.trade.mine[+b.dataset.tcx]; if(!o) return; giveGoods(o.give); S.trade.mine.splice(+b.dataset.tcx,1); toast('已撤回，东西退回了'); save(); rTrade(); });
 }
-setInterval(()=>{ if(!S.chosen||!S.trade.mine.length) return; let ch=false; for(const o of S.trade.mine.slice()){ const r=tgVal(o.want)/Math.max(1,tgVal(o.give)); if(r>=.7&&r<=1.6&&Math.random()<.05){ giveGoods(o.want); S.trade.mine=S.trade.mine.filter(x=>x!==o); const w=pickA(NPCN); S.trade.hist.push(`${w} 接受了你的交换：你给 ${o.give.type==='item'?ITEMS[o.give.k][0]+' ×'+o.give.n:SP[o.give.id][0]+' Lv'+o.give.lv}，换到 ${o.want.type==='item'?ITEMS[o.want.k][0]+' ×'+o.want.n:SP[o.want.id][0]+' Lv'+o.want.lv}`); S.trade.hist=S.trade.hist.slice(-10); toast(`${w} 接受了你的交换！`); ch=true; } } if(ch){ save(); if(tab==='trade') rTrade(); else renderShell(); } },1000);
+setInterval(()=>{ if(!S.chosen||!S.trade.mine.length) return; let ch=false; for(const o of S.trade.mine.slice()){ const r=tgVal(o.want)/Math.max(1,tgVal(o.give)); if(r>=.7&&r<=1.6&&Math.random()<.05){ giveGoods(o.want); S.trade.mine=S.trade.mine.filter(x=>x!==o); const w=pickA(NPCN); lifeAdd('trade'); S.trade.hist.push(`${w} 接受了你的交换：你给 ${o.give.type==='item'?ITEMS[o.give.k][0]+' ×'+o.give.n:SP[o.give.id][0]+' Lv'+o.give.lv}，换到 ${o.want.type==='item'?ITEMS[o.want.k][0]+' ×'+o.want.n:SP[o.want.id][0]+' Lv'+o.want.lv}`); S.trade.hist=S.trade.hist.slice(-10); toast(`${w} 接受了你的交换！`); ch=true; } } if(ch){ save(); if(tab==='trade') rTrade(); else renderShell(); } },1000);
 
 /* ---------- 段位 ---------- */
 const RANKS=[['青铜',0],['白银',100],['黄金',300],['铂金',600],['钻石',1000],['大师',1500],['传说',2200]];
@@ -15663,7 +15731,7 @@ nav#subnav [data-tab="map"]{display:none!important}
 
   /* ---------- 公开资料：别人在排行榜、训练家卡片里看到的（存档时一起更新） ---------- */
   function pubSnap(){ const t=TW(), uw=urgWeek();
-    const id=myTitle(); return {v:1,title:id,titleN:TT[id][1],tower:t.best||0,towerW:{k:t.wk.k,best:t.wk.best||0},urgW:{k:uw.k,n:uw.n},urgT:(S.urg&&S.urg.total)||0,dex:caughtN(),shiny:shinyN(),farm:cardInfo().farm}; }
+    const id=myTitle(); return {v:1,title:id,titleN:TT[id][1],tower:t.best||0,towerW:{k:t.wk.k,best:t.wk.best||0},urgW:{k:uw.k,n:uw.n},urgT:(S.urg&&S.urg.total)||0,dex:caughtN(),shiny:shinyN(),farm:cardInfo().farm,card:cardX()}; }
   window.__pubSnap=pubSnap;   /* save() 每次存档时调用 */
   const pubOf=o=>o&&o.pub&&typeof o.pub==='object'?o.pub:null;
   const wkNow=()=>weekInfo().key;
@@ -15673,17 +15741,22 @@ nav#subnav [data-tab="map"]{display:none!important}
   /* 不在 OSE Console 里（单机预览）：示例训练家补上一份假的公开资料，页面才看得出样子 */
   function fakePub(o,i){ const r=grRng(grHash('pub'+o.n)), tl=o.tl||10, best=Math.max(0,Math.round(tl/2.2+r()*12-4));
     const tlist=TITLES.filter(t=>t[4]<=(tl>60?4:tl>40?3:tl>20?2:1)); const tt=tlist[Math.floor(r()*tlist.length)];
-    return {v:1,title:tt[0],titleN:tt[1],tower:best,towerW:{k:wkNow(),best:Math.round(best*r())},urgW:{k:wkNow(),n:Math.floor(r()*36)},dex:o.caught,shiny:o.shiny||0}; }
+    return {v:1,title:tt[0],titleN:tt[1],tower:best,towerW:{k:wkNow(),best:Math.round(best*r())},urgW:{k:wkNow(),n:Math.floor(r()*36)},dex:o.caught,shiny:o.shiny||0,card:fakeCard(o,r)}; }
+  /* 示例训练家的卡片背面：按等级、图鉴数编一份看起来合理的统计 */
+  function fakeCard(o,r){ const tl=o.tl||10, cg=o.caught||0, w=Math.round(tl*tl*1.6+r()*400), bt=Math.round(w*(1.05+r()*.15)), cat=Math.round(cg*(1.6+r()*1.4)), boss=Math.round(tl*(.8+r()));
+    let left=cg; const rdex=REGDEX.map(([a,b])=>{ const n=Math.min(b-a+1,Math.round(left*(.55+r()*.25))); left-=n; return n; }); rdex[0]+=Math.min(151-rdex[0],left);
+    const pool=[6,9,3,25,59,130,149,248,373,376,445,448,462,609,635,94,143,131,212,282,330,350,571,612,658,700,887,998], team=[]; if(o.ace) team.push({id:o.ace.id,lv:o.ace.lv,shiny:!!o.ace.shiny});
+    while(team.length<Math.min(6,1+Math.floor(tl/8))) team.push({id:pool[Math.floor(r()*pool.length)],lv:Math.max(5,tl-Math.floor(r()*12)),shiny:r()<.04});
+    const top=team.reduce((a,m)=>!a||m.lv>a.lv?m:a,null);
+    return {life:{bt,win:w,ball:Math.round(cat*(1.5+r())),cat,boss,bossW:Math.round(boss*(.6+r()*.3)),evo:Math.round(cg*.35),egg:Math.round(tl*(1+r()*3)),trade:Math.round(r()*tl)},team,rdex,mons:Math.round(cg*1.3),shOwn:o.shiny||0,leg:Math.min(LEGN,(o.legend||0)*3+Math.floor(r()*4)),top}; }
   if(typeof RANKERS!=='undefined') RANKERS.forEach((o,i)=>{ if(!o.pub) o.pub=fakePub(o,i); });
   OTHERS.forEach((o,i)=>{ if(!SYNC()&&!o.pub) o.pub=fakePub(o,i); });
   const people=()=>{ const L=SYNC()?OTHERS:RANKERS; return L.map(o=>({...otherCard(o),uid:o.u||o.n})); };
 
-  /* 训练家卡片：多一行称号 + 对战塔 */
+  /* 训练家卡片：称号 + 对战塔（卡片本体在 cardHtml 里读 d.ttl / d.tower） */
   window.__cardX=()=>({ttl:myTitle(),tower:TW().best||0,urgW:urgWeek().n});   /* myCard() / otherCard() 会把这些并进去 */
-  window.__ocX=o=>{ const p=pubOf(o); return {ttl:p?p.title:null,ttlN:p?p.titleN:null,tower:towerOf(o),urgW:urgOf(o)}; };
+  window.__ocX=o=>{ const p=pubOf(o); return {ttl:p?p.title:null,ttlN:p?p.titleN:null,tower:towerOf(o),urgW:urgOf(o),card:p&&p.card?p.card:null}; };
   window.myTitleTag=()=>titleTag(myTitle());
-  { const _ch=cardHtml; cardHtml=function(d){ let h=_ch(d); const tg=d.ttl?titleTag(d.ttl,d.ttlN):'<span class="muted">—</span>', tw=d.tower==null?'—':d.tower?`最高第 ${d.tower} 层`:'还没挑战过';
-      return h.replace(/(<div class="tcr"><dt>性别<\/dt><dd>[\s\S]*?<\/dd><\/div>)/,`$1<div class="tcr w"><dt>称号</dt><dd>${tg}</dd></div>`).replace(/(<div class="tcr w"><dt>对战段位<\/dt><dd>[\s\S]*?<\/dd><\/div>)/,`$1<div class="tcr w"><dt>对战塔</dt><dd>${tw}</dd></div>`); }; }
   /* 训练家卡片页：称号墙，点一下佩戴 */
   { const _rc=rCard; rCard=function(){ _rc(); const host=document.querySelector('#main .panel'); if(!host) return; const cur=myTitle();
       const el=document.createElement('div'); el.className='card'; el.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">称号</h2><span class="muted">已获得 ${TITLES.filter(t=>titleOK(t[0])).length} / ${TITLES.length}</span></div><div class="muted" style="margin-bottom:8px">达成条件就会得到称号。点一个佩戴，戴上的称号会显示在训练家卡片、主页，别人在排行榜里也看得到。</div>
@@ -16352,6 +16425,18 @@ function rCenter(){
 /* 不弹「出战队伍」确认窗的战斗（对战塔、特效测试）：能上场的都倒下了，就在开场动画之前挡下来（放在最外层，等全部脚本跑完再包） */
 setTimeout(()=>{ const _sb=startBattle; startBattle=function(cfg){ try{ if(cfg&&cfg.noPop&&!S.team.map(mon).some(m=>m&&!isBusy(m)&&!isFnt(m)&&(!cfg.only||cfg.only(m))&&!(cfg.carry&&cfg.carry[m.uid]===0))&&S.team.map(mon).some(m=>m&&isFnt(m))) return toast('队伍里能上场的宝可梦都倒下了，先到「牧场 → 宝可梦中心」治疗'); }catch(e){} return _sb.apply(this,arguments); }; },0);
 /* ===== 第十八阶段结束 ===== */
+/* ===== 第十九阶段（Kris 2026-11-19）：训练家卡片背面要的统计 —— 战斗次数、Boss 战、捕获、进化、孵化（扔球和交换在原来的代码里直接记） ===== */
+(function(){
+  /* 战斗：看到新的一场（B / D 换成新的对象）就记一场；有的战斗要先选队伍才真的开打，所以不在 startBattle 里算。特效测试（临时的测试宝可梦）不算 */
+  let lb=null, ld=null;
+  setInterval(()=>{ try{ const test=S.mons.some(m=>m.test);
+    if(B&&B!==lb){ lb=B; if(!test){ lifeAdd('bt'); const c=B.cfg||{}; if(/世界 Boss/.test((c.tag||'')+(c.title||''))) lifeAdd('boss'); } }
+    if(D&&D!==ld){ ld=D; if(!test) lifeAdd('bt'); } }catch(e){} },250);
+  const _pg=prog; prog=function(k){ try{ if(k==='caught') lifeAdd('cat'); else if(k==='boss') lifeAdd('bossW'); }catch(e){} return _pg.apply(this,arguments); };
+  const _ev=evolve; evolve=function(m){ const id0=m&&m.id, r=_ev.apply(this,arguments); try{ if(m&&m.id!==id0) lifeAdd('evo'); }catch(e){} return r; };
+  const _nc=nurCollect; nurCollect=function(){ const n0=S.mons.length, r=_nc.apply(this,arguments); try{ if(S.mons.length>n0) lifeAdd('egg'); }catch(e){} return r; };
+})();
+/* ===== 第十九阶段结束 ===== */
 /* 保险（Kris 2026-11-18）：弹窗打开了、内容却没画出来（中途出错）时，不要留下一个空白框挡住画面——直接关掉 */
 (function(){ const md=document.getElementById('modal'), bt=document.getElementById('battle'); if(!md||!bt) return;
   const chk=()=>{ if(!md.hidden&&!bt.children.length&&!bt.textContent.trim()){ md.hidden=true; console.warn('空白弹窗已自动关闭'); try{ evoAsking=null; tmPopFor=null; sigPopFor=null; }catch(e){} } };
