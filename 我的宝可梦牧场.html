@@ -715,8 +715,8 @@ button.item.rk:hover{border-color:var(--leaf);background:#f1f7e4}button.item.rk.
 .tmbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.tbn{display:flex;align-items:center;gap:8px;font-size:22px;margin-right:6px}.tbn .tbtn{width:30px;height:30px;font-size:14px}.tchip{border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:#fff;font-weight:600;font-size:14px}.tchip.g{background:#dfeedd;border-color:#bcd8b8;color:#2d6a31}.tchip.warn{color:#b3261e;border-color:#e9b0aa}.tsep{width:1px;height:26px;background:var(--line);margin:0 2px}.tbd{font-weight:700}.tpow{margin-left:auto;display:inline-flex;gap:8px;align-items:center;background:#e7f2df;border:1px solid #cfe3c7;color:#2d6a31;border-radius:999px;padding:6px 16px;font-weight:700;white-space:nowrap}.tpow b{font-size:20px}
 /* 队伍页（Kris 2026-11-19 改版）：左边队伍列表、中间大图、右边资料 */
 .tv{display:grid;grid-template-columns:270px minmax(0,1fr) minmax(0,1.15fr);gap:12px;align-items:stretch}
-.tv-list{display:flex;flex-direction:column;gap:6px;padding:10px}.tv-list>.tv-row{flex:1}.tv-rsh{font-style:normal;font-size:12px;flex:none}
-.tv-row{position:relative;display:flex;align-items:center;gap:8px;padding:6px 8px;border:2px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;min-height:62px}
+.tv-list{display:flex;flex-direction:column;gap:6px;padding:10px}.tv-list>.tv-row{flex:none;height:70px;box-sizing:border-box}   /* 每格固定高度：空队伍、有宝可梦时整块一样大（Kris 2026-11-20） */.tv-rsh{font-style:normal;font-size:12px;flex:none}
+.tv-row{position:relative;display:flex;align-items:center;gap:8px;padding:6px 8px;border:2px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;min-height:0}
 .tv-row:hover{border-color:#bcd8b8}.tv-row.on{border-color:var(--leaf);background:linear-gradient(90deg,#e3f1dc,#fff);box-shadow:0 2px 8px #2d6a3122}
 .tv-row:focus-visible{outline:3px solid var(--leaf);outline-offset:1px}
 .tv-row.empty{border-style:dashed;cursor:default;justify-content:space-between;background:#fbf9f1}.tv-row.empty .btn{padding:4px 10px;font-size:13px}
@@ -755,7 +755,7 @@ button.item.rk:hover{border-color:var(--leaf);background:#f1f7e4}button.item.rk.
 @media(max-width:820px){.tv{grid-template-columns:minmax(0,1fr)}.tv-none{grid-column:auto}
   /* 手机：队伍排成 3 × 2 的小格子，图在中间，编号和换位按钮放在两个角 */
   .tv-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px}
-  .tv-row{flex-direction:column;justify-content:center;gap:2px;padding:20px 6px 6px;min-height:0;text-align:center}
+  .tv-list>.tv-row{height:116px}.tv-row{flex-direction:column;justify-content:center;gap:2px;padding:20px 6px 6px;min-height:0;text-align:center}
   .tv-row .tv-no{position:absolute;left:4px;top:4px;width:20px;height:20px;font-size:11px}.tv-row .tv-sw{position:absolute;right:3px;top:3px;width:24px;height:24px;font-size:12px}
   .tv-row img{width:48px;height:48px}.tv-ri{width:100%}.tv-rn{justify-content:center}.tv-rn b{font-size:12.5px}.tv-rl{font-size:11px}
   .tv-row.empty{padding:22px 4px 8px;justify-content:center}.tv-row.empty .muted{font-size:12px}.tv-row.empty .btn{font-size:12px;padding:3px 8px}}
