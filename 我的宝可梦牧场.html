@@ -1554,10 +1554,10 @@ function renderShell(){
   $('#nav').innerHTML=GROUPS.filter(x=>x[0]!=='dev'||!window.__POKEFARM_SYNC).map(([k,n,ts])=>`${(()=>{ const x=ts.reduce((a,t)=>a+(PEND[t]||0),0)+(k==='adv'?wildN:0);   /* 上面这排不显示数字，有待处理的按钮闪烁（Kris 2026-11-19） */
     return `<button role="tab" aria-selected="${k===g[0]}" data-grp="${k}"${x?` class="pend" aria-description="有 ${x} 项待处理"`:''}><span class="ni" aria-hidden="true">${pxIcon(k)}</span><span class="nl">${n}</span></button>`; })()}`).join(''); pendPhase($('#nav'));
   const sub=$('#subnav'); sub.hidden=g[2].length<2;
-  /* 会出现数字的分页：没有数字时也先留一个空位，数字出现 / 消失时分页条不会跳（Kris 2026-11-19） */
+  /* 宝可梦中心在这一排最右边：没有数字时也先留一个空位，数字出现 / 消失时分页条不会变宽变窄（Kris 2026-11-19） */
   sub.innerHTML=g[2].length<2?'':g[2].map(k=>{ const bossN=k==='boss'?(S.bosses||[]).length+(PARTY.invites||[]).length+(PEND.boss||0):0;
     const nb=k==='boss'?(bossN?` <span class="nbadge">${bossN}</span>`:''):k==='wild'?(wildN?` <span class="nbadge">${wildN}</span>`:''):PEND[k]?` <span class="nbadge" aria-label="${PEND[k]} 项待处理">${PEND[k]}</span>`:'';
-    const hold=!nb&&(k in PEND||k==='wild')?' <span class="nbadge nbhold" aria-hidden="true"></span>':'';
+    const hold=!nb&&k==='pcenter'?' <span class="nbadge nbhold" aria-hidden="true"></span>':'';
     return `<button role="tab" aria-selected="${k===tab}" data-tab="${k}">${TABNAME[k]}${nb||hold}${(FEAT[k]||0)>(S.tl||1)?` <small class="muted">Lv${FEAT[k]} 开放</small>`:''}</button>`; }).join('');
 }
 function go(t){ if(!TABNAME[t]) t='ranch'; if(t==='card'&&tab!=='card') cardFrom=tab; tab=t; if(t!=='card') lastSub[groupOf(t)[0]]=t; try{localStorage.setItem('ose.ranch.sub',JSON.stringify(lastSub))}catch(e){} if(location.hash!=='#'+t) history.replaceState(null,'','#'+t); render(); window.scrollTo({top:0}); }
@@ -16339,7 +16339,7 @@ function woLoss(){ const lv=Math.max(1,...S.team.map(mon).filter(Boolean).map(m=
 function doWhiteout(){ if(!S.wo) return; delete S.wo; const c=woLoss(); S.coins-=c; S.mons.forEach(healMon); save(); PCJUST={wo:c}; go('pcenter'); }
 setInterval(()=>{ try{ if(S.wo&&!B&&!(typeof D!=='undefined'&&D)&&$('#modal').hidden) doWhiteout(); }catch(e){} },300);
 /* 宝可梦中心有几只要治疗（队伍里的），显示在「牧场 → 宝可梦中心」旁边 */
-{ const _po=pendingOf; pendingOf=function(){ const r=_po.apply(this,arguments); try{ r.pcenter=S.team.map(mon).filter(m=>m&&needHeal(m)).length;   /* 0 也记下来：分页条要先留数字的空位 */ }catch(e){} return r; }; }
+{ const _po=pendingOf; pendingOf=function(){ const r=_po.apply(this,arguments); try{ const n=S.team.map(mon).filter(m=>m&&needHeal(m)).length; if(n) r.pcenter=n; }catch(e){} return r; }; }
 /* 队伍页上方：有倒下或受伤的就提醒一句，能直接去宝可梦中心 */
 function pcHint(){ const ms=S.team.map(mon).filter(m=>m&&needHeal(m)); if(!ms.length) return ''; const fn=ms.filter(isFnt).length;
   return `<div class="card pchint"><span>${fn?`<b>${fn} 只倒下了</b>，不能上场。`:''}${ms.length-fn?`${ms.length-fn} 只受了伤或 PP 用掉了。`:''}到宝可梦中心可以免费治好。</span><button class="btn" data-go="pcenter">去宝可梦中心</button></div>`; }
