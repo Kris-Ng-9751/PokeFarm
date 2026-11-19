@@ -84,7 +84,7 @@ body{background:radial-gradient(900px 500px at 50% 30%,var(--bg1),var(--bg2) 70%
   /* 标题曲（Kris 2026-11-18）：Kris 提供的 GBA 标题画面音乐 title.mp3，前奏放一次，之后从 10 秒到 51.316 秒无限循环（接缝 0.12 秒交叉淡化）。
      跟游戏共用声音设定（localStorage 的 ose.ranch.snd，背景音乐默认开）；浏览器规定网页被点之前不能出声，所以第一次点画面才开始播 */
   var KEY='ose.ranch.snd', SND={bgm:1,vol:.6}; try{ var o=JSON.parse(localStorage.getItem(KEY)||'{}'); if(o.bgm!=null) SND.bgm=o.bgm; if(o.vol!=null) SND.vol=o.vol; }catch(e){}
-  var LS=10, LE=51.316, ac=null, gain=null, src=null, el=null, playing=false, sndb=document.getElementById('snd'), tip=document.getElementById('sndtip');
+  var LS=10, LE=51.316, t0a=0, ac=null, gain=null, src=null, el=null, playing=false, sndb=document.getElementById('snd'), tip=document.getElementById('sndtip');
   var ICON=function(on){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>'+(on?'<path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>':'<path d="M17 9l5 6M22 9l-5 6"/>')+'</svg>'+(on?'音乐开':'音乐关'); };
   var drawB=function(){ sndb.innerHTML=ICON(!!SND.bgm); sndb.setAttribute('aria-pressed',SND.bgm?'true':'false'); sndb.setAttribute('aria-label',SND.bgm?'关掉音乐':'打开音乐'); };
   var keep=function(){ try{ var o=JSON.parse(localStorage.getItem(KEY)||'{}'); o.bgm=SND.bgm; localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} };
@@ -92,7 +92,7 @@ body{background:radial-gradient(900px 500px at 50% 30%,var(--bg1),var(--bg2) 70%
     fetch('bgm/title.mp3').then(function(r){ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(function(ab){ return new Promise(function(res,rej){ ac.decodeAudioData(ab,res,rej); }); }).then(function(b){
       var sr=b.sampleRate, sS=Math.round(LS*sr), eS=Math.min(b.length,Math.round(LE*sr)), xf=Math.round(.12*sr);
       for(var c=0;c<b.numberOfChannels;c++){ var d=b.getChannelData(c); for(var i=0;i<xf;i++){ var k=i/xf, at=eS-xf+i; d[at]=d[at]*(1-k)+d[sS-xf+i]*k; } }
-      if(!SND.bgm||!playing) return; src=ac.createBufferSource(); src.buffer=b; src.loop=true; src.loopStart=LS; src.loopEnd=LE; src.connect(gain); src.start(); }).catch(function(){ startEl(); }); };
+      if(!SND.bgm||!playing) return; src=ac.createBufferSource(); src.buffer=b; src.loop=true; src.loopStart=LS; src.loopEnd=LE; src.connect(gain); src.start(); t0a=ac.currentTime; }).catch(function(){ startEl(); }); };
   var startEl=function(){ if(el) return el.play().catch(function(){}); el=new Audio('bgm/title.mp3'); el.volume=Math.min(1,SND.vol*.6); el.addEventListener('timeupdate',function(){ if(el.currentTime>=LE) el.currentTime=LS+(el.currentTime-LE); }); el.addEventListener('ended',function(){ el.currentTime=LS; el.play().catch(function(){}); }); el.play().catch(function(){}); };
   var play=function(){ if(playing||!SND.bgm) return; playing=true; tip.classList.remove('on'); if(location.protocol==='file:') return startEl(); if(ac&&ac.state==='suspended') ac.resume(); startWA(); };
   var stop=function(fade){ playing=false; if(src&&gain){ try{ var t=ac.currentTime; gain.gain.setValueAtTime(gain.gain.value,t); gain.gain.linearRampToValueAtTime(0,t+(fade||.2)); src.stop(t+(fade||.2)+.02); }catch(e){} src=null; } if(el){ el.pause(); } };
@@ -101,7 +101,9 @@ body{background:radial-gradient(900px 500px at 50% 30%,var(--bg1),var(--bg2) 70%
   try{ var C0=window.AudioContext||window.webkitAudioContext; if(C0&&SND.bgm&&location.protocol!=='file:'){ ac=new C0(); if(ac.state==='running') play(); } }catch(e){}
   ['pointerdown','keydown','touchstart'].forEach(function(ev){ document.addEventListener(ev,function(e){ if(e.target.closest&&e.target.closest('#snd,#start')) return; play(); },{capture:true,passive:true}); });
   sndb.addEventListener('click',function(){ SND.bgm=SND.bgm?0:1; keep(); drawB(); if(SND.bgm) play(); else { stop(); tip.classList.remove('on'); } });
-  btn.addEventListener('click',function(e){ if(btn.getAttribute('aria-disabled')==='true'){ e.preventDefault(); return; } e.preventDefault(); stop(.35); document.getElementById('fade').classList.add('on'); setTimeout(function(){ location.href=GAME; },380); });
+  /* 进游戏时把标题曲放到哪里记下来，游戏的加载画面从这里接着放（Kris 2026-11-19） */
+  var pos=function(){ if(src&&ac){ var e=ac.currentTime-t0a; return e<LE?e:LS+(e-LS)%(LE-LS); } if(el&&!el.paused) return el.currentTime; return -1; };
+  btn.addEventListener('click',function(e){ if(btn.getAttribute('aria-disabled')==='true'){ e.preventDefault(); return; } e.preventDefault(); var ps=playing?pos():-1; try{ if(ps>=0) sessionStorage.setItem('ose.title.pos',JSON.stringify({pos:ps,at:Date.now()})); }catch(er){} document.getElementById('fade').classList.add('on'); setTimeout(function(){ location.href=GAME; },380); });
 })();
 </script>
 </body>

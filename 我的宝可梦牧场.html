@@ -953,6 +953,36 @@ table{border-collapse:separate;border-spacing:0}th{text-align:left;font-weight:5
   window.addEventListener('error',function(e){ if(!done&&e&&e.message){ msg.textContent='加载遇到问题：'+String(e.message).slice(0,80); el.classList.add('stuck'); } });
 })();
 </script>
+<script>
+/* 加载画面也接着放标题曲（Kris 2026-11-19）：从网站首页按「开始游戏」进来时，首页会把标题曲放到哪里记下来（sessionStorage 的 ose.title.pos），
+   这里从那个位置接着放（前奏放一次，之后 10 秒到 51.316 秒循环），一直放到游戏自己的音乐开始（点了画面、声音解锁）再淡出。
+   直接打开游戏页、或者关掉了背景音乐，就不放 */
+(function(){ var S={bgm:1,vol:.6}, h=null; try{ var o=JSON.parse(localStorage.getItem('ose.ranch.snd')||'{}'); if(o.bgm!=null) S.bgm=o.bgm; if(o.vol!=null) S.vol=o.vol; }catch(e){}
+  try{ h=JSON.parse(sessionStorage.getItem('ose.title.pos')||'null'); sessionStorage.removeItem('ose.title.pos'); }catch(e){}
+  if(!h||!S.bgm||!(Date.now()-h.at<20000)) return;
+  var LS=10, LE=51.316, SRC='bgm/title.mp3', VOL=S.vol*.6, ac=null, g=null, src=null, el=null, off=false, armed=false;
+  var posNow=function(){ var t=h.pos+(Date.now()-h.at)/1000; if(t>=LE) t=LS+(t-LS)%(LE-LS); return Math.max(0,t); };
+  window.__titleStop=function(f){ if(off) return; off=true; window.__titleStop=null; f=f==null?.8:f;
+    try{ if(src&&g){ var t=ac.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t); g.gain.linearRampToValueAtTime(0,t+f); src.stop(t+f+.05); } }catch(e){}
+    if(el){ var v=el.volume, n=0, iv=setInterval(function(){ n++; el.volume=Math.max(0,v*(1-n/10)); if(n>=10){ clearInterval(iv); el.pause(); } },f*100); } };
+  var useEl=function(){ if(off||el) return; el=new Audio(SRC); el.volume=Math.min(1,VOL);
+    el.addEventListener('loadedmetadata',function(){ try{ el.currentTime=posNow(); }catch(e){} });
+    el.addEventListener('timeupdate',function(){ if(el.currentTime>=LE) el.currentTime=LS+(el.currentTime-LE); });
+    el.addEventListener('ended',function(){ el.currentTime=LS; el.play().catch(function(){}); });
+    el.play().catch(function(){ el=null; arm(); }); };
+  /* 浏览器不让直接出声：加载画面上点一下就开始放 */
+  var arm=function(){ if(armed) return; armed=true; ['pointerdown','keydown','touchstart'].forEach(function(ev){ document.addEventListener(ev,function go(){ ['pointerdown','keydown','touchstart'].forEach(function(x){ document.removeEventListener(x,go,true); }); if(off||!document.getElementById('boot')) return; if(ac) ac.resume().then(play).catch(useEl); else useEl(); },true); }); };
+  var buf=null, play=function(){ if(off||src||!buf||!ac||ac.state!=='running') return; g=ac.createGain(); g.gain.value=0; g.connect(ac.destination); src=ac.createBufferSource(); src.buffer=buf; src.loop=true; src.loopStart=LS; src.loopEnd=LE; src.connect(g);
+    var t=ac.currentTime; src.start(t,posNow()); g.gain.linearRampToValueAtTime(VOL,t+.3); };
+  var C=window.AudioContext||window.webkitAudioContext; if(!C||location.protocol==='file:') return useEl();
+  try{ ac=new C(); }catch(e){ return useEl(); }
+  fetch(SRC).then(function(r){ if(!r.ok) throw 0; return r.arrayBuffer(); }).then(function(ab){ return new Promise(function(res,rej){ ac.decodeAudioData(ab,res,rej); }); }).then(function(b){
+    var sr=b.sampleRate, sS=Math.round(LS*sr), eS=Math.min(b.length,Math.round(LE*sr)), xf=Math.round(.12*sr);   /* 循环接缝 0.12 秒交叉淡化（跟首页一样） */
+    for(var c=0;c<b.numberOfChannels;c++){ var d=b.getChannelData(c); for(var i=0;i<xf;i++){ var k=i/xf, at=eS-xf+i; d[at]=d[at]*(1-k)+d[sS-xf+i]*k; } }
+    buf=b; if(ac.state==='running') play(); else ac.resume().then(function(){ if(ac.state==='running') play(); else arm(); }).catch(arm); setTimeout(function(){ if(!src&&!off) arm(); },400);
+  }).catch(function(){ useEl(); });
+})();
+</script>
 
 <div class="wrap shell">
 <aside class="side">
@@ -15874,7 +15904,8 @@ const BGMA={"mega":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   const inBattle=()=>{ const m=document.getElementById('modal'); return !!(m&&!m.hidden&&((typeof B!=='undefined'&&B)||(typeof D!=='undefined'&&D))); };
   let HOLD=false;   /* 捕捉成功的小曲在播：这场战斗不再放音乐 */
   let JHOLD=false;  /* 进化的恭喜小曲在播：先停掉背景音乐 */
-  function bgmSync(){ if(!live()) return; if(JHOLD){ BG.song=null; return; } if(HOLD&&!inBattle()) HOLD=false;
+  function bgmSync(){ if(!live()) return; if(window.__titleStop){ try{ window.__titleStop(); }catch(e){} }   /* 加载画面接着放的标题曲：游戏自己的声音开始了就淡出（Kris 2026-11-19） */
+    if(JHOLD){ BG.song=null; return; } if(HOLD&&!inBattle()) HOLD=false;
     if(!SND.bgm||HOLD) return bgmStop(); if(!inBattle()) return bgmPlay('ranch');
     const st=battleState(), boss=typeof B!=='undefined'&&B&&B.cfg&&/^世界 Boss/.test(B.cfg.tag||'')&&!(typeof D!=='undefined'&&D&&D.my); if(boss) return bgmPlay(st==='won'?'victory':st==='on'?'lbattle':null);
     const wild=typeof B!=='undefined'&&B&&B.cfg&&B.cfg.kind==='wild'&&!(typeof D!=='undefined'&&D&&D.my), sg=typeof B!=='undefined'&&B&&B.cfg&&!(typeof D!=='undefined'&&D&&D.my)?B.cfg:null, pre=wild?'':sg&&CHAMP(sg)?'c':sg&&BOSSTAG.has(sg.tag)?'g':'t'; bgmPlay(st==='won'?pre+'victory':st==='on'?pre+'battle':null); }
