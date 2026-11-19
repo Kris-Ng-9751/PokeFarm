@@ -16066,12 +16066,24 @@ const BGMA={"mega":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
     const L=typeof LANG!=='undefined'?LANG:'zh';
     p.innerHTML=`<b class="sndh">语言</b><div class="mnlang">${[['zh','中文'],['en','English']].map(([k,n])=>`<button type="button" data-setlang="${k}" aria-pressed="${L===k}">${n}</button>`).join('')}</div>
       <b class="sndh">声音</b>${row('bgm','背景音乐')}${row('sfx','音效')}${row('cry','宝可梦叫声')}
-      <label class="sndv"><span>音量</span><input type="range" min="0" max="100" value="${Math.round(SND.vol*100)}" data-sndv aria-label="音量"></label>`;
+      <label class="sndv"><span>音量</span><input type="range" min="0" max="100" value="${Math.round(SND.vol*100)}" data-sndv aria-label="音量"></label>
+      <button type="button" class="mnhome" data-gohome><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>回到首页</button>`;
     p.hidden=false;
     p.querySelectorAll('[data-setlang]').forEach(c=>c.onclick=()=>{ const k=c.dataset.setlang; if(k===L) return; try{ localStorage.setItem('ose.ranch.lang',k); }catch(err){ return toast('这个浏览器不能保存语言设置'); } location.reload(); });
     p.querySelectorAll('[data-snd]').forEach(c=>c.onchange=()=>{ SND[c.dataset.snd]=c.checked?1:0; keep(); vols(); bgmSync(); if(c.dataset.snd==='sfx'&&c.checked) sfx('coin'); if(c.dataset.snd==='cry'&&c.checked) cry(25); });
     const v=p.querySelector('[data-sndv]'); v.oninput=()=>{ SND.vol=v.value/100; keep(); vols(); }; v.onchange=()=>sfx('tap');
+    p.querySelector('[data-gohome]').onclick=()=>{ sfx('tap'); goHome(); };
     btnSync(); }
+  /* 菜单里的「回到首页」（Kris 2026-11-19）：先存档，背景音乐淡出、画面闪白，再回到有「开始游戏」的首页（标题画面）。
+     网站上首页是同一个文件夹的 index.html；直接打开的单个游戏文件没有首页，就重新载入，回到加载画面 */
+  let leaving=false;
+  async function goHome(){ if(leaving) return; leaving=true; try{ save(); }catch(e){}
+    let url=null; const here=decodeURIComponent(location.pathname.split('/').pop()||'');
+    if(location.protocol==='file:'){ if(here==='我的宝可梦牧场.html') url='index.html'; }   /* 网站包解压后的游戏文件旁边才有首页 */
+    else if(here&&here!=='index.html'){ try{ const r=await fetch('index.html',{method:'HEAD',cache:'no-store'}); if(r.ok) url='index.html'; }catch(e){} }
+    try{ if(AC&&MST){ const t=AC.currentTime; MST.gain.cancelScheduledValues(t); MST.gain.setValueAtTime(MST.gain.value,t); MST.gain.linearRampToValueAtTime(0,t+.35); } }catch(e){}
+    const f=document.createElement('div'); f.className='mnflash'; document.body.appendChild(f); requestAnimationFrame(()=>f.classList.add('on'));
+    setTimeout(()=>{ if(url) location.href=url; else location.reload(); },400); }
   { const _rs=renderShell; renderShell=function(){ const r=_rs.apply(this,arguments); try{ btnSync(); }catch(e){} return r; }; }
   setTimeout(()=>{ try{ btnSync(); }catch(e){} },0);
   { const _g=GSEC.start; GSEC.start=()=>_g()+[gBox(gH('声音'),`<p>右上角「菜单」里的「声音」可以分别开关<b>背景音乐</b>（牧场一首；野生宝可梦、训练家、道馆馆主 / 四天王、冠军 / 传奇训练家、世界 Boss 的对战和胜利各用 GBA 原曲）、<b>音效</b>（按钮、出招、打中、捕捉、升级、领奖励）和<b>宝可梦叫声</b>（宝可梦出场时），也能调音量。一开始三样都是开的；设定记在这台设备上。浏览器规定要先点一下画面才会出声。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
@@ -16081,7 +16093,9 @@ const BGMA={"mega":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
 .mnlang{display:flex;gap:6px}.mnlang button{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font:700 13px var(--sans);color:var(--ink);cursor:pointer}.mnlang button[aria-pressed=true]{background:var(--leaf);border-color:var(--leaf);color:#fff;cursor:default}
 .mnpop{position:fixed;z-index:60;width:270px;background:var(--card,#fffdf6);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px #0003;padding:12px 14px;display:flex;flex-direction:column;gap:10px}.mnpop[hidden]{display:none}.sndh{font:400 17px var(--pix)}
 .sndr{display:flex;align-items:center;gap:10px;cursor:pointer}.sndr span{flex:1;display:flex;flex-direction:column}.sndr input{position:absolute;opacity:0;pointer-events:none}.sndr i{flex:0 0 auto;width:40px;height:22px;border-radius:999px;background:#cfd5c6;position:relative;transition:background .15s}.sndr i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0003;transition:left .15s}.sndr input:checked+i{background:var(--leaf)}.sndr input:checked+i::after{left:21px}.sndr input:focus-visible+i{outline:2px solid var(--leaf);outline-offset:2px}
-.sndv{display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px}.sndv input{flex:1;accent-color:var(--leaf)}`;
+.sndv{display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px}.sndv input{flex:1;accent-color:var(--leaf)}
+.mnhome{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;padding:9px 12px;border:1px solid var(--line);border-top-color:var(--line);border-radius:10px;background:#fff;color:var(--ink);font:700 14px var(--sans);cursor:pointer}.mnhome:hover{border-color:var(--leaf);color:var(--leaf)}.mnhome:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+.mnflash{position:fixed;inset:0;z-index:9999;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s ease}.mnflash.on{opacity:1}`;
   document.head.appendChild(st);
 })();
 /* ===== 第十五阶段结束 ===== */
