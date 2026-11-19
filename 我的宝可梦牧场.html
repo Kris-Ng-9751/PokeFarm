@@ -15872,7 +15872,6 @@ const BGMA={"medal":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAA
     broke:()=>{ nz({r:2.2,r2:.5,d:.25,v:.25}); note({w:'p50',n:62,sl:43,d:.25,v:.14}); },
     level:()=>{ phrase('C5 E5 G5 C6 - G5 C6 E6 - - -',.07,{w:'p25',v:.14,vib:12}); phrase('E4 G4 C5 E5 - C5 E5 G5 - - -',.07,{w:'p12',v:.07}); },
     coin:()=>{ note({w:'p25',n:88,d:.07,v:.13,s:1}); note({w:'p25',n:93,d:.3,v:.13,t:T()+.07}); },
-    win:()=>{ const s=.11; phrase('G4 C5 E5 G5 - - E5 G5 - C6 - - - - - .',s,{w:'brass',v:.16,vib:16,a:.02}); phrase('E4 G4 C5 E5 - - C5 E5 - G5 - - - - - .',s,{w:'p12',v:.07}); phrase('C3 - - - - - G2 - - C3 - - - - - .',s,{w:'wave',v:.22}); },
     lose:()=>{ phrase('E5 - D#5 - D5 - C#5 - - - - -',.13,{w:'p25',v:.13,vib:10}); phrase('A2 - - - G#2 - - - A2 - - -',.13,{w:'wave',v:.2}); },
     evo:()=>{ phrase('C5 E5 G5 C6 E5 G5 C6 E6 G5 C6 E6 G6 - - -',.06,{w:'bell',v:.1}); phrase('C4 - - - E4 - - - G4 - - - C5 - -',.06,{w:'str',v:.08,a:.05}); },
   };
@@ -16026,7 +16025,7 @@ const BGMA={"medal":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAA
   const watchLog=()=>{ const lg=document.querySelector('#blog .gsc')||document.querySelector('#dlog .gsc')||document.querySelector('#blog')||document.querySelector('#dlog'); if(!lg) return; const L=[...lg.children].map(x=>x.textContent);
     const sig=L.join('\n'); if(sig===watchLog.last) return; const prev=watchLog.lines||[]; watchLog.last=sig; watchLog.lines=L;
     let k=0; while(k<prev.length&&k<L.length&&prev[k]===L[k]) k++; const nw=L.slice(k); if(nw.length>6) return;   /* 整页重画（新战斗）不当成新消息 */
-    nw.forEach(t=>{ if(/效果拔群/.test(t)) superNext=true; if(/效果不好/.test(t)) weakNext=true; if(/倒下/.test(t)&&!/全部倒下/.test(t)) setTimeout(()=>sfx('faint',null,300),120); if(/^胜利|打败了|获胜|你赢了/.test(t)&&!SND.bgm) sfx('win',null,3000); if(/全部倒下|战败/.test(t)) sfx('lose',null,3000); }); };
+    nw.forEach(t=>{ if(/效果拔群/.test(t)) superNext=true; if(/效果不好/.test(t)) weakNext=true; if(/倒下/.test(t)&&!/全部倒下/.test(t)) setTimeout(()=>sfx('faint',null,300),120); /* 关掉背景音乐时打赢不再放合成的胜利音效（Kris 2026-11-19：不要合成的声音） */ if(/全部倒下|战败/.test(t)) sfx('lose',null,3000); }); };
   const mo=new MutationObserver(ms=>{ let hit=false, swing=false; ms.forEach(m=>{ if(m.type==='attributes'){ const el=m.target, c=el.classList; if(!c) return; const was=m.oldValue||''; if(c.contains('hit')&&!/\bhit\b/.test(was)) hit=true; if((c.contains('lunge')||c.contains('charge'))&&!/\b(lunge|charge)\b/.test(was)) swing=true; } });
     try{ watchLog(); }catch(e){}
     if(hit) hitSnd();
