@@ -2782,14 +2782,14 @@ function bReplay(b,bs){ b.busy=true; let i=0; const st={over:b.over,pick:b.pick,
     const fm=(e.castFx&&FXF[e.castFx]&&fxOn())?e.castFx:(e.semi&&FXF[e.semi]&&fxOn())?e.semi:(e.z&&FXF['z:'+e.z]&&fxOn())?'z:'+e.z:(e.mv||(cat==='st'&&FXF[id]?id:null));   /* Z 招式放自己的特效（Kris 2026-11-06）；变化招式（大晴天、火焰守护、龙之舞……）也放特效 */
     const fd=fm&&fxOn()&&FXDUR[fm]; if(fd) setTimeout(()=>{ if(B===b) fxPlay(fm,e.who==='me'); },180+pad);
     const atk=e.mv&&MV[e.mv]&&MV[e.mv][2]>0, tintMv=e.mv||id; if(tintMv&&MV[tintMv]&&fxOn()) fxTint(MV[tintMv][1],(fd?fd.total:900)+pad);   /* 第八阶段：所有招式都沿用原版属性背景色，包括变化招式、一般系招式和已有专属动画。 */
-    setTimeout(()=>{ if(B===b&&atk){ const sel=e.who==='me'?'#bfoe':'#bme', n=blinkN(e.mm); if(fxOn()) blink(sel,n); else if(n) flash(sel); } },(fd?fd.hit:260)+pad); if(fd&&fd.pre&&fxOn()) fd.pre.forEach(tp=>setTimeout(()=>{ if(B===b&&atk) blink(e.who==='me'?'#bfoe':'#bme',2); },tp+pad));   /* 多段攻击：前面几下也各闪一次 */
+    setTimeout(()=>{ if(B===b&&atk){ const sel=e.who==='me'?'#bfoe':'#bme', n=blinkN(e.mm); if(fxOn()) blink(sel,n); else if(n) flash(sel); } },(fd?fd.total+180:260)+pad);   /* 被打中的闪烁和命中音效：等招式特效整个放完才来（Kris 2026-11-20），和扣血同一刻 */ if(fd&&fd.pre&&fxOn()) fd.pre.forEach(tp=>setTimeout(()=>{ if(B===b&&atk) blink(e.who==='me'?'#bfoe':'#bme',2); },tp+pad));   /* 多段攻击：前面几下也各闪一次 */
     const fxEnd=fd?fd.total+180:0;   /* 血条等招式特效整个放完（结尾也放完）才扣（Kris 2026-11-04） */
     { const emh=e.mh, efh=e.fh; setTimeout(()=>{ if(B===b){ if(b.stg){ b.stg.mh=emh; b.stg.fh=efh; } hpShow(emh,efh); } },(fd?fxEnd:260)+pad+(fd?extra0(e,fd,contact,atk):0)); pm=emh; pf=efh; }
     /* 连击的接触招式（Kris 2026-10-29）：命中后每一下都往前打一下、配一个命中特效、对手闪一下；招式自己画了每一下的（own）就只补动作和闪烁 */
     const nh=e.hits||1, multi=contact&&atk&&nh>1&&fd&&fxOn(), gap=multi?(fd.gap||240):0, extra=multi&&!fd.own?(nh-1)*gap:0;
     if(multi) for(let k=1;k<nh;k++) setTimeout(()=>{ if(B!==b) return; fxJab(a,e.who==='me'); if(!fd.own) fxHitBurst(e.mv,e.who==='me'); blink(e.who==='me'?'#bfoe':'#bme',1); },(fd.reach||fd.hit)+k*gap+pad);
     if(multi&&fd.own) setTimeout(()=>{ if(B===b) fxJab(a,e.who==='me'); },(fd.reach||fd.hit)+pad);
-    setTimeout(step,(fd?fxEnd+220:860)+pad+extra); };
+    setTimeout(step,(fd?fxEnd+220:860)+pad+extra+(fd&&atk?blinkN(e.mm)*140:0)); };   /* 特效放完才闪：闪完才进下一拍，不然下一拍重画会把闪烁切掉 */
   step(); }
 const extra0=(e,fd,contact,atk)=>{ const nh=e.hits||1; return contact&&atk&&nh>1&&fd&&fxOn()&&!fd.own?(nh-1)*(fd.gap||240):0; };   /* 连击的接触招式：最后一下打完才扣血 */
 
@@ -5969,9 +5969,10 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
     if(a){ a.classList.remove('lunge','charge'); void a.offsetWidth; if(contact&&!isMax) setTimeout(()=>{ if(D===d) dZone(mapOf(tg[0]),()=>fxDash(a,fromMe,Math.max(140,fd.hit-120),fd.hold||140)); },100); else a.classList.add(isMax||e.cat!=='ph'?'charge':'lunge'); }
     if(MV[e.mv]) fxTint(MV[e.mv][1],fd.total);
     setTimeout(()=>{ if(D!==d) return; tg.forEach(t=>dZone(mapOf(t),()=>fxPlay(fm,fromMe))); mapTo(tg[0]); },180);   /* 每只目标各自记住对应，特效不会全挤到最后一只身上 */
-    setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl,mm])=>{ const n=e.cat==='st'?0:blinkN(mm); if(n) blink(`#battle .gsp.d${s}${sl}`,n); }); },fd.hit+180);
-    if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,prev); },fd.total+180);
-    setTimeout(step,fd.total+420); };
+    const bdur=e.cat==='st'?0:Math.max(0,...tg.map(t=>blinkN(t[2])*140));   /* 闪烁和命中音效等特效放完才来（Kris 2026-11-20）；闪完才扣血、换下倒下的（重画会把闪烁切掉） */
+    setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl,mm])=>{ const n=e.cat==='st'?0:blinkN(mm); if(n) blink(`#battle .gsp.d${s}${sl}`,n); }); },fd.total+180);
+    if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,prev); },fd.total+180+bdur);
+    setTimeout(step,fd.total+420+bdur); };
   step(); }
 /* 双打的天气特性：和单打一样，出场就改天气，沙暴 / 冰雹每回合结束时伤害场上所有不免疫的宝可梦 */
 function dWxEnd(){ const d=D, w=d.wx; if(w!=='sand'&&w!=='hail') return; const imm=w==='sand'?['岩石','地面','钢']:['冰'], pn=WXN[w][0], hurt=o=>o.tera?!imm.includes(o.tera):!imm.some(t=>hasTy(o,t)); let any=0;
@@ -6040,7 +6041,7 @@ function dTurn(){
     /* 双打的两回合招式（Kris 2026-11-18）：飞翔 / 潜水 / 挖洞第 1 回合躲起来（这回合大多打不中它）；冰冻伏特、极寒冷焰、日光束、日光刃第 1 回合蓄力（日光束、日光刃在晴天直接打）。Z 招式、极巨招式不算。第 1 回合没能行动（畏缩、麻痹等）就不算开始蓄力 */
     const two=!sh.tag&&(DSEMI[sh.id]||TWOTURN[sh.id])&&!(SOLARMV.has(sh.id)&&sunNow(d)), rel=A._chg; let chgNow=false;
     if(rel){ A.__semi2=A._semi?'semi2:'+rel:null; A._chg=0; A._semi=0; }
-    let dm=0; window.__nx=sh; D.__hl=[]; const act=canAct(SC2,A);
+    let dm=0; window.__nx=sh; D.__hl=[]; D.__pos=new Map(); d.my.forEach((pi,s)=>{ if(pi>=0&&d.party[pi]) D.__pos.set(d.party[pi].me,['m',s]); }); d.fo.forEach((fi,s)=>{ if(fi>=0&&d.foes[fi]) D.__pos.set(d.foes[fi],['f',s]); }); const act=canAct(SC2,A);   /* __pos：出招前每只在哪个位置（被这一招打倒的，之后就不在场上了） */
     if(act){ if(!rel&&two){ chgNow=true; A._chg=sh.id; A._chgT=a.tg; if(DSEMI[sh.id]) A._semi=sh.id; d.log.push(`${nm} 使用了 ${sh.name}，${nm} ${DSEMI[sh.id]?DSEMI[sh.id][0]:TWOTURN[sh.id]}`); }
       else if(sh.pow===0&&MVS[sh.id]) useStatus(SC2,A,T,sh,a.side==='m'); else dm=dHit(A,T,sh,a.side==='m',nm); }
     if(tside==='f'){ const f=d.foes[tgt]; f.fh=Math.max(0,f.fh-dm); if(f.fh<=0){ d.log.push(`对方的 ${SP[f.id][0]} 倒下了！`); d.xp+=f.lv*9+10; d.fo[tslot]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(tslot); } }
@@ -6049,7 +6050,7 @@ function dTurn(){
     dBeat(a.side,a.slot,tside,tslot); { const e=d.beats&&d.beats[d.beats.length-1];   /* 这一拍出的招式和打中的每一只，回放时放特效用（Kris 2026-11-18） */
       if(e&&chgNow){ e.mv=null; e.chg=sh.id; e.semi=DSEMI[sh.id]?'semi1:'+sh.id:null; }
       else if(e&&act){ const where=o=>{ const pi=d.party.findIndex(p=>p.me===o); if(pi>=0) return ['m',d.my.indexOf(pi)]; const fi=d.foes.indexOf(o); return fi>=0?['f',d.fo.indexOf(fi)]:null; };
-        const hl=(D.__hl||[]).map(([o,m])=>{ const w=where(o); return w&&w[1]>=0?[w[0],w[1],m]:null; }).filter(Boolean);
+        const hl=(D.__hl||[]).map(([o,m])=>{ let w=where(o); if(!(w&&w[1]>=0)) w=D.__pos&&D.__pos.get(o); return w&&w[1]>=0?[w[0],w[1],m]:null; }).filter(Boolean);   /* 被打倒的也要算进打中的目标：才会闪、才有命中音效（Kris 2026-11-20：双打打倒对方时没有音效） */
         e.mv=sh.id; e.z=sh.tag?sh.name:null; e.semi=A.__semi2||null; e.cat=sh.pow>0?(SPECIAL.has(sh.id)?'sp':'ph'):'st'; e.tgs=hl.length?hl:[[tside,tslot,sh.pow>0?0:1]]; } A.__semi2=null; D.__hl=null; }
     if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length) { dWin(); break; }
     if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); break; } }
