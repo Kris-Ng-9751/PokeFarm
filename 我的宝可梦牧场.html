@@ -2524,7 +2524,7 @@ const fdynV=b=>!!b.foe&&(b.foe.dyn>0||!!(b.stg&&b.fDynEndN&&b.stg.n<b.fDynEndN))
 function dynTick(b){ if(!(b.dyn>0)) return; b.dyn--; if(b.dyn===0){ b.dynMx=b.mx; b.mx=maxhp(b.me); b.mh=b.mh>0?Math.max(1,Math.min(b.mx,Math.ceil(b.mh/1.5))):0; if(b.bd) b.bd.m=b.mh; b.log.push('极巨化结束了，变回原来的大小。'); b.dynEndN=b.log.length; if(b.beats) b.beats.push({who:'me',n:b.log.length,mh:b.bd?b.bd.m:b.mh,fh:b.bd?b.bd.f:b.fh,dynEnd:1}); } }
 function beatsOn(){ const b=B; b.beats=[]; b.bd={m:b.mh,f:b.fh}; b.bd0={m:b.mh,f:b.fh}; }
 const _bRender=bRender;
-bRender=function(){ const b=B; if(b&&b.beats&&b.beats.length&&!b.busy){ const bs=b.beats; b.beats=null; return bReplay(b,bs); } if(b&&!b.busy) b.beats=null; return _bRender.apply(this,arguments); };
+bRender=function(){ const b=B; if(b&&b.beats&&b.beats.length&&!b.busy){ const bs=b.beats; b.beats=null; return bReplay(b,bs); } if(b&&!b.busy){ b.beats=null; b.__n0=b.log.length; } return _bRender.apply(this,arguments); };   /* __n0：这回合开始前战斗记录有几句（藏「去吧」之后那几句时，只看这回合的） */
 /* 打倒对方宝可梦（Kris 2026-11-19）：回放完先让它叫一声，再往下沉倒下；之后才轮到对方派下一只 / 收回宝可梦、训练家出来。
    对方马上派下一只的情况（我方没有别的宝可梦可换）：派出延到倒下之后，回放时场上还是被打倒的那只 */
 { const _fd=bFoeDown; bFoeDown=function(){ const b=B; if(b&&b.beats&&b.cfg.kind!=='wild') b.__fntPend=1; return _fd.apply(this,arguments); };   /* 野生的打倒后还要捕捉，留在场上（Kris 2026-11-19） */
@@ -2543,8 +2543,8 @@ function bReplay(b,bs){ b.busy=true; let i=0; const st={over:b.over,pick:b.pick,
   let pm=b.bd0?b.bd0.m:bs[0].mh, pf=b.bd0?b.bd0.f:bs[0].fh;
   const hpShow=(mh,fh)=>{ const q=(h,x)=>Math.max(0,Math.round(100*h/x)), c=p=>p>50?'g':p>20?'y':'r', fb=document.querySelector('#battle .ginfo.f .ghp i'), mb=document.querySelector('#battle .ginfo.m .ghp i'), mt=document.querySelector('#battle .ginfo.m .gn.small span:last-child');
     if(fb){ const p=q(fh,fxV(b)); fb.style.width=p+'%'; fb.className=c(p); } if(mb){ const p=q(mh,mxV(b)); mb.style.width=p+'%'; mb.className=c(p); } if(mt) mt.textContent=`${Math.max(0,mh)} / ${mxV(b)}`; };
-  const step=()=>{ if(B!==b) return; if(i>=bs.length){ b.stg=null; if(b.__fntPend&&fxOn()){ b.__fntPend=0; _bRender(); return foeFaint(b,()=>{ if(B!==b) return; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; bSendNext(); } else _bRender(); }); } b.__fntPend=0; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; return bSendNext(); } return _bRender(); }
-    const e=bs[i++]; if(e.dynEnd){ pm=e.mh; pf=e.fh; } if(e.castFx&&window.castStep) castStep(b,e); b.stg={n:e.n,mh:pm,fh:pf}; _bRender(); { const w=entWait(); if(w>0&&(e.id||e.mv)){ i--; return setTimeout(step,w); } }   /* 有宝可梦正在从精灵球出场：等它完全出来再出招（Kris 2026-10-31） */   /* 血条先保持出招前的样子，打中的那一刻（命中特效结束、对手开始闪）再扣 */
+  const step=()=>{ if(B!==b) return; if(i>=bs.length){ b.stg=null; b.__n0=b.log.length; if(b.__fntPend&&fxOn()){ b.__fntPend=0; _bRender(); return foeFaint(b,()=>{ if(B!==b) return; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; bSendNext(); } else _bRender(); }); } b.__fntPend=0; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; return bSendNext(); } return _bRender(); }
+    const e=bs[i++]; if(e.dynEnd){ pm=e.mh; pf=e.fh; } if(e.castFx&&window.castStep) castStep(b,e); b.stg={n:e.n,mh:pm,fh:pf}; _bRender(); { const w=entWait(); if(w>0&&(e.id||e.mv)){ logHoldTail('#blog',i>=2?bs[i-2].n:(b.__n0!=null?b.__n0:e.n),e.n); i--; return setTimeout(step,w); } }   /* 有宝可梦正在从精灵球出场：等它完全出来再出招（Kris 2026-10-31） */   /* 血条先保持出招前的样子，打中的那一刻（命中特效结束、对手开始闪）再扣 */
     const id=e.id, still=id&&FXSTILL.has(id)&&fxOn(), cat=id?(!MV[id][2]?'st':SPECIAL.has(id)?'sp':'ph'):null, contact=!e.z&&!e.semi&&((cat==='ph'&&!NOCONTACT.has(MV[id][0]))||(cat==='sp'&&SPCONTACT.has(MV[id][0]))), bite=!e.z&&cat==='ph'&&/牙|咬|爪|拳/.test(MV[id][0]), chg=!still&&!e.z&&!e.semi&&(cat==='sp'||cat==='st'||bite), pad=chg&&fxOn()?420:0;   /* Z 招式自己带开场蓄力和冲刺，不再另外冲一下 */   /* 牙 / 咬 / 爪 / 拳类物理招式也先蓄力，再冲上去（Kris 2026-10-28） */   /* 物理招式冲一下；特殊 / 变化招式蓄力 0.4 秒再出招 */
     const a=document.querySelector('#battle .gsp.'+(e.who==='me'?'me':'foe')); if(e.semi&&!(fxOn()&&FXF[e.semi])&&window.semiVis) semiVis(b,e.who==='me',e.semi.startsWith('semi1')); if(a&&cat&&!still&&!e.semi){ const k=e.z&&/^(超)?极巨/.test(e.z)?'charge':contact&&fxOn()?(bite?'charge':null):(cat==='ph'&&!bite?'lunge':'charge');   /* 极巨 / 超极巨招式：站在原地蓄力出招，不往前冲（Kris 2026-11-18） */ a.classList.remove('lunge','charge'); void a.offsetWidth; if(k) a.classList.add(k);
       if(contact&&fxOn()){ const fd0=e.mv&&FXDUR[e.mv], hit=(fd0?(fd0.reach||fd0.hit):260)+pad, out=fd0&&fd0.hit>=1100?270:200, st0=Math.max(pad,hit-out), mh0=fd0&&(e.hits||1)>1?((e.hits||1)-1)*(fd0.gap||240):0; setTimeout(()=>{ if(B!==b) return; a.classList.remove('lunge','charge'); fxDash(a,e.who==='me',hit-st0,((fd0&&fd0.hold)||140)+mh0); },st0); } }   /* 连击：停在对手面前的时间加长，好打完每一下 */   /* 接触类招式：出招的宝可梦跟着拳头 / 巨口 / 爪痕一起冲到对手面前，打中那一刻到位，停一下再退回（Kris 2026-10-28） */
@@ -5715,16 +5715,16 @@ function dZone(M,fn){ const z0=DZM, p0=window.__dmap; DZM=M; window.__dmap=M; tr
   EventTarget.prototype.addEventListener=function(t,cb,o){ return ael.call(this,t,(DZM&&typeof cb==='function')?wrap(cb,DZM):cb,o); }; })();
 (function(){ const R=s=>{ const M=window.__dmap; if(!M||typeof s!=='string'||!D) return s; return s.replace(/\.gsp\.me(?![\w-])/g,'.gsp.'+M.me).replace(/\.gsp\.foe(?![\w-])/g,'.gsp.'+M.foe).replace(/#bme(?![\w-])/g,'#battle .gsp.'+M.me).replace(/#bfoe(?![\w-])/g,'#battle .gsp.'+M.foe); };
   for(const P of [Document.prototype,Element.prototype]){ const q=P.querySelector, qa=P.querySelectorAll; P.querySelector=function(x){ return q.call(this,R(x)); }; P.querySelectorAll=function(x){ return qa.call(this,R(x)); }; } })();
-{ const _dt=dTurn; dTurn=function(){ if(D) D.__slot0={my:[...D.my],fo:[...D.fo]}; return _dt.apply(this,arguments); }; }   /* 记下这回合开始时场上是谁，回放第一拍用 */
+{ const _dt=dTurn; dTurn=function(){ if(D) D.__slot0={my:[...D.my],fo:[...D.fo],n:D.log.length}; return _dt.apply(this,arguments); }; }   /* 记下这回合开始时场上是谁，回放第一拍用 */
 function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shift,menu:d.menu}; d.over=null; d.shift=null; d.menu='main';
   let prev=d.hp0||{pm:bs[0].pm,fh:bs[0].fh}; d.hp0=null;   /* 血条先保持出招前的样子，打中、闪完再扣（Kris 2026-11-04） */
   const show=(e,hp,pre)=>{ const r={pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:d.my,fo:d.fo,log:d.log}, sl=pre||e;   /* pre：出招前场上是谁（被打倒的那只先留在场上挨完这一招、放完特效，才换下去） */
     d.party.forEach((p,k)=>p.mh=hp.pm[k]!=null?hp.pm[k]:e.pm[k]); d.foes.forEach((f,k)=>f.fh=hp.fh[k]!=null?hp.fh[k]:e.fh[k]); d.my=[...sl.my]; d.fo=[...sl.fo]; d.log=r.log.slice(0,e.n); d.__shownN=e.n;
-    _dRender(); dSemiPaint(e.sv);
+    _dRender(); dSemiPaint(e.sv); document.querySelectorAll('#dlog .dask').forEach(x=>x.style.display='none');   /* 回放时不显示「xx 要做什么？」（Kris 2026-11-19） */
     d.party.forEach((p,k)=>p.mh=r.pm[k]); d.foes.forEach((f,k)=>f.fh=r.fh[k]); d.my=r.my; d.fo=r.fo; d.log=r.log; };
-  const step=()=>{ if(D!==d){ dMapSet(null); return; } if(i>=bs.length){ dMapSet(null); d.__shownN=null; d.busy=false; Object.assign(d,st); return dRender(); }
+  const step=()=>{ if(D!==d){ dMapSet(null); return; } if(i>=bs.length){ dMapSet(null); d.__shownN=null; d.__slot0=null; d.busy=false; Object.assign(d,st); return dRender(); }
     const e=bs[i++], hp0=prev, same=e.pm.every((v,k)=>v===hp0.pm[k])&&e.fh.every((v,k)=>v===hp0.fh[k]);
-    const pre=i>=2?bs[i-2]:(d.__slot0||null); show(e,hp0,pre&&pre.my&&pre.fo?pre:null); { const w=entWait(); if(w>0&&e.as!=null){ i--; return setTimeout(step,w); } }   /* 双打（Kris 2026-11-18）：以前一招打倒对手时，那只在特效放之前就从画面消失，特效找不到目标就整个没放 */
+    const pre=i>=2?bs[i-2]:(d.__slot0||null); show(e,hp0,pre&&pre.my&&pre.fo?pre:null); { const w=entWait(); if(w>0&&e.as!=null){ logHoldTail('#dlog',pre&&pre.n!=null?pre.n:e.n,e.n); i--; return setTimeout(step,w); } }   /* 双打（Kris 2026-11-18）：以前一招打倒对手时，那只在特效放之前就从画面消失，特效找不到目标就整个没放 */
     prev={pm:e.pm,fh:e.fh};
     const a=document.querySelector(`#battle .gsp.d${e.as}${e.asl}`), fromMe=e.as==='m', tg=(e.tgs&&e.tgs.length?e.tgs:[[e.ds,e.dsl,1]]);
     /* 双打招式特效（Kris 2026-11-18）：和单打放同一套特效。特效程序找的是「我方 / 对方」精灵，这里把它们暂时对到这一拍出招和挨打的那两只（dMapSet）；范围招式对每只目标各放一次 */
@@ -5785,7 +5785,7 @@ const DSEMI={19:['飞上了高空！','在高空中',new Set([16,239,87,327,479,
 function dHit(att,def,sh,mine,nm){ if(def._semi&&DSEMI[def._semi]&&!DSEMI[def._semi][2].has(+sh.id)){ if(D.__hl) D.__hl.push([def,0]); D.log.push(`${nm} 使用了 ${sh.name}，但是 ${SP[def.id][0]} ${DSEMI[def._semi][1]}，没有打中`); return 0; } if(def.prot){ if(D.__hl) D.__hl.push([def,0]); D.log.push(`${nm} 使用了 ${sh.name}，但是对方守住了`); return 0; } if(sh.acc<=100&&Math.random()*100>=sh.acc*(abOf(att)===14?1.3:1)*stgMul(att,'acc')/stgMul(def,'eva')){ if(D.__hl) D.__hl.push([def,0]); D.log.push(`${nm} 使用了 ${sh.name}，但是没有命中`); return 0; } const r=dmg(att,def,sh); if(def._semi&&DSEMI[def._semi]&&DSEMI[def._semi][3].has(+sh.id)) r.d*=2; if(D.__hl) D.__hl.push([def,r.m]); if(r.d&&gemHit(att,sh)){ r.d=Math.floor(r.d*1.3); D.log.push(`${ITEMS[att.gem][0]}的力量提高了 ${sh.name} 的威力！`); } { const dh=SC2.hp(def); if(def.endure&&r.d>=dh) r.d=Math.max(0,dh-1); } if(mine&&D.xatk) r.d=Math.floor(r.d*1.5); if(!mine&&D.xdef) r.d=r.d?Math.max(1,Math.floor(r.d*.67)):0; D.log.push(`${nm} 使用了 ${sh.name}，造成 ${r.d} 点伤害`+(r.hits>1?`（连续命中 ${r.hits} 次）`:'')+(r.m>1?'（效果拔群！）':r.m===0?'（没有效果）':r.m<1?'（效果不好）':'')); applySec(SC2,att,def,sh,r.d,SC2.hp(def)-r.d>0); abAfterHit(SC2,att,def,sh,r,SC2.hp(def)-r.d>0); return r.d; }
 function dTurn(){
   const d=D, acts=[]; d.turns++; d.beats=[];
-  d.sel.forEach(x=>{ if(x.sw!==undefined){ const old=d.party[d.my[x.slot]], nw=d.party[x.sw]; if(!nw||nw.mh<=0||d.my.includes(x.sw)){ d.log.push('换人失败了。'); return; } dRevertDyn(old); d.my[x.slot]=x.sw; d.part.add(x.sw); d.log.push(`${SP[old.me.id][0]}，回来！去吧，${SP[nw.me.id][0]}！`); wxEnter(nw.me.id,true,nw.me); }
+  d.sel.forEach(x=>{ if(x.sw!==undefined){ const old=d.party[d.my[x.slot]], nw=d.party[x.sw]; if(!nw||nw.mh<=0||d.my.includes(x.sw)){ d.log.push('换人失败了。'); return; } dRevertDyn(old); d.my[x.slot]=x.sw; if(d.__slot0) d.__slot0.my[x.slot]=x.sw; d.part.add(x.sw); d.log.push(`${SP[old.me.id][0]}，回来！去吧，${SP[nw.me.id][0]}！`);   /* 换人在回合一开始就做完：回放第一拍场上已经是换上来的那只，先放它出场，再轮到别人出招（Kris 2026-11-19） */ wxEnter(nw.me.id,true,nw.me); }
     else if(x.item){ const k=x.item, it=BI.find(y=>y[0]===k), p=d.party[d.my[x.slot]]; if(!it||!(S.items[k]>0)||!biOK(k)) return; const t=it[2], v=it[3], nm=SP[p.me.id][0];
       if(t==='heal'||t==='healp'){ const a=t==='heal'?(v>=9999?p.mx:v):Math.ceil(p.mx*v); p.mh=Math.min(p.mx,p.mh+a); d.log.push(`使用了${ITEMS[k][0]}，${nm} 回复了 ${a>=p.mx?'全部':a} HP`); }
       else if(t==='revive'){ const f=d.party.find(q=>q.mh<=0); if(!f){ d.log.push('没有倒下的宝可梦。'); return; } f.mh=Math.max(1,Math.ceil(f.mx*v)); d.log.push(`使用了${ITEMS[k][0]}，${SP[f.me.id][0]} 复活了！`); }
@@ -8704,6 +8704,10 @@ const gfxKind=(id,g)=>g==='mega'?((id===10077||id===10078)?'primal':'mega'):g;
 /* ---------- 宝可梦从精灵球出场（Kris 2026-10-31）：精灵球划一道弧线飞到位置 → 落地一弹 → 上半边打开 → 白光炸开、星星四散 → 宝可梦从白色的小剪影变大现身。
    对战开始、换宝可梦、对方派出下一只都会播；野生宝可梦是自己跳出来的，不用精灵球。画面中途重画时会接着播，不会断 ---------- */
 const ENT={seen:new WeakMap(),act:{}};
+/* 等宝可梦从精灵球出场时（Kris 2026-11-19）：这一拍里「去吧，xx！」之后的那几句（对方出招……）先藏起来，等它完全出来、真的出招时才显示 */
+function logHoldTail(sel,p,n){ try{ const lg=document.querySelector(sel+' .gsc'); if(!lg) return; const rows=[...lg.children].filter(r=>!r.classList.contains('dask')); if(rows.length<n) return;
+  let cut=p; for(let j=n-1;j>=p;j--){ if(/去吧|派出了|就决定是你了|回来吧/.test(rows[j].textContent)){ cut=j+1; break; } }
+  if(cut>=n) return; rows.slice(cut,n).forEach(r=>r.classList.add('gfxwait')); fitLog(lg.parentElement); }catch(e){} }
 function entWait(){ if(!fxOn()) return 0; const t=performance.now(); let w=0; Object.values(ENT.act).forEach(a=>{ w=Math.max(w,a.t0+1000-t); }); w=Math.max(w,GFXEND-t); return Math.ceil(w); }   /* 精灵球出场、变身特效都要等播完 */
 function entPlay(host,gsp,side,key,t0){ const hr=host.getBoundingClientRect(), r=gsp.getBoundingClientRect(); if(!hr.width) return;
   const W=hr.width, H=hr.height, s=Math.max(14,Math.min(34,W*.028)), cx=r.left+r.width/2-hr.left, h=Math.max(r.height,H*.18), cy=r.bottom-h*.5-hr.top;
