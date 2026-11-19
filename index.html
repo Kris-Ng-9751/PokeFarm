@@ -6,60 +6,143 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2048%2048%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%2221%22%20fill%3D%22%23fff%22%20stroke%3D%22%232a2a2a%22%20stroke-width%3D%223%22%2F%3E%3Cpath%20d%3D%22M3%2024a21%2021%200%200%201%2042%200z%22%20fill%3D%22%23e5463b%22%20stroke%3D%22%232a2a2a%22%20stroke-width%3D%223%22%2F%3E%3Cpath%20d%3D%22M3%2024h42%22%20stroke%3D%22%232a2a2a%22%20stroke-width%3D%223%22%2F%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%227%22%20fill%3D%22%23fff%22%20stroke%3D%22%232a2a2a%22%20stroke-width%3D%223%22%2F%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%223%22%20fill%3D%22%23fff%22%20stroke%3D%22%23bbb%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M11%2015a14%2014%200%200%201%209-6%22%20stroke%3D%22%23fff%22%20stroke-opacity%3D%22.55%22%20stroke-width%3D%223%22%20fill%3D%22none%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E"><title>我的宝可梦牧场</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
-:root{--bg1:#2b4a35;--bg2:#16251c;--cream:#f4efdc;--mute:#a9bfa9;--gold:#f2b632;--gold2:#ffd466}
 *{box-sizing:border-box}
-html,body{height:100%;margin:0}
-body{background:radial-gradient(900px 500px at 50% 30%,var(--bg1),var(--bg2) 70%);background-color:var(--bg2);color:var(--cream);font:14px/1.5 'Noto Sans SC',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:hidden}
-.bw{width:min(420px,100%);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
-.bball{width:96px;height:96px;image-rendering:pixelated;animation:bhop 1.1s cubic-bezier(.3,0,.4,1) infinite;filter:drop-shadow(0 10px 8px rgba(0,0,0,.35))}
-.ready .bball{animation:bfloat 2.4s ease-in-out infinite}
-.bsh{width:60px;height:8px;border-radius:50%;background:rgba(0,0,0,.35);margin-top:-14px;animation:bshadow 1.1s cubic-bezier(.3,0,.4,1) infinite}
-.ready .bsh{animation:none;opacity:.5}
-.bt{font:400 30px/1.2 'DotGothic16','Noto Sans SC',monospace;letter-spacing:.06em;color:#fff}
-.bt small{display:block;margin-top:8px;font:12.5px 'Noto Sans SC',system-ui,sans-serif;letter-spacing:0;color:var(--mute)}
-.bbar{width:100%;height:14px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
-.bbar i{display:block;height:100%;width:4%;border-radius:999px;background:repeating-linear-gradient(115deg,var(--gold) 0 10px,var(--gold2) 10px 20px);background-size:28px 100%;animation:bstripe .7s linear infinite;transition:width .4s ease}
-.bst{font-size:13px;color:#d6e2d3;min-height:20px}
-.start{font:400 22px/1 'DotGothic16','Noto Sans SC',monospace;letter-spacing:.12em;color:#2a2410;background:linear-gradient(#ffd466,#f2b632);border:3px solid #2a2410;border-radius:12px;padding:14px 40px;cursor:pointer;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18),0 6px 0 #6b4c0c,0 10px 18px rgba(0,0,0,.35);transition:transform .08s ease,box-shadow .08s ease,opacity .3s ease;text-decoration:none;display:inline-block}
-.start:hover{filter:brightness(1.06)}
-.start:active{transform:translateY(4px);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 2px 0 #6b4c0c,0 4px 10px rgba(0,0,0,.35)}
-.start:focus-visible{outline:3px solid #fff;outline-offset:4px}
-.start[aria-disabled="true"]{opacity:.45;pointer-events:none}
-.ready .start{animation:bpulse 1.6s ease-in-out infinite}
-.btips{position:relative;width:100%;height:44px}
-.btips span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 8px;font-size:12.5px;color:var(--mute);opacity:0;animation:btip 16s infinite}
-.btips span:nth-child(2){animation-delay:3.2s}.btips span:nth-child(3){animation-delay:6.4s}.btips span:nth-child(4){animation-delay:9.6s}.btips span:nth-child(5){animation-delay:12.8s}
-.fade{position:fixed;inset:0;background:var(--bg2);opacity:0;pointer-events:none;transition:opacity .4s ease}
-.fade.on{opacity:1}
-@keyframes bhop{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-22px) rotate(180deg)}100%{transform:translateY(0) rotate(360deg)}}
-@keyframes bfloat{50%{transform:translateY(-8px)}}
-@keyframes bshadow{0%,100%{transform:scaleX(1);opacity:.6}50%{transform:scaleX(.6);opacity:.3}}
-@keyframes bstripe{to{background-position:28px 0}}
-@keyframes btip{0%{opacity:0;transform:translateY(6px)}4%,18%{opacity:1;transform:none}22%,100%{opacity:0}}
-@keyframes bpulse{50%{transform:scale(1.05)}}
-.snd{position:fixed;top:14px;right:14px;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid rgba(244,239,220,.35);border-radius:999px;background:rgba(0,0,0,.25);color:var(--cream);font:13px 'Noto Sans SC',system-ui,sans-serif;cursor:pointer}.snd:hover{background:rgba(0,0,0,.4)}.snd:focus-visible{outline:2px solid #fff;outline-offset:2px}.snd svg{width:18px;height:18px}
-.sndtip{position:fixed;top:56px;right:14px;font-size:12px;color:var(--mute);opacity:0;transition:opacity .3s}.sndtip.on{opacity:1}
-@media (prefers-reduced-motion:reduce){.bball,.bsh,.bbar i,.btips span,.ready .start{animation:none}.btips span:first-child{opacity:1}}
+html,body{height:100%;margin:0;background:#141a3c}
+/*SCENE-CSS*/
+/* 标题 / 加载画面（Kris 2026-11-19 重新设计）：GBA 标题画面风 —— 像素黎明天空、远山、牧场栅栏、草地，宝可梦在草地上跑；
+   首页和游戏的加载画面用同一套，进游戏时画面接着动（按同一个时钟算位置） */
+.ts-root{position:fixed;inset:0;z-index:100;overflow:hidden;background:#141a3c;color:#383848;font:15px/1.5 'DotGothic16','Noto Sans SC',monospace;transition:opacity .6s ease,visibility .6s}
+.ts-root.out{opacity:0;visibility:hidden}
+.ts-root .ts-cv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;border:0;border-radius:0;background:none;cursor:default;display:block}   /* 游戏里有通用的 canvas 样式（圆角、边框），这里盖掉 */
+.ts-root .ts-logo{position:absolute;left:50%;top:13vh;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);text-align:center;animation:tfloat 4s ease-in-out infinite}
+.ts-root .ts-lg{font:400 clamp(34px,7.2vw,88px)/1.1 'DotGothic16','Noto Sans SC',monospace;letter-spacing:.04em;color:#fff4c8;white-space:nowrap;
+  text-shadow:4px 0 #1b1838,-4px 0 #1b1838,0 4px #1b1838,0 -4px #1b1838,4px 4px #1b1838,-4px 4px #1b1838,4px -4px #1b1838,-4px -4px #1b1838,
+  0 8px #d8483a,4px 8px #d8483a,-4px 8px #d8483a,0 12px #1b1838,4px 12px #1b1838,-4px 12px #1b1838}
+.ts-root .ts-sub{display:inline-block;margin-top:22px;padding:4px 14px;background:#1b1838;color:#fcd07c;font-size:clamp(12px,1.5vw,16px);letter-spacing:.12em;box-shadow:0 0 0 3px #fcd07c,0 0 0 6px #1b1838}
+.ts-root .ts-start{position:absolute;left:50%;bottom:calc(var(--tbh,150px) + 34px);transform:translateX(-50%);display:inline-flex;align-items:center;gap:12px;padding:12px 34px 14px;
+  font:400 clamp(20px,2.6vw,28px)/1 'DotGothic16','Noto Sans SC',monospace;letter-spacing:.14em;color:#1b1838;text-decoration:none;cursor:pointer;
+  background:#f8d030;border:4px solid #1b1838;box-shadow:inset 0 -5px 0 #d8a018,inset 0 4px 0 #fff0a0,0 6px 0 #1b1838;transition:transform .08s,box-shadow .08s,opacity .3s}
+.ts-root .ts-start::before{content:'';width:0;height:0;border-style:solid;border-width:8px 0 8px 12px;border-color:transparent transparent transparent #1b1838;animation:tblink 1s steps(1) infinite}
+.ts-root .ts-start:hover{background:#fcdc50}
+.ts-root .ts-start:active{transform:translate(-50%,4px);box-shadow:inset 0 -5px 0 #d8a018,inset 0 4px 0 #fff0a0,0 2px 0 #1b1838}
+.ts-root .ts-start:focus-visible{outline:4px solid #fff;outline-offset:4px}
+.ts-root .ts-start[aria-disabled="true"]{opacity:0;pointer-events:none}
+.ts-root .ts-box{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);width:min(680px,calc(100% - 32px));padding:14px 22px 16px;background:#f8f8f8;border:4px solid #485070;border-radius:10px;
+  box-shadow:inset 0 0 0 3px #c8d4ec,0 6px 0 rgba(20,20,40,.35);color:#383848;text-shadow:1px 1px 0 #d4d4dc}
+.ts-root .ts-msg{font-size:clamp(15px,1.7vw,18px);min-height:1.5em}
+.ts-root .ts-bar{display:flex;align-items:center;gap:10px;margin:10px 0 8px}
+.ts-root .ts-bar b{font-weight:400;font-size:13px;color:#f8f8f8;background:#485070;padding:1px 7px;text-shadow:none;letter-spacing:.08em}
+.ts-root .ts-bar span{flex:1;height:12px;background:#283048;border:2px solid #1b1838;padding:2px;box-sizing:content-box}
+.ts-root .ts-bar i{display:block;height:100%;width:4%;background:linear-gradient(#a8ecff 0 35%,#48c0f0 35%);transition:width .35s steps(6)}
+.ts-root .ts-tips{position:relative;height:1.5em;font-size:13.5px;color:#68708a;text-shadow:none}
+.ts-root .ts-tips span{position:absolute;inset:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;animation:ttip 20s infinite}
+.ts-root .ts-tips span:nth-child(2){animation-delay:4s}.ts-root .ts-tips span:nth-child(3){animation-delay:8s}.ts-root .ts-tips span:nth-child(4){animation-delay:12s}.ts-root .ts-tips span:nth-child(5){animation-delay:16s}
+.ts-root .ts-arr{position:absolute;right:16px;bottom:10px;width:0;height:0;border-style:solid;border-width:9px 7px 0;border-color:#d8483a transparent transparent;animation:tbob .8s steps(2) infinite}
+.ts-root .bretry{display:none;margin-top:8px;font:400 14px 'DotGothic16','Noto Sans SC',monospace;border:3px solid #1b1838;padding:6px 16px;background:#f8d030;color:#1b1838;cursor:pointer;box-shadow:0 3px 0 #1b1838}
+.ts-root.stuck .bretry{display:inline-block}
+.ts-root .snd{position:absolute;top:14px;right:14px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f8f8f8;border:3px solid #485070;border-radius:8px;box-shadow:inset 0 0 0 2px #c8d4ec;color:#383848;font:400 14px 'DotGothic16','Noto Sans SC',monospace;cursor:pointer}
+.ts-root .snd:hover{background:#fff}.ts-root .snd:focus-visible{outline:3px solid #fff;outline-offset:2px}.ts-root .snd svg{width:18px;height:18px}
+.ts-root .sndtip{position:absolute;top:58px;right:14px;padding:3px 10px;background:#1b1838;color:#fcd07c;font-size:13px;opacity:0;transition:opacity .3s}.ts-root .sndtip.on{opacity:1}
+.ts-root .ts-flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s ease}.ts-root .ts-flash.on{opacity:1}
+.ts-root.ts-intro .ts-logo{animation:tdrop .9s cubic-bezier(.3,1.5,.5,1) both,tfloat 4s ease-in-out .9s infinite}
+@keyframes tfloat{50%{transform:translate(-50%,-6px)}}
+@keyframes tdrop{0%{transform:translate(-50%,-60vh)}100%{transform:translate(-50%,0)}}
+@keyframes tblink{50%{opacity:0}}
+@keyframes tbob{50%{transform:translateY(3px)}}
+@keyframes ttip{0%{opacity:0}3%,18%{opacity:1}21%,100%{opacity:0}}
+@media(max-width:560px){.ts-root .ts-logo{top:12.5vh}.ts-root .ts-lg{white-space:normal;font-size:clamp(30px,10.5vw,46px)}.ts-root .ts-box{padding:12px 16px 14px}}
+@media(prefers-reduced-motion:reduce){.ts-root .ts-logo,.ts-root.ts-intro .ts-logo,.ts-root .ts-start::before,.ts-root .ts-arr,.ts-root .ts-bar i{animation:none;transition:none}.ts-root .ts-tips span{animation:none}.ts-root .ts-tips span:first-child{opacity:1}}
+/*/SCENE-CSS*/
 </style>
 </head>
 <body>
-<div class="bw" id="bw">
-  <svg class="bball" id="bball" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"></svg><div class="bsh"></div>
-  <div class="bt">我的宝可梦牧场<small>养宝可梦、打道馆、探索、种树果</small></div>
-  <div class="bbar" aria-hidden="true"><i id="bfill"></i></div>
-  <div class="bst" id="bmsg" role="status" aria-live="polite">正在打开牧场大门…</div>
-  <a class="start" id="start" href="我的宝可梦牧场.html" aria-disabled="true">开始游戏</a>
-  <div class="btips" aria-hidden="true"><span>连续签到 7 天，第 7 天送稀有宝箱</span><span>珍宝阁里第 300 抽必出神兽，抽到后重新累计</span><span>探索队和矿工队出门后，回来记得领奖励</span><span>世界 Boss 每小时整点刷新，别错过</span><span>Mega 进化、极巨化、太晶化，每只宝可梦三选一</span></div>
+<div class="ts-root ts-intro" id="bw">
+  <canvas class="ts-cv" id="tsc" aria-hidden="true"></canvas>
+  <div class="ts-logo"><div class="ts-lg">我的宝可梦牧场</div><div class="ts-sub">养宝可梦 · 打道馆 · 探索 · 种树果</div></div>
+  <a class="ts-start" id="start" href="我的宝可梦牧场.html" aria-disabled="true">开始游戏</a>
+  <div class="ts-box" id="tbox"><div class="ts-msg" id="bmsg" role="status" aria-live="polite">正在打开牧场大门…</div><div class="ts-bar" aria-hidden="true"><b>进度</b><span><i id="bfill"></i></span></div><div class="ts-tips" aria-hidden="true"><span>连续签到 7 天送稀有宝箱，14 天超稀有，30 天传说宝箱</span><span>珍宝阁里第 300 抽必出神兽，抽到后重新累计</span><span>探索队和矿工队出门后，回来记得领奖励</span><span>世界 Boss 每小时整点刷新，别错过</span><span>Mega 进化、极巨化、太晶化，每只宝可梦三选一</span></div><i class="ts-arr" aria-hidden="true"></i></div>
+  <button class="snd" id="snd" type="button" aria-pressed="false"></button><div class="sndtip" id="sndtip">点一下画面就会开始播放音乐</div>
+  <div class="ts-flash" id="fade"></div>
 </div>
-<div class="fade" id="fade"></div>
-<button class="snd" id="snd" type="button" aria-pressed="false"></button><div class="sndtip" id="sndtip">点一下画面就会开始播放音乐</div>
+<script>
+/*SCENE-JS*/
+/* 标题 / 加载画面的像素场景（Kris 2026-11-19）：用 GBA 的感觉画 —— 画布是很小的像素（大约 260 格高）再放大；
+   黎明天空（抖动渐层）、条纹太阳、飘动的云、远山、山丘、牧场栅栏、草地都在往左慢慢卷动，宝可梦在草地上往右跑、天上有鸟飞过。
+   位置都按同一个时钟（Date.now）算，所以从首页进游戏、加载画面接着动，不会跳回开头 */
+(function(){
+  var SPRS={"25":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAuCAMAAACccvDPAAAAkFBMVEUAAAD25lL2vSAAAACcUgDelABiMQhBQUopKSn/9qTFIBjmWkH///9zc4MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf7sgEAAAAMHRSTlMA/////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADWsa+wAAABjElEQVR42q3V2XKFMAgA0LDqXfr/v1vArMTp+FAeqnM9BiRLSymFyqOgk/7ZPYLGHjt95A7cnb18JncgJmjmsFjLIUyOGQHcHbeOPfwCHhsrRc0xy+v1ApBLwc/O3ImrgDVMUS+jQ4HEqKtiCXjcXoFE6LmnjPGM63D+NLJ96fTRBhOYHH2xpTtWJzVRQD0IQKXn7fVIY9cvfPYCLT4fEF3LvpzGnbJU9nkjJRZQP2gjcPQa8G0RbmHh3jjFcPinM4ju2O9H36MQzEH9t9quacXModO7MKZwc5ZH29DT5BAk5vVoVu4AFhZ1G+S0Q67F4iE4vk/ztrGZqF1tE+rPSZKjAWQ0zNkKIy33PxAFqoig6PwdJItD8QVmTHQtj7hmvIbjayGK5P1Gbaw+cHSOmXJXuO5bqteY4gz9ST0E6hXreIujZZ3F50ZDlCkfL5nBPrVtsTSEjeF2xO7LFLcD8Xb1xXq4ObHJpbXVQv9gqsK9B6S2O4XvmHdZp6+LY/M2La3LjOzNR/+hiHb2C86gCuK9h0hCAAAAAElFTkSuQmCC","4":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAqCAMAAADoIdnnAAAAkFBMVEUAAAD/lEHeUjkQEBCLKQD/1XvmrFrmOQD/1Qj2pAD/xWL///8IOYsYi7QxrO4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB1gkEkAAAAMHRSTlMA//////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADYnhDzAAABcklEQVR42pWV6bKGIAiGC0i07Lv/yz0o4tY2hx9NDo9svtaymAEQ0fJhAGuyDxD2tRi+Uvv+P+yFk7qUgi+sUis8chEMixGesdPCxRjpGTus/APPFwwrFn8zxvWNomF0/uba2FesTQ3gFbNhAE0YB9+yWixqVBEBex9qC6jqwENziqKsE4nmuW5DMWZKpQnSHQZ71nCYHJjdEgqg9pI4FtNwCHkv5kcKV/rN0ZiDcIEXNAcqVAxtHJI0hxu8BmGbh/elCQUJnHPaA3ZjCwIGtomI17nMjcKU2oKUV0dHsCVzs35lTI2S8bmMbRf9EnG/2io2hqMdH7CBo35lOXNxg2Ncbdtd1nS+XanUMKiciqCnVqhJy2UtQhFHjxXOuaIQE4HrqKRKPYSKgZ50T+kFxB7LykuHjPM9BeUIiijTAnG+z1k+GStaktfLpxNNZ4jK4e2HGDsx0vVOD8Gw3dpbDA86WgBt4pZLNuyiA7/+EdOuZH+rAwsXv8y0tgAAAABJRU5ErkJggg==","1":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAhCAMAAABkz+JgAAAAkFBMVEUAAAA5lJRi1bQQEBCD7sUYSkpzrDExc3O9/3Ok1UGsADFSYin////Nzc3/amLuIDkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACmZJrsAAAAMHRSTlMA////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAsqWH7AAABWUlEQVR42oXUiZaDIAwFUEIIGRD1//92skGZbvM8ra1cA7HalD7nSP/lOBrih7EqOSRNdhXfix9La6229yaEpFZRxzJEfwmhTGeVloFSRPEMUckY063JxBTmosk5k+4eJhAUMAAAgkxOszoDngSskgRwGUc72UxTMwstYysCcOMkCrH0USK58HmSOEAnYegGQ7riwncfJ6mhWl8MLDM2I0QMn/cALyNv9+hSSAwBbWb0AbGgDH1clxkGRU4S594hR6D361JiISuly8H8FJ1oKr+EJMuT4zmzCyZEm0rKyMt/CgJZ5xrGwVbAjKK4feS0vrKIF5rIivf7kpjQ797aw7iKoH3mmE4PzLtVhzzRkIzFitbtqi1Hx9qlNgRPJjEoQq9gl+iDscVotWlgJzZZtgMK1CRk0G17CjnDNHYfSh+nbQ9CQzY7hyZO1ub+EM8Dhgd+/0t5OTulX3poDr98uQz7AAAAAElFTkSuQmCC","7":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAnCAMAAABUv8o5AAAAkFBMVEUAAABanKSLxc0QEBApc4PNeynmrFr/5pz/1WqDKQC05u7Vzc29agBiKQD////VlFIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACqg0QaAAAAMHRSTlMA////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAsqWH7AAABe0lEQVR42oWU24KDIAxECRNQqnb//283A2GrVNn0oQ8cJrfBED4hFqphHiIvixjnoEOMCacfasJpPFHPnPq5TDGVTlmz/L/ntHQ1bBtZ3GNvlwOwqTxi5Q8r7wkGT/qeYfo3jGKYPGF4sUdvQh6xgD43ozynmeAyFbFfADgsRin0SZA4jEXtHBDrMVlUCixAL5S0VBApDErVElQHMZ+YevFIm8T4tQnfJ1UYOWdtDWPce42UVwtSckcZRzAlUuyiXcPhZ6e5WKdpIULFymHfD0KDq9KyrHmxMCzTJ8R62XrGloZZdfnYiHWzxjssrY6hOpl5P+1YB0tqlGG7YTjq8zbwjC2ZHeTacE779rMT02HSVKpqmXKJWVG3e7GVWM7eQsr8lNxhJk2RtXXanuBWEVypWOviMHIfVrcCLmZKHVR/sQPkZpJCKe7U1XBhuNLmidJASLy3SIDXUQol9Ol1uXdwvfT92RJuBKP4V1KEc7mwO1GBf77W47UQfgH3SQzOFcrXcwAAAABJRU5ErkJggg==","133":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAvCAMAAABT2/NXAAAAkFBMVEUAAACkYkrVnEoAAADmxZRzSkpSMSC9nHv/5qz///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAsRWWoAAAAMHRSTlMA////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACxt8v8AAABi0lEQVR42p3UW5KEMAgFUJEA9v43PJcbjPHRM9ZQ/dUeIWCSZRkhy4uw1V4geaf0b2YCpS9S/VfJtW03V9EzketrLuo+KxDEXZ1SwVz+6WouiNnB3NBZGUphAXe1vEJQpotXuUSPSnxdHY/3TOeOp/WubMyA9AtaGWC2ZkGVqWE7owrkwRxKRGv6pGC8DEiLPaucUol5vdsSjVTZ36TqZaJJ+efMdJRjFENP9dyHOtBQXso/uldMFTPDyKtJJqXCMUB30WGp/DhUSCpi+Bsq+DuS8duwogpVA6pAMok9mfHjcA6cgA6GwlxohKYxmpsCShVbC0vXjXGUU00qILBo1qN3Hzor6yq2jFafhBXtYJYKqbYKkmCqjDLGKbfYZkalNkUqvyscjAsC84FadCQHExtbp9XqWc1lKJnQ4lHdqcU+T+1Ip6PkfUGYEpAPpaqXo01EUOpK6mYKp6qBPt2efIyrIvez/4bEsbX7eXxWhfr2Ry7/kipvuUX7CXpa937WcKBzP/9956Pklyw/JcgNkjMI/ioAAAAASUVORK5CYII=","16":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAApCAMAAACFghBKAAAAkFBMVEUAAACkYlrmvWJBKRjNg1oQEBD/7pxzSjG9KSDuYkH/9r3///+Dg4P/rHO9vb0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADcRl8BAAAAMHRSTlMA//////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADYnhDzAAABZUlEQVR42oXU27LCIAwF0OZGoNTz/597kgDVsYAZHxy73EAkHsddqsfvUv6tVJl1nwYWZIi3aXA68tqldWXkPJG2yMl5Mu0UgMW0WrCcAdpzEVll5dfLnAMhAF2iUopQlWpBS1W8MhC5IpC5skemku9rrQ7KBkuycgYLRiXnjF2BlciclfKBrMPTdthCjnAgZpg5jabCjYwBbRTf6smaMkYDUSi/SO+71FRK9vBOsq2Nq9mdJoxWUCwJroD8MKrxNWmoVztkJIXSvtWJiiLCJNp63LusiR/KdoDi5h6ZUBzdh7ZcqGQpsaL2I9qajKP7sSuPFuhLjpG1RjCiDuZRbBu7NxUl1hQMG6dr3WP8vhyCo4jiPfvrcYXeDFGks+dFk09nMzeL+nZEIosJOITa7660+4eibBGkG+RjZtPUZmqJ/q6afeayF63RZbNdfdTz9bdg8VtIvaolyvp8zV71h+iR04//ARGJDER4+weOAAAAAElFTkSuQmCC","12":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADkAAAAzCAMAAAAaXVDRAAAAkFBMVEUAAADu7v8xMVIAAABaSnO9veaDg71zYqxqvc1Se8XeMTFiMTn/nLScnLTmYoMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADOZyquAAAAMHRSTlMA//////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADYnhDzAAACw0lEQVR42p2W25rrIAiFK6A2ybTv/7gbFnhKO8l8m4seIj8LEaOPxy/G/PhPY+E/BGBmkVrXZ+SkrK4iMoIxE1FSqwvsaARoXE2pEAULUEpKDp9mOpPGmam/5wPFIumDPU20eaQkQKFokn2gfif7uIo0srhkH5IV9d/UR3Pky16d9A2dyAGaTJlJewR5M55IfM6gi06kzZsayydRpFNQS/HyziSFTQk3ksZ4Sd9JfH6Q9BE4yNLJ+B75cieJevBB9gwoDXSIcge7z+iEEgVoeXfRQbag5popelr/isyipYvCwYbmtIp00ntKZM3Xamph2UQG2JrvMZVorlLOyQa4FN26Wf9mjxfJRf1o7ILGqi/RUUCWqqyabgxpHdHISdRZdSPa90M71Mha7UnJ3YH77l/RZOjx/nmraFG4GmoJ57RIgow8wizT/SdIS1YqQKATGCtmxRWPqi5G7hXg8X7vR6BWopUsfb+HHbtO09Ks8tYY+wES6z6/09bqmqRqBlhVXMkdlYXo8jbkpURGstTtuYmTCu7cJrqAqG6w2bPlKk81qsh7IstKRnnNimuqKCm5kTDAg2OeJ3Da36mRVZd1UxLoweLzpDO5zjRrytl8EzKxYyeS/QRjTfvSeL7DLsDegooV96rUOQcLfT8TGe8naRMlawLBpo3i8K9nKY8yWXzrckcZdncCe52EFdyeQLXA/NsU58MWJq8XRSeIbErKDWpFwozy6+U9ZKLQBHpFFpxyWUkh9BA0LVm5EkWBMtZEWDMU8nlSkPmS1LZVH3lZiqMLJEQvSKymvSW1LMTRBeLkZ7Ofu96C69bcGKvEZHJyq+kXjYz9hfe/SgOSywq5qL1oNlvKIH1JbleFcC0i9ADuFVsXvW6iqFFPVlH7BfKu+/xk3jxXJ5+M+x3dtDzQPO0MerYi391q+Ryd/nxD5r9epv8BYE4Yr89M6SYAAAAASUVORK5CYII="};
+  window.ttlScene=function(cv){
+    var g=cv.getContext('2d'), W=0, H=0, S=1, Y0=0, sky=null, clouds=[], mtn=[], hill=[], raf=0, last=0, imgs={}, still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    Object.keys(SPRS).forEach(function(k){ var i=new Image(); i.src=SPRS[k]; imgs[k]=i; });
+    var SKY=['#141a3c','#1e2452','#2c2e6a','#463a80','#683f8e','#904a94','#b85690','#dc6886','#f0807a','#f89e70','#fbbd72','#fcd77e'];
+    var B4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+    var hex=function(h){ return [parseInt(h.substr(1,2),16),parseInt(h.substr(3,2),16),parseInt(h.substr(5,2),16)]; };
+    var rnd=function(n){ var x=Math.sin(n*127.1+311.7)*43758.5453; return x-Math.floor(x); };
+    function build(){
+      S=Math.max(2,Math.round(Math.min(innerHeight/260,innerWidth/180)));   /* 手机竖屏按宽度算，宝可梦不会太大 */ W=Math.ceil(innerWidth/S); H=Math.ceil(innerHeight/S); cv.width=W; cv.height=H; Y0=Math.round(H*.6);
+      /* 天空：每一行在两种颜色之间用 4x4 抖动混合，像 GBA 的渐层 */
+      sky=document.createElement('canvas'); sky.width=W; sky.height=Y0+12; var sg=sky.getContext('2d'), id=sg.createImageData(W,Y0+12), d=id.data, C=SKY.map(hex);
+      for(var y=0;y<Y0+12;y++){ var f=Math.min(.999,y/(Y0+4))*(C.length-1), a=Math.floor(f), fr=f-a;
+        for(var x=0;x<W;x++){ var c=(fr*16>B4[(y&3)*4+(x&3)])?C[a+1]:C[a], o=(y*W+x)*4; d[o]=c[0]; d[o+1]=c[1]; d[o+2]=c[2]; d[o+3]=255; } }
+      sg.putImageData(id,0,0);
+      /* 条纹太阳：一半落在山后，下半截切出几道横纹 */
+      var sx=Math.round(W*.7), sy=Y0-6, R=Math.max(16,Math.round(H*.13));
+      for(var yy=-R;yy<=R;yy++){ var w=Math.floor(Math.sqrt(R*R-yy*yy)), cut=yy>R*.15&&((yy+R)%6<2); if(cut) continue;
+        sg.fillStyle=yy<-R*.5?'#fff8d8':yy<0?'#fff0b0':'#ffd890'; sg.fillRect(sx-w,sy+yy,w*2+1,1); }
+      /* 云：几个圆拼成的像素云块，下缘一道阴影 */
+      clouds=[]; for(var k=0;k<7;k++){ var cw=24+Math.floor(rnd(k)*30), ch=8+Math.floor(rnd(k+9)*6), cc=document.createElement('canvas'); cc.width=cw; cc.height=ch+2; var cg=cc.getContext('2d');
+        var bl=[]; for(var j=0;j<4;j++) bl.push([4+rnd(k*7+j)*(cw-8),ch*.55+rnd(k*3+j)*ch*.2,3+rnd(k*5+j)*(ch*.55)]);
+        for(var py=0;py<ch+2;py++) for(var px=0;px<cw;px++){ var inn=bl.some(function(b){ return (px-b[0])*(px-b[0])+(py-b[1])*(py-b[1])*2.2<b[2]*b[2]; }); if(!inn) continue;
+          var up=bl.some(function(b){ return (px-b[0])*(px-b[0])+(py+2-b[1])*(py+2-b[1])*2.2<b[2]*b[2]; });
+          cg.fillStyle=!up?'#f8c0b0':py<ch*.45?'#fff2e4':'#fbd8cc'; cg.fillRect(px,py,1,1); }
+        clouds.push({c:cc,y:Math.round(H*(.08+rnd(k+3)*.32)),sp:1.2+rnd(k+5)*2.2,x:rnd(k+1)*(W+cw)}); }
+      /* 远山、山丘的高度：几条整数周期的正弦相加，卷动时首尾接得上 */
+      var P=W*2; mtn=[]; hill=[];
+      for(var x2=0;x2<P;x2++){ var t=x2/P*Math.PI*2;
+        mtn.push(Math.round(Y0-H*.13-Math.sin(t*3)*H*.05-Math.sin(t*7+1)*H*.03-Math.abs(Math.sin(t*13+2))*H*.025));
+        hill.push(Math.round(Y0-H*.035-Math.sin(t*4+.5)*H*.025-Math.sin(t*9+2)*H*.01)); }
+    }
+    function walker(id,i,n,t,base,flip,fly){ var im=imgs[id]; if(!im||!im.complete||!im.naturalWidth) return; var sp=fly?9:12, span=W+160,   /* 同一组用同一个周期，彼此间隔固定，不会挤在一起 */ off=(i/n)*span,
+        x=((t*sp+off)%span)-im.naturalWidth-20, hop=fly?Math.round(Math.sin(t*5+i)*2):-Math.round(Math.abs(Math.sin(t*7+i*1.7))*3), y=base-im.naturalHeight+hop;
+      if(!fly){ g.fillStyle='rgba(20,40,20,.35)'; g.fillRect(Math.round(x+im.naturalWidth*.2),base-1,Math.round(im.naturalWidth*.6),2); }
+      g.save(); if(flip){ g.translate(Math.round(x)+im.naturalWidth,Math.round(y)); g.scale(-1,1); g.drawImage(im,0,0); } else g.drawImage(im,Math.round(x),Math.round(y)); g.restore(); }
+    function draw(){
+      var t=(Date.now()%1e8)/1000; g.imageSmoothingEnabled=false;
+      g.drawImage(sky,0,0);
+      /* 星星：天空上方几颗一闪一闪 */
+      for(var s=0;s<26;s++){ var sx=Math.floor(rnd(s+40)*W), sy=Math.floor(rnd(s+80)*Y0*.35); if(Math.sin(t*2+s*1.3)>.2){ g.fillStyle=s%3?'#d8d8ff':'#fff'; g.fillRect(sx,sy,1,1); } }
+      clouds.forEach(function(c){ var span=W+c.c.width, x=((c.x-t*c.sp)%span+span)%span-c.c.width; g.drawImage(c.c,Math.round(x),c.y); });
+      var P=mtn.length, om=Math.floor(t*2)%P, oh=Math.floor(t*5)%P;
+      for(var x=0;x<W;x++){ var m=mtn[(x+om)%P]; g.fillStyle='#4a3a78'; g.fillRect(x,m,1,Y0-m+2); g.fillStyle='#6a5498'; g.fillRect(x,m,1,1); }
+      for(var x3=0;x3<W;x3++){ var h=hill[(x3+oh)%P]; g.fillStyle='#2c6a52'; g.fillRect(x3,h,1,Y0-h+3); g.fillStyle='#4a9a64'; g.fillRect(x3,h,1,1); }
+      /* 草地：一层一层往下变深 */
+      var bands=['#68c060','#58b052','#4ca44a','#409844','#368c3e'], bh=Math.ceil((H-Y0)/bands.length);
+      bands.forEach(function(c,i){ g.fillStyle=c; g.fillRect(0,Y0+i*bh,W,bh+1); });
+      /* 牧场栅栏 */
+      var fy=Y0+3, fo=(t*12)%14;
+      g.fillStyle='#a06a3c'; g.fillRect(0,fy+2,W,1); g.fillRect(0,fy+5,W,1); g.fillStyle='#704424'; g.fillRect(0,fy+3,W,1); g.fillRect(0,fy+6,W,1);
+      for(var px=-fo;px<W;px+=14){ var X=Math.round(px); g.fillStyle='#704424'; g.fillRect(X,fy,3,9); g.fillStyle='#c8905a'; g.fillRect(X,fy,2,8); g.fillStyle='#e0b080'; g.fillRect(X,fy,2,1); }
+      /* 草丛和小花，越近卷得越快 */
+      for(var r=0;r<3;r++){ var y0=Y0+14+r*Math.round((H-Y0-18)/3), sp=16+r*10, gap=11+r*3, of=(t*sp)%gap;
+        for(var gx=-of-gap;gx<W+gap;gx+=gap){ var n=Math.floor((gx+t*sp)/gap+.01)+r*101, X2=Math.round(gx+rnd(n)*6), Y2=y0+Math.round(rnd(n+7)*6), sw=Math.sin(t*3+n)>.6?1:0;
+          g.fillStyle=r===2?'#2a7a34':'#3a8c3c'; g.fillRect(X2,Y2,1,3); g.fillRect(X2+2+sw,Y2-1,1,4); g.fillRect(X2+4,Y2,1,3);
+          if(rnd(n+3)>.82){ g.fillStyle=rnd(n+5)>.5?'#f87878':'#f8e060'; g.fillRect(X2+7,Y2-1,2,2); g.fillStyle='#fff'; g.fillRect(X2+7,Y2-1,1,1); } } }
+      /* 宝可梦：草地上往右跑，天上有鸟飞过 */
+      var base=Math.round(Y0+(H-Y0)*.24);
+      ['25','4','1','7','133'].forEach(function(id,i,a){ walker(id,i,a.length,t,base,true,false); });
+      walker('16',0,2,t,Math.round(H*.47),true,true); walker('12',1,2,t,Math.round(H*.43),true,true);   /* 鸟飞在标题下面、山的上面，不挡字 */
+    }
+    function loop(){ if(!cv.isConnected){ cancelAnimationFrame(raf); return; } raf=requestAnimationFrame(loop); var n=performance.now(); if(n-last<40) return; last=n; try{ draw(); }catch(e){} }
+    build(); draw(); var rt=0; addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(function(){ build(); draw(); },120); });
+    if(still){ Object.keys(imgs).forEach(function(k){ imgs[k].onload=draw; }); return; } loop();
+  };
+})();
+/*/SCENE-JS*/
+</script>
 <script>
 (function(){
-  /* 像素精灵球：0 透明 1 描边 2 红 3 白 4 中间按钮（和游戏里的加载画面同一颗） */
-  var rows=['0000111111110000','0011222222221100','0122222222222210','0122222222222210','1222222222222221','1222222222222221','1111111441111111','1111111441111111','1333333441333331','1333333333333331','1333333333333331','0133333333333310','0133333333333310','0013333333331100','0001133333311000','0000011111100000'];
-  var col={1:'#22302a',2:'#d8473a',3:'#f4efdc',4:'#ffffff'}, s='';
-  rows.forEach(function(r,y){ for(var x=0;x<16;x++){ var c=r.charAt(x); if(c!=='0') s+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+col[c]+'"/>'; } });
-  document.getElementById('bball').innerHTML=s;
+  ttlScene(document.getElementById('tsc'));
+  var fitB=function(){ var b=document.getElementById('tbox'); if(b) document.getElementById('bw').style.setProperty('--tbh',b.offsetHeight+'px'); }; fitB(); addEventListener('resize',fitB);
 
   var GAME='我的宝可梦牧场.html', fill=document.getElementById('bfill'), msg=document.getElementById('bmsg'), btn=document.getElementById('start'), bw=document.getElementById('bw'), done=false;
   var set=function(p,m){ fill.style.width=Math.max(4,Math.min(100,p))+'%'; if(m) msg.textContent=m; };
