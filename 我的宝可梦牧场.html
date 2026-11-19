@@ -16356,7 +16356,7 @@ function rCenter(){
   const bar=m=>{ const r=monHpR(m), c=r>.5?'#4caf50':r>.2?'#f2b01e':'#e04a3a'; return `<div class="pcbar"><i style="width:${isFnt(m)?0:Math.max(3,Math.round(r*100))}%;background:${c}"></i></div><small>${isFnt(m)?'倒下':`HP ${curHp(m)} / ${maxhp(m)}`}</small>`; };
   const ppRow=m=>getMoves(m).map(id=>{ const l=ppLeft(m,id), x=MV[id][4]; return `<span class="pcpp ${l===0?'z':l<x?'lo':''}">${MV[id][0]} <b>${l}/${x}</b></span>`; }).join('');
   const row=m=>{ const nh=needHeal(m), on=PCSEL.has(m.uid);
-    return `<button type="button" class="pcm ${isFnt(m)?'fnt':''} ${on?'on':''}" ${nh?`data-pcsel="${m.uid}" role="checkbox" aria-checked="${on}"`:'disabled'}><i class="pcck" aria-hidden="true">${on?'✓':''}</i><img src="${spm(m)}" alt=""><div class="pci"><div class="pcn"><b>${nameOf(m)}</b> <span class="muted">Lv${m.lv}</span> ${m.sta&&STA_TAG[m.sta]?`<span class="tag" style="background:${STA_TAG[m.sta][1]};color:#fff;border-color:${STA_TAG[m.sta][1]}">${STA_TAG[m.sta][0]}</span>`:''}${isFnt(m)?'<span class="tag r4">倒下</span>':''}${nh?'':'<span class="tag">很健康</span>'}</div>${bar(m)}<div class="pcpps">${ppRow(m)}</div></div></button>`; };
+    return `<button type="button" class="pcm ${isFnt(m)?'fnt':''} ${on?'on':''}" ${nh?`data-pcsel="${m.uid}" role="checkbox" aria-checked="${on}"`:'disabled'}><i class="pcck" aria-hidden="true">${on?'✓':''}</i><img src="${spm(m)}" alt=""><div class="pci"><div class="pcn"><b title="${nameOf(m)}">${nameOf(m)}</b><span class="muted">Lv${m.lv}</span></div><div class="pctags">${m.sta&&STA_TAG[m.sta]?`<span class="tag" style="background:${STA_TAG[m.sta][1]};color:#fff;border-color:${STA_TAG[m.sta][1]}">${STA_TAG[m.sta][0]}</span>`:''}${isFnt(m)?'<span class="tag r4">倒下</span>':''}${nh?'':'<span class="tag">很健康</span>'}</div>${bar(m)}<div class="pcpps">${ppRow(m)}</div></div></button>`; };
   const msg=just&&just.wo!=null?`队伍全部倒下了……你急急忙忙跑回了宝可梦中心${just.wo?`，慌乱中掉了 <b>${just.wo.toLocaleString()}</b> 金币`:''}。宝可梦们已经治好了，下次小心一点！`
     :just&&just.heal?'久等了！你的宝可梦已经恢复精神了。期待你再来！'
     :need.length?'欢迎来到宝可梦中心！点下面的宝可梦选要治疗哪几只，或者全部治好。':'欢迎来到宝可梦中心！你的宝可梦都很有精神。';
@@ -16403,7 +16403,8 @@ function rCenter(){
 .pcm .pcck{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:6px;border:2px solid #d8d2c4;background:#fff;color:#fff;font:700 13px/16px var(--sans);text-align:center;font-style:normal}.pcm:disabled .pcck{display:none}.pcm.on .pcck{background:#e8505a;border-color:#e8505a}
 .pcm:focus-visible{outline:3px solid #e8505a;outline-offset:2px}
 .pcm img{width:56px;height:56px;object-fit:contain;image-rendering:pixelated;flex:none}.pcm.fnt img{filter:grayscale(1);opacity:.55}
-.pci{flex:1;min-width:0}.pcn{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pci{flex:1;min-width:0}.pcn{display:flex;align-items:baseline;gap:6px;padding-right:22px;white-space:nowrap}.pcn b{overflow:hidden;text-overflow:ellipsis;min-width:0}.pcn .muted{flex:none}
+.pctags{display:flex;gap:4px;flex-wrap:wrap;min-height:22px;margin-top:3px}   /* 状态标签固定放在名字下面一行（Kris 2026-11-19：名字长时以前会跑位） */
 .pcbar{height:8px;background:#e8e4da;border-radius:4px;overflow:hidden;margin:5px 0 2px}.pcbar i{display:block;height:100%;border-radius:4px;transition:width .5s}
 .pci small{font-size:12px;color:var(--mut)}
 .pcpps{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.pcpp{font-size:11.5px;padding:1px 6px;border-radius:6px;background:#f2efe6;color:var(--mut)}.pcpp b{color:var(--ink);font-weight:600}.pcpp.lo b{color:#c27a0a}.pcpp.z b{color:#d8473a}
