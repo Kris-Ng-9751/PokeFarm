@@ -1459,10 +1459,10 @@ const biNeed=k=>{ const c=BICOND[k]; return c[0]==='g'?`赢下同一地区 ${c[1
 const unlockText=k=>{ const b=BI.find(x=>x[0]===k); return b&&!biOK(k)?biNeed(k):''; };
 
 /* ---------- shell ---------- */
-const TABS=[['diary','日记'],['ranch','主页'],['team','队伍'],['box','我的宝可梦'],['daily','签到 / 任务'],['cm','委托任务'],['urg','紧急任务'],['wk','周挑战'],['nursery','培育中心'],['gacha','珍宝阁'],['wild','野外'],['arena','对战'],['gym','道馆'],['e4','四天王'],['legend','传奇训练家'],['bag','背包'],['craft','制作'],['shop','商场'],['dex','图鉴'],['lab','图鉴研究所'],['pr','PR 奖励'],['card','训练家卡片'],['farm','农场'],['explore','地图探索'],['sq','特别任务'],['ms','里程碑'],['mine','矿洞'],['fish','钓鱼池'],['fossil','化石复原'],['boss','世界 Boss'],['auction','拍卖'],['trade','交换'],['map','全地图'],['rank','排行榜'],['guide','游玩指南'],['devtools','开发者工具'],['devfx','技能特效']];
+const TABS=[['diary','日记'],['ranch','主页'],['team','队伍'],['box','我的宝可梦'],['daily','签到 / 任务'],['cm','委托任务'],['urg','紧急任务'],['wk','周挑战'],['nursery','培育中心'],['pcenter','宝可梦中心'],['gacha','珍宝阁'],['wild','野外'],['arena','对战'],['gym','道馆'],['e4','四天王'],['legend','传奇训练家'],['bag','背包'],['craft','制作'],['shop','商场'],['dex','图鉴'],['lab','图鉴研究所'],['pr','PR 奖励'],['card','训练家卡片'],['farm','农场'],['explore','地图探索'],['sq','特别任务'],['ms','里程碑'],['mine','矿洞'],['fish','钓鱼池'],['fossil','化石复原'],['boss','世界 Boss'],['auction','拍卖'],['trade','交换'],['map','全地图'],['rank','排行榜'],['guide','游玩指南'],['devtools','开发者工具'],['devfx','技能特效']];
 let tab='ranch';
 /* 14 个分页分成 5 组：上面一排是大类，有子页的再显示第二排（Kris 2026-10-24） */
-const GROUPS=[['home','牧场',['ranch','map','farm','mine','fish','fossil','nursery']],['mons','宝可梦',['team','box','dex','lab']],['daily','每日',['daily','cm','urg','sq','ms','pr','diary']],['gacha','珍宝阁',['gacha']],['adv','冒险',['wild','explore','boss']],['battle','对战',['arena','wk','gym','e4','legend']],['rank','排行榜',['rank']],['items','背包',['bag','craft']],['shop','商场',['shop','auction','trade']],['guide','指南',['guide']],['dev','开发者',['devtools','devfx']]];
+const GROUPS=[['home','牧场',['ranch','map','farm','mine','fish','fossil','nursery','pcenter']],['mons','宝可梦',['team','box','dex','lab']],['daily','每日',['daily','cm','urg','sq','ms','pr','diary']],['gacha','珍宝阁',['gacha']],['adv','冒险',['wild','explore','boss']],['battle','对战',['arena','wk','gym','e4','legend']],['rank','排行榜',['rank']],['items','背包',['bag','craft']],['shop','商场',['shop','auction','trade']],['guide','指南',['guide']],['dev','开发者',['devtools','devfx']]];
 const TABNAME=Object.fromEntries(TABS);
 let cardFrom='ranch';
 const groupOf=t=>GROUPS.find(g=>g[2].includes(t))||GROUPS[0];
@@ -1546,7 +1546,7 @@ function polish(){
   if(tab==='map'&&cards[0]){ const t=cards[0].querySelector(':scope>.muted'); if(t&&/紫色是各个地区/.test(t.textContent)){ const lv=(t.textContent.match(/你是训练家 Lv\d+/)||[''])[0];
       t.innerHTML=`点一个地点会弹出介绍窗口，再点「前往」。${lv?lv+'。':''}<span class="pz-legend"><span><i style="background:#8a63d2"></i>地区（道馆、四天王）</span><span><i style="background:#3f8a6b"></i>地图探索</span><span><i style="background:#7fb857"></i>牧场、农场、矿洞等</span><span><i style="background:#5ba0d8"></i>对战场</span><span><i style="background:#7a6a55"></i>野外区域（写着这一批有几只）</span><span><i style="background:#e0a84a"></i>城镇（商场等）</span><span><i style="background:#d8473a"></i>世界 Boss</span><span><i style="background:#9aa4ae"></i>等级还不够</span></span>`; } }
 }
-function render(){ if(window.__POKEFARM_SYNC&&(tab==='devtools'||tab==='devfx')) tab='ranch'; if(tab!=='team') tsel=null; renderShell(); stopRanch(); if(!S.chosen){ $('#nav').innerHTML=''; rStarter(); save(); return; } try{ ({diary:rDiary,ranch:rRanch,team:rTeam,box:rBox,daily:rDaily,cm:rCM,urg:rUrg,wk:rWk,nursery:rNursery,gacha:rGacha,wild:rWild,arena:rArena,gym:rGym,e4:rE4,legend:rLegend,bag:rBag,craft:rCraft,shop:rShop,dex:rDex,pr:rPR,card:rCard,locked:rLocked,farm:rFarm,explore:rExplore,sq:rSQ,ms:rMS,lab:rLab,mine:rMine,fish:rFish,fossil:rFossil,boss:rBoss,auction:rAuction,trade:rTrade,map:rMap,rank:rRank,guide:rGuide,devtools:rDevTools,devfx:rDevFx})[(FEAT[tab]||0)>S.tl?'locked':tab](); }catch(e){ console.error(e); $('#main').innerHTML='<section class="panel"><div class="card"><h2>这一页出错了</h2><div class="muted">页面：'+tab+'<br>错误：'+String(e&&e.message||e)+'</div></div></section>'; } capLists(); polish(); save(); learnPrompt(); evoPrompt(); }
+function render(){ if(window.__POKEFARM_SYNC&&(tab==='devtools'||tab==='devfx')) tab='ranch'; if(tab!=='team') tsel=null; renderShell(); stopRanch(); if(!S.chosen){ $('#nav').innerHTML=''; rStarter(); save(); return; } try{ ({diary:rDiary,ranch:rRanch,team:rTeam,box:rBox,daily:rDaily,cm:rCM,urg:rUrg,wk:rWk,nursery:rNursery,pcenter:rCenter,gacha:rGacha,wild:rWild,arena:rArena,gym:rGym,e4:rE4,legend:rLegend,bag:rBag,craft:rCraft,shop:rShop,dex:rDex,pr:rPR,card:rCard,locked:rLocked,farm:rFarm,explore:rExplore,sq:rSQ,ms:rMS,lab:rLab,mine:rMine,fish:rFish,fossil:rFossil,boss:rBoss,auction:rAuction,trade:rTrade,map:rMap,rank:rRank,guide:rGuide,devtools:rDevTools,devfx:rDevFx})[(FEAT[tab]||0)>S.tl?'locked':tab](); }catch(e){ console.error(e); $('#main').innerHTML='<section class="panel"><div class="card"><h2>这一页出错了</h2><div class="muted">页面：'+tab+'<br>错误：'+String(e&&e.message||e)+'</div></div></section>'; } capLists(); polish(); save(); learnPrompt(); evoPrompt(); }
 /* 某一页出错时不要卡在上一页的内容上：显示提示，其他页面还能照常点（Kris 2026-10-27） */
 { const _render=render; render=function(){ try{ return _render.apply(this,arguments); }catch(e){ console.error(e); try{ $('#main').innerHTML=`<section class="panel"><div class="card"><h2>这一页出错了</h2><div class="muted">${String(e&&e.message||e)}。换一页再回来试试；如果一直这样，把这行字告诉我。</div></div></section>`; }catch(x){} } }; }
 $('#nav').onclick=e=>{const b=e.target.closest('[data-grp]'); if(!b) return; const g=GROUPS.find(x=>x[0]===b.dataset.grp); go(g[2].includes(lastSub[g[0]])?lastSub[g[0]]:g[2][0]); };
@@ -1877,10 +1877,10 @@ function rTeam(){
   const menu=(m,i)=>`<div class="tmenu" hidden data-menu="${i}"><button class="btn alt" data-pick2="${m.uid}">查看详情</button><button class="btn alt" data-team="rm" data-u="${m.uid}">移出队伍</button></div>`;
   const acts=(m,i)=>`<div class="tma"><button class="tbtn ${tsel===i?'on':''}" data-tsel="${i}" title="${tsel===i?'取消换位':'换位'}" aria-label="换位">⇄</button><button class="tbtn" data-tmore="${i}" title="更多" aria-label="更多">⋯</button>${menu(m,i)}</div>`;
   const lead=(m)=>`<div class="card tl tslot ${tsel===0?'sel':''}" data-slot="0" draggable="true"><div class="tls" style="background-image:url(${BG_IMG.arena})"><span class="tlc">👑 首发</span>${acts(m,0)}<div data-pick="${m.uid}" style="cursor:pointer"><img src="${spm(m)}" alt=""></div></div>
-    <div data-pick="${m.uid}" style="cursor:pointer;text-align:center"><div class="tlnm"><b>${nameOf(m)}</b>${gTag(m)} ${shTag(m.shiny)} ${restTag(m)}</div><div class="muted">Lv${m.lv} · ${typeStr(m.id)}系</div></div>
+    <div data-pick="${m.uid}" style="cursor:pointer;text-align:center"><div class="tlnm"><b>${nameOf(m)}</b>${gTag(m)} ${shTag(m.shiny)} ${hpTag(m)}</div><div class="muted">Lv${m.lv} · ${typeStr(m.id)}系${monHpR(m)<1&&!isFnt(m)?` · HP ${curHp(m)}/${maxhp(m)}`:''}</div></div>
     <div class="tst">${[['HP',maxhp(m)],['攻击',stat(m,5)],['防御',stat(m,6)],['特攻',stat(m,8)],['特防',stat(m,9)],['速度',stat(m,7)]].map(([k,v])=>`<span><i>${k}</i><b>${v}</b></span>`).join('')}</div>
     <div class="tmv">${mvChips(m)}${m.held?`<span class="tmc held">${iImg(m.held,16)} ${ITEMS[m.held][0]}</span>`:''}</div></div>`;
-  const small=(m,i)=>`<div class="card tm tslot ${tsel===i?'sel':''}" data-slot="${i}" draggable="true"><span class="tmn">${i+1}</span><div class="tmb" data-pick="${m.uid}"><img src="${spm(m)}" alt=""><div class="tmi"><div class="tmnm"><b>${nameOf(m)}</b>${gTag(m)} ${shTag(m.shiny)} ${restTag(m)}</div><div class="muted">Lv${m.lv} · ${typeStr(m.id)}</div><div class="tmv">${mvChips(m)}</div></div></div>${acts(m,i)}</div>`;
+  const small=(m,i)=>`<div class="card tm tslot ${tsel===i?'sel':''}" data-slot="${i}" draggable="true"><span class="tmn">${i+1}</span><div class="tmb" data-pick="${m.uid}"><img src="${spm(m)}" alt=""><div class="tmi"><div class="tmnm"><b>${nameOf(m)}</b>${gTag(m)} ${shTag(m.shiny)} ${hpTag(m)}</div><div class="muted">Lv${m.lv} · ${typeStr(m.id)}</div><div class="tmv">${mvChips(m)}</div></div></div>${acts(m,i)}</div>`;
   const empty=i=>`<div class="card tg-empty tslot" data-slot="${i}"><span class="muted">空位 ${i+1}</span><button class="btn" data-padd="1" ${S.team.length>=6||S.mons.length<=S.team.length?'disabled':''}>加入队伍</button></div>`;
   const m0=mon(S.team[0]);
   const tcost=teamCost(), tfull=S.tn>=TEAM_MAX;
@@ -1889,9 +1889,7 @@ function rTeam(){
   const tavg=tms.length?Math.round(tms.reduce((a,m)=>a+m.lv,0)/tms.length):0, tbusy=tms.filter(m=>isBusy(m)).length;
   const tpow=tms.reduce((a,m)=>a+maxhp(m)+stat(m,5)+stat(m,6)+stat(m,7)+stat(m,8)+stat(m,9),0);   /* 队伍战力 = 队里每只宝可梦六项能力值的总和 */
   const bar=`<div class="card tmbar"><div class="tbn"><b class="tbname">${S.teams[S.ti].n}</b><button class="tbtn tedit" id="tren" title="改队伍名字" aria-label="改名字">✎</button></div><span class="tchip g">${S.team.length}/6</span><span class="tchip">平均 Lv${tavg}</span><span class="tchip">最高 Lv${tms.length?Math.max(...tms.map(m=>m.lv)):0}</span>${tbusy?`<span class="tchip warn">${tbusy} 只派遣中，不能出战</span>`:''}<span class="tsep"></span><span class="tbd">队伍属性：</span><span class="tys">${Object.keys(tty).map(t=>`<i style="background:${TYC[t]||'#aaa'}">${t}</i>`).join('')||'<span class="muted">—</span>'}</span><span class="tpow">⚔ 队伍战力 <b>${tpow.toLocaleString()}</b></span></div>`;
-  const resting=S.mons.filter(isResting), hcost=resting.reduce((a,m)=>a+healCost(m),0);
-  const restBox=resting.length?`<div class="card" style="border-color:#d8473a"><div class="row" style="justify-content:space-between"><div><h2 style="margin:0">休息中（${resting.length} 只）</h2><div class="muted">战败的宝可梦要休息 ${REST_MIN} 分钟，休息时不能战斗、不能派遣；${resting.map(m=>`${nameOf(m)} 还要 ${restLeft(m)} 分钟`).join('，')}。</div></div><button class="btn" id="theal">花 ${hcost} 金币全部治疗</button></div></div>`:'';
-  $('#main').innerHTML=`<section class="panel">${picker}${bar}${restBox}<div class="tg">${m0?lead(m0):empty(0)}<div class="tg-rest">${[1,2,3,4,5].map(i=>{ const m=mon(S.team[i]); return m?small(m,i):empty(i); }).join('')}</div></div><div class="muted thint">对战、探索、道馆用的是「使用中」的队伍 · 最多 6 只，第一只首发，经验由出过场的宝可梦平分 · 拖动卡片换位（空位也可以），拖到上面的队伍按钮上就加进那个队伍；手机上点 ⇄ 再点目标位置</div></section>`;
+    $('#main').innerHTML=`<section class="panel">${picker}${bar}${pcHint()}<div class="tg">${m0?lead(m0):empty(0)}<div class="tg-rest">${[1,2,3,4,5].map(i=>{ const m=mon(S.team[i]); return m?small(m,i):empty(i); }).join('')}</div></div><div class="muted thint">对战、探索、道馆用的是「使用中」的队伍 · 最多 6 只，第一只首发，经验由出过场的宝可梦平分 · 拖动卡片换位（空位也可以），拖到上面的队伍按钮上就加进那个队伍；手机上点 ⇄ 再点目标位置</div></section>`;
   document.querySelectorAll('[data-tmore]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const mn=b.parentElement.querySelector('.tmenu'); const was=mn.hidden; document.querySelectorAll('.tmenu').forEach(x=>x.hidden=true); mn.hidden=!was; });
   document.querySelectorAll('[data-pick2]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const u=+b.dataset.pick2; showMon(u,[u]); });
   document.addEventListener('click',()=>document.querySelectorAll('.tmenu').forEach(x=>x.hidden=true),{once:true});
@@ -1909,7 +1907,6 @@ function rTeam(){
     el.addEventListener('dragleave',()=>el.classList.remove('dragover'));
     el.addEventListener('drop',e=>{ e.preventDefault(); el.classList.remove('dragover'); const a=+e.dataTransfer.getData('text/plain'); if(!isNaN(a)) copyToTeam(a,ti); }); });
   document.querySelectorAll('[data-ti]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.ti; if(i===S.ti) return; tsel=null; fixTeam(); S.ti=i; S.team=S.teams[i].u; fixTeam(); save(); render(); });
-  const th=$('#theal'); if(th) th.onclick=()=>{ const rs=S.mons.filter(isResting), c=rs.reduce((a,m)=>a+healCost(m),0); if(!rs.length||!pay(c)) return; rs.forEach(m=>{ delete m.rest; }); toast(`治疗完成，花了 ${c} 金币`); save(); render(); };
   const tb=$('#tbuy'); if(tb) tb.onclick=()=>{ if(S.tn>=TEAM_MAX) return; const c=teamCost(); if(!pay(c)) return; S.tn++; ensureTeams(); toast(`队伍位 +1，现在有 ${S.tn} 个队伍`); save(); render(); };
   document.querySelectorAll('[data-padd]').forEach(b=>b.onclick=()=>{ if(S.team.length>=6) return toast('队伍已满 6 只'); monPop(S.mons.filter(m=>!S.team.includes(m.uid)).sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)||b.lv-a.lv),'选择要加入队伍的宝可梦',u=>{ pvAddCb={uid:u,label:'加入队伍',fn:u2=>{ if(S.team.length<6&&!S.team.includes(u2)) S.team.push(u2); fixTeam(); refresh(); }}; showMon(u,[u]); }); });
 }
@@ -1969,9 +1966,9 @@ function nurOK(a,b){ if(!a||!b) return '先选两只'; if(a.uid===b.uid) return 
   else if(ga===gb) return '要一公一母';
   return ''; }
 const shOwn=root=>{ const L=S.mons.filter(m=>m.shiny&&rootOf(m.id)===root); return L.length?`<span class="tag r4" title="我的宝可梦里已经有这一系的异色：${[...new Set(L.map(nameOf))].join('、')}">已有异色：${[...new Set(L.map(nameOf))].join('、')}</span>`:''; };   /* 孵出的是这一系的第一形态；我的宝可梦里这一系已经有异色，就在培育栏注明（Kris 2026-11-02） */
-const nurFree=m=>!isBusy(m)&&!isResting(m)&&!inAnyTeam(m.uid)&&SP[m.id][10]<2;
+const nurFree=m=>!isBusy(m)&&!inAnyTeam(m.uid)&&SP[m.id][10]<2;
 function nurStart(i,ua,ub){ const N=nurSt(), a=mon(ua), b=mon(ub); const bad=nurOK(a,b); if(bad) return toast(bad); if(N.slots[i]) return;
-  if(!nurFree(a)||!nurFree(b)) return toast('这两只在队伍里、派遣中或休息中，先换别的');
+  if(!nurFree(a)||!nurFree(b)) return toast('这两只在队伍里或派遣中，先换别的');
   const rar=nurRar(a), cost=NUR_COST[rar]; if(!pay(cost)) return;
   N.slots[i]={a:a.uid,b:b.uid,root:nurRoot(a),ready:Date.now()+NUR_MIN[rar]*60000,start:Date.now(),cost}; toast(`开始培育：${nurT(NUR_MIN[rar])}后孵化`); N['pa'+i]=0; N['pb'+i]=0; save(); rNursery(); }
 function nurCollect(i){ const N=nurSt(), sl=N.slots[i]; if(!sl||sl.ready>Date.now()) return; { const g=monGuard(); if(g) return toast(g); } if(monCnt()>=MON_CAP) return toast(capMsg()); const a=mon(sl.a), b=mon(sl.b), root=sl.root;
@@ -2048,7 +2045,7 @@ function rNursery(){
   document.querySelectorAll('[data-nurinfo]').forEach(e=>e.onclick=()=>nurInfo(+e.dataset.nurinfo));
   document.querySelectorAll('[data-nurcancel]').forEach(e=>e.onclick=()=>nurCancel(+e.dataset.nurcancel));
   document.querySelectorAll('[data-nura]').forEach(e=>e.onclick=()=>{ const i=+e.dataset.nura; const can=ms.filter(x=>matches(x,i).length); monPop(can.concat(ms.filter(x=>!can.includes(x))),'选第一只（能配对的排在前面）',u=>{ const a=mon(u); N['pa'+i]=u||0; const b=a&&matches(a,i)[0]; N['pb'+i]=b?b.uid:0; rNursery(); },m=>matches(m,i).length?'':'暂时没有配对'); });   /* 选好第一只，第二只自动选一只能配的（可以再改） */
-  document.querySelectorAll('[data-nurauto]').forEach(e=>e.onclick=()=>{ const i=e.dataset.nurauto, p=autoPair(+i); if(!p) return toast('没有能配的一对（要同一系的一公一母，且不在队伍 / 派遣 / 休息中）'); N['pa'+i]=p.a.uid; N['pb'+i]=p.b.uid; rNursery(); });
+  document.querySelectorAll('[data-nurauto]').forEach(e=>e.onclick=()=>{ const i=e.dataset.nurauto, p=autoPair(+i); if(!p) return toast('没有能配的一对（要同一系的一公一母，且不在队伍 / 派遣中）'); N['pa'+i]=p.a.uid; N['pb'+i]=p.b.uid; rNursery(); });
   document.querySelectorAll('[data-nurclr]').forEach(e=>e.onclick=()=>{ const i=e.dataset.nurclr; N['pa'+i]=0; N['pb'+i]=0; rNursery(); });
   document.querySelectorAll('[data-nurb]').forEach(e=>e.onclick=()=>{ const i=+e.dataset.nurb, A=mon(+N['pa'+i]||0); if(!A) return; monPop(matches(A,i),'选第二只（能和 '+nameOf(A)+' 配的）',u=>{ N['pb'+i]=u||0; rNursery(); }); });
   document.querySelectorAll('[data-nurgo]').forEach(e=>e.onclick=()=>{ const i=+e.dataset.nurgo; nurStart(i,+N['pa'+i]||0,+N['pb'+i]||0); });
@@ -2064,9 +2061,9 @@ const NAT_H=[0,12,24,36,48], NAT_MAX=4, NAT_BASE=1, NAT_BUY=[20000,50000,100000]
 const natSt=()=>{ const N=nurSt(); N.nslots=N.nslots||[]; while(N.nslots.length<NAT_MAX) N.nslots.push(null); N.nlv=N.nlv||[]; return N; };
 const natN=()=>NAT_BASE+Math.min(NAT_BUY.length,natSt().nbought||0), natLv=i=>natSt().nlv[i]||0;
 const natTier=m=>SP[m.id][10]>=2?4:Math.min(3,SP[nurRoot(m)][3]||1), natMs=(m,i)=>Math.round(NAT_H[natTier(m)]*3600e3*(1-NAT_RED[natLv(i)]));
-const natFree=m=>!isBusy(m)&&!isResting(m)&&!inAnyTeam(m.uid), natHr=ms=>{ const h=ms/3600e3; return (Math.round(h*10)/10)+' 小时'; };
+const natFree=m=>!isBusy(m)&&!inAnyTeam(m.uid), natHr=ms=>{ const h=ms/3600e3; return (Math.round(h*10)/10)+' 小时'; };
 function natStart(i,ua,mk){ const N=natSt(), m=mon(ua); if(!m) return toast('先选一只宝可梦'); if(!MINTS[mk]||(S.items[mk]||0)<1) return toast('先选一个薄荷'); if(N.nslots[i]) return;
-  if(!natFree(m)) return toast('这只在队伍里、派遣中、培育中或休息中，先换别的'); if(natOf(m)===MINTS[mk][0]) return toast('已经是这个性格了');
+  if(!natFree(m)) return toast('这只在队伍里、派遣中或培育中，先换别的'); if(natOf(m)===MINTS[mk][0]) return toast('已经是这个性格了');
   const ms=natMs(m,i); S.items[mk]--; N.nslots[i]={m:m.uid,mint:mk,nat:MINTS[mk][0],start:Date.now(),ready:Date.now()+ms}; N['qa'+i]=0; N['qm'+i]='';
   toast(`开始性格培育：${natHr(ms)}后，${nameOf(m)} 的性格变成「${NATS[MINTS[mk][0]][0]}」`); save(); rNursery(); }
 function natStop(i){ const N=natSt(), sl=N.nslots[i]; if(!sl||sl.ready<=Date.now()) return; if(!confirm('取消这次性格培育？薄荷会退还给你。')) return;
@@ -2541,10 +2538,10 @@ function wxEnd(){ const b=B, w=b.wx; if(w!=='sand'&&w!=='hail') return; const im
 function wxBlock(m){ const w=WXAB[m.id]; return w?`<div class="row"><b>天气特性：</b><span class="tag r3">${WXN[w][1]}</span><span class="muted">出场时开启${WXN[w][0]}。${WXN[w][2]}。</span></div>`:(MEGA[m.id]||[]).some(f=>WXAB[f])?`<div class="row"><b>天气特性：</b><span class="muted">Mega 进化后 ${(MEGA[m.id]||[]).filter(f=>WXAB[f]).map(f=>SP[f][0]+'：'+WXN[WXAB[f]][1]).join('、')}。</span></div>`:''; }
 function startBattle(cfg){
   fixTeam(); monOpen=false; dexOpen=false;
-  const avail=m=>m&&!isBusy(m)&&!isResting(m)&&(!cfg.only||cfg.only(m))&&!(cfg.carry&&cfg.carry[m.uid]===0);   /* 连战：上一场倒下的不能再上 */
-  if(!S.team.map(mon).filter(avail).length){ const rs=S.team.map(mon).filter(isResting); return toast(rs.length?`队伍里的宝可梦在休息（还要 ${Math.min(...rs.map(restLeft))} 分钟），可以在「队伍」页花金币立刻治疗`:'队伍里的宝可梦都在探索中，先召回再来'); }
+  const avail=m=>m&&!isBusy(m)&&!isFnt(m)&&(!cfg.only||cfg.only(m))&&!(cfg.carry&&cfg.carry[m.uid]===0);   /* 连战：上一场倒下的不能再上 */
+  if(!S.team.map(mon).filter(avail).length){ const fn=S.team.map(mon).filter(m=>m&&!isBusy(m)&&isFnt(m)); return toast(fn.length?'队伍里能上场的宝可梦都倒下了，先到「牧场 → 宝可梦中心」治疗':'队伍里的宝可梦都在探索中，先召回再来'); }
   if(cfg.cnt) cnt()[cfg.cnt]=(cnt()[cfg.cnt]||0)+1;
-  const party=S.team.map(mon).filter(avail).map(real=>{ gOf(real); const me={...real}; delete me.tera; if(cfg.lvCap&&me.lv>cfg.lvCap) me.lv=cfg.lvCap;   /* 周挑战：等级压到本周的上限 */ const mvs=getMoves(real).slice(); return {real,me,mh:cfg.carry&&cfg.carry[real.uid]!=null?Math.min(maxhp(me),cfg.carry[real.uid]):maxhp(me),mx:maxhp(me),mvs,pp:mvs.map(i=>MV[i][4])}; });   /* 连战：HP 接着上一场 */
+  const party=S.team.map(mon).filter(avail).map(real=>{ gOf(real); const me={...real}; delete me.tera; if(cfg.lvCap&&me.lv>cfg.lvCap) me.lv=cfg.lvCap;   /* 周挑战：等级压到本周的上限 */ const mvs=getMoves(real).slice(); return {real,me,mh:cfg.carry&&cfg.carry[real.uid]!=null?Math.min(maxhp(me),cfg.carry[real.uid]):Math.max(1,Math.round(maxhp(me)*monHpR(real))),mx:maxhp(me),mvs,pp:mvs.map(i=>ppLeft(real,i))}; });   /* HP / PP 接着上次（宝可梦的状态不再每场重置） */   /* 连战：HP 接着上一场 */
   const foes=(cfg.foes||[cfg.foe]).map(f=>({...f,g:f.g||gRoll(f.id),fx:Math.round(maxhp(f)*(f.hpm||1)),fh:Math.round(maxhp(f)*(f.hpm||1)),fmv:initMoves(f.id,f.lv)})); foes.forEach(f=>{ S.seen=S.seen||{}; S.seen[f.id]=1; });
   B={cfg,party,cur:0,foes,fcur:0,log:[`${cfg.title} 出现了！`],over:null,used:{},gu:{},dyn:0,zOn:false,turns:0,ball:'ball',menu:'main',part:new Set([party[0].real.uid]),xp:0,pick:false};
   loadActive(); if(cfg.wx&&WXN[cfg.wx]){ B.wx=cfg.wx; B.log.push(`对方的 ${SP[B.foe.id][0]} 的特性：${WXN[cfg.wx][1]}！${WXN[cfg.wx][2]}`); }   /* 道馆重赛：开场天气 */
@@ -4590,7 +4587,7 @@ function bGimmick(m){
 function endDyn(){ const b=B; if(b.dyn>0){ b.mx=maxhp(b.me); b.mh=Math.min(b.mx,Math.ceil(b.mh/1.5)); b.dyn=0; } }
 function bPlayerDown(){
   const b=B; b.dyn=0; b.zOn=false; b.mh=0; { const o=b.me; o.stg={}; o.sta=''; o.cnf=0; o.seed=0; o.prot=0; o.protLast=0; o.endure=0; } saveActive(); b.log.push(`${SP[b.me.id][0]} 倒下了。`);
-  if(b.party.some((p,i)=>i!==b.cur&&p.mh>0)){ b.pick=true; b.log.push('请选择下一只宝可梦。'); } else { const rs=b.party.map(p=>p.real); rs.forEach(m=>{ m.rest=Date.now()+REST_MIN*60000; }); b.log.push(`队伍全部倒下了。战败！上场的 ${rs.length} 只宝可梦要休息 ${REST_MIN} 分钟，也可以在「队伍」页花金币立刻治疗。`); b.over='end'; if(b.cfg.onLose) b.cfg.onLose(); save(); }
+  if(b.party.some((p,i)=>i!==b.cur&&p.mh>0)){ b.pick=true; b.log.push('请选择下一只宝可梦。'); } else { b.log.push('队伍全部倒下了……眼前一片漆黑！'); b.over='end'; b.whiteout=1; if(b.cfg.onLose) b.cfg.onLose(); save(); }
   bRender();
 }
 const EVIDX=[4,5,6,8,9,7];   /* BASE6 的顺序（HP 攻 防 特攻 特防 速）对应的能力编号 */
@@ -4794,7 +4791,7 @@ $('#battle').addEventListener('click',e=>{ if(e.target.matches&&e.target.matches
   if(m==='done'){ S.mons=S.mons.filter(x=>!x.test); if(B.cfg.kind==='wild'&&(B.over==='catch'||(B.over==='end'&&B.fh<=0))) S.wild=S.wild.filter(w=>w.wid!==B.cfg.wid); const nx=B.over==='end'&&B.fh<=0?B.cfg.next:null; B=null; $('#modal').hidden=true; if(nx) return nx(); return render(); }   /* 连战：赢了就接下一场 */
   if(m==='ball'){ const key=B.ball||'ball'; if(monCnt()>=MON_CAP) return toast(capMsg()); if(!(S.items[key]>0)) return; S.items[key]--; const bn=ITEMS[key][0]; const p=catchP(B,key); S.cb=0; const ok=Math.random()<p, b0=B; B.busy=true;
     return catchAnim(key,ok,()=>{ if(B!==b0) return; B.busy=false;
-    if(ok){ const f=B.foe; const nm={uid:S.nuid++,id:f._oid||f.id,lv:f.lv,exp:0,shiny:!!f.shiny,g:f.g,ball:key}; if(key==='b_friend') nm.fr=200; if(key==='b_luxury') nm.fr=20; S.mons.push(nm); S.stats.caught++; prog('caught'); B.log.push(tgain(5)); B.log.push(`${bn}摇了三下……捕捉成功！${SP[f.id][0]} 加入了牧场。`); S.wild=S.wild.filter(w=>w.wid!==B.cfg.wid); B.over='end'; B.caughtOK=1; } else { B.log.push(`${bn}打开了，它挣脱了！`); if(Math.random()<fleeP(B)){ B.log.push(`${SP[B.foe.id][0]} 逃走了……`); S.wild=S.wild.filter(w=>w.wid!==B.cfg.wid); B.over='end'; B.fled=1; } } bRender(); if(B&&B.caughtOK){ const f=document.querySelector('#bfoe'); if(f) f.style.visibility='hidden'; }
+    if(ok){ const f=B.foe; const nm={uid:S.nuid++,id:f._oid||f.id,lv:f.lv,exp:0,shiny:!!f.shiny,g:f.g,ball:key}; if(key==='b_friend') nm.fr=200; if(key==='b_luxury') nm.fr=20; if(key!=='b_heal'){ const r=B.fx>0?B.fh/B.fx:1; if(r<1) nm.hpr=Math.max(.01,r); if(f.sta) nm.sta=f.sta==='tox'?'psn':f.sta; }   /* 抓到的时候剩多少 HP、什么异常状态就带过来（治愈球回满） */ S.mons.push(nm); S.stats.caught++; prog('caught'); B.log.push(tgain(5)); B.log.push(`${bn}摇了三下……捕捉成功！${SP[f.id][0]} 加入了牧场。`); S.wild=S.wild.filter(w=>w.wid!==B.cfg.wid); B.over='end'; B.caughtOK=1; } else { B.log.push(`${bn}打开了，它挣脱了！`); if(Math.random()<fleeP(B)){ B.log.push(`${SP[B.foe.id][0]} 逃走了……`); S.wild=S.wild.filter(w=>w.wid!==B.cfg.wid); B.over='end'; B.fled=1; } } bRender(); if(B&&B.caughtOK){ const f=document.querySelector('#bfoe'); if(f) f.style.visibility='hidden'; }
     if(B&&B.fled){ const f=document.querySelector('#bfoe'); if(f){ try{ f.animate([{transform:'translateX(0)',opacity:1},{transform:'translateX(-8%) translateY(-6%)',opacity:1,offset:.2},{transform:'translateX(60%)',opacity:0}],{duration:700,fill:'forwards',composite:'add'}); }catch(e){} setTimeout(()=>{ if(f) f.style.visibility='hidden'; },700); } } }); }   /* 逃走：往后一跳、跑出画面 */
   if(m==='shift:yes'){ if(B&&B.shift){ B.menu='party'; bRender(); } return; }
   if(m==='shift:no'){ if(B&&B.shift) bSendNext(); return; }
@@ -4977,7 +4974,7 @@ const BALLS=[
  {k:'b_timer',n:'计时球',d:'战斗回合越多越好用，最高 ×4。',f:c=>Math.min(4,1+c.turns*0.3)},
  {k:'b_luxury',n:'豪华球',d:'×1。捕到的宝可梦亲密度增长 ×1.5。',f:()=>1},
  {k:'b_dusk',n:'黑暗球',d:'夜晚（新加坡时间 18 点到 6 点）×3.5。',f:()=>todNow()==='night'?3.5:1},
- {k:'b_heal',n:'治愈球',d:'×1。捕到后回满体力（原型里宝可梦本来就是满血）。',f:()=>1},
+ {k:'b_heal',n:'治愈球',d:'×1。捕到后回满 HP、治好异常状态（其他球抓到的宝可梦保持被抓时的 HP 和状态）。',f:()=>1},
  {k:'b_quick',n:'先机球',d:'第 1 回合就赢 ×5。',f:c=>c.turns<=1?5:1},
  {k:'b_dream',n:'梦境球',d:'对睡眠状态 ×4（原型里没有睡眠状态，相当于 ×1）。',f:()=>1},
  {k:'b_beast',n:'究极球',d:'对究极异兽 ×5，对其他宝可梦只有 ×0.1。',f:c=>UB.includes(c.id)?5:.1},
@@ -5657,11 +5654,7 @@ const exPick=a0=>{ const a=a0.filter(k=>!BICOND[k]||biOK(k)); const k=a[Math.flo
 function exScore(A,mons){ const avg=mons.reduce((a,m)=>a+m.lv,0)/mons.length, match=mons.filter(m=>A.ty.length===0||A.ty.includes(SP[m.id][2])||A.ty.includes(SP[m.id][8])).length/mons.length; return avg/A.lv+.3*match; }
 function exStars(sc){ return sc>=1.5?3:sc>=1.1?2:sc>=.8?1:0; }
 const exNeed=m=>inAnyTeam(m.uid)?.25:0;
-/* 战败要休息（Kris 2026-10-27，难度第一期）：和野生宝可梦 / NPC / Boss 打输了，上场的宝可梦休息 10 分钟，休息的时候不能战斗、不能派遣；也可以花金币立刻治疗 */
-const REST_MIN=10, healCost=m=>Math.max(50,(m.lv||1)*20);
-const isResting=m=>!!(m&&(m.rest||0)>Date.now()), restLeft=m=>Math.max(1,Math.ceil((m.rest-Date.now())/60000));
-const restTag=m=>isResting(m)?`<span class="tag r4" title="战败后休息中，可以在「队伍」页花金币立刻治疗">休息 ${restLeft(m)} 分</span>`:'';
-const canSend=m=>!isBusy(m)&&!isResting(m)&&!inAnyTeam(m.uid);   /* 派遣（探索 / 矿洞 / 农夫）和推荐都不选带「队伍」标签的宝可梦 */
+/* 宝可梦的状态（Kris 2026-11-19）：战斗完不再重置。HP（按比例存在 m.hpr，没有 = 满血，0 = 倒下）、异常状态（m.sta / m.slpT）、招式 PP（m.pp，招式编号 → 剩几次）都带到下一场；到「宝可梦中心」免费治好。以前的「战败休息 10 分钟 / 花金币治疗」拿掉了 */ const monHpR=m=>m&&m.hpr!=null?m.hpr:1, isFnt=m=>!!m&&m.hpr===0, curHp=m=>isFnt(m)?0:Math.max(1,Math.round(maxhp(m)*monHpR(m))); const ppLeft=(m,id)=>m&&m.pp&&m.pp[id]!=null?Math.min(m.pp[id],MV[id][4]):MV[id][4]; const needHeal=m=>!!m&&(monHpR(m)<1||!!m.sta||!!(m.pp&&Object.keys(m.pp).length)); function healMon(m){ delete m.hpr; delete m.sta; delete m.slpT; delete m.toxN; delete m.pp; } const STA_TAG={psn:['中毒','#a040a0'],tox:['剧毒','#7a2e7a'],par:['麻痹','#d8b020'],brn:['灼伤','#e05a2a'],slp:['睡眠','#7a8aa0'],frz:['冰冻','#4aa8d8']}; const hpTag=m=>{ if(!m) return ''; if(isFnt(m)) return '<span class="tag r4" title="倒下了，到「宝可梦中心」治疗">倒下</span>'; const r=monHpR(m), t=m.sta&&STA_TAG[m.sta]; return (r<1?`<span class="hpmini" title="HP ${curHp(m)}/${maxhp(m)}"><i style="width:${Math.max(4,Math.round(r*100))}%;background:${r>.5?'#4caf50':r>.2?'#f2b01e':'#e04a3a'}"></i></span>`:'')+(t?`<span class="tag" style="background:${t[1]};color:#fff;border-color:${t[1]}">${t[0]}</span>`:''); }; const canSend=m=>!isBusy(m)&&!inAnyTeam(m.uid);   /* 派遣（探索 / 矿洞 / 农夫）和推荐都不选带「队伍」标签的宝可梦 */
 function exBest(A,n=3,skip=[]){ const free=S.mons.filter(m=>canSend(m)&&!skip.includes(m.uid)); const sc=m=>m.lv/A.lv+.3*(A.ty.length===0||A.ty.includes(SP[m.id][2])||A.ty.includes(SP[m.id][8])?1:0)-exNeed(m)+(m.shiny?.001:0); return free.sort((x,y)=>sc(y)-sc(x)).slice(0,n); }
 const exStarStr=n=>n?'★'.repeat(n):'☆';
 function exStart(i,A,ms){ cnt().ex++; S.ex.slots[i]={area:A.k,mons:ms.map(m=>m.uid),ready:Date.now()+A.min*60000,start:Date.now()}; }
@@ -5787,9 +5780,9 @@ function duoCard(){
 }
 function bindDuo(){ const r=$('#dref'); if(r) r.onclick=()=>{ if(!refPay('rd')) return; genDuos(); render(); }; document.querySelectorAll('[data-duo]').forEach(b=>b.onclick=()=>{ const o=S.duos[+b.dataset.duo]; if(!arLeft('duo')) return toast('今天的对战次数用完了，0 点刷新'); const ng=npcGm(o.team); startDouble(o.n,o.team,o.r,o.rating,undefined,undefined,'duo',{gm:o.gm,items:o.items,gk:ng&&ng.gm.k,gt:ng&&ng.gm.t}); }); }
 function startDouble(title,team,reward,rating,onWin,onLose,ckey,opts){
-  fixTeam(); const mine=S.team.map(mon).filter(m=>m&&!isBusy(m)).slice(0,4); if(mine.length<2) return toast('2v2 需要队伍里至少 2 只宝可梦（到「队伍」里再加）');
+  fixTeam(); const mine=S.team.map(mon).filter(m=>m&&!isBusy(m)&&!isFnt(m)).slice(0,4); if(mine.length<2) return toast(S.team.map(mon).some(m=>m&&isFnt(m))?'2v2 需要至少 2 只能上场的宝可梦：倒下的先到「牧场 → 宝可梦中心」治疗':'2v2 需要队伍里至少 2 只宝可梦（到「队伍」里再加）');
   if(ckey) cnt()[ckey]=(cnt()[ckey]||0)+1;
-  D={title,reward,rate:rating,onWin,onLose,party:mine.map(real=>{ gOf(real); const mvs=getMoves(real).slice(); const me={...real}; delete me.tera; return {real,me,mh:maxhp(real),mx:maxhp(real),mvs,pp:mvs.map(i=>MV[i][4])}; }),foes:team.map(f=>({...f,g:gRoll(f.id),fx:maxhp(f),fh:maxhp(f),fmv:initMoves(f.id,f.lv)})),
+  D={title,reward,rate:rating,onWin,onLose,party:mine.map(real=>{ gOf(real); const mvs=getMoves(real).slice(); const me={...real}; delete me.tera; return {real,me,mh:Math.max(1,Math.round(maxhp(real)*monHpR(real))),mx:maxhp(real),mvs,pp:mvs.map(i=>ppLeft(real,i))}; }),foes:team.map(f=>({...f,g:gRoll(f.id),fx:maxhp(f),fh:maxhp(f),fmv:initMoves(f.id,f.lv)})),
     my:[0,1],fo:[0,1],nm:2,nf:2,log:[`${title} 想要对战！`],over:null,sel:[],pm:null,part:new Set([0,1]),xp:0,turns:0};
   D.used={}; D.gu={}; D.foeItems=opts&&opts.items?opts.items.slice():null;
   if(opts&&opts.gk){ const fs=D.foes; let ix=-1; for(let i=fs.length-1;i>=0;i--){ if((opts.gk!=='mega'||MEGA[fs[i].id])&&(opts.gk!=='dyn'||!NODYN.has(fs[i].id))){ ix=i; break; } } if(ix>=0) fs[ix].gm={k:opts.gk,t:opts.gk==='tera'&&opts.gt&&CHART[opts.gt]?opts.gt:null}; }
@@ -5875,7 +5868,7 @@ function dWxEnd(){ const d=D, w=d.wx; if(w!=='sand'&&w!=='hail') return; const i
     if(f.fh<=0){ d.log.push(`对方的 ${SP[f.id][0]} 倒下了！`); d.xp+=f.lv*9+10; d.fo[fs]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(fs); } });
   if(any) dBeat(null,0,null,0);
   if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length) return dWin();
-  if(!dAlive('m').length){ d.log.push('队伍全部倒下了。战败，没有惩罚，休息一下就好。'); d.over='lose'; if(d.onLose) d.onLose(); } }
+  if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); } }
 /* 双打的变身 / Z 招式 / 道具 / 对方王牌特殊能力：和单打同一套规则（每只宝可梦各自可以变身一次、一只只能选一种：Mega、极巨化、太晶化、Z 招式；变身在选招前生效） */
 function dRevertDyn(p){ if(p&&p.me){ p.me._chg=0; p.me._semi=0; } if(p.dyn>0){ p.dyn=0; p.mx=maxhp(p.me); p.mh=Math.min(p.mx,Math.ceil(p.mh/1.5)); } p.zOn=false; }
 function dShown(p,i,z){ const base=plain(p.mvs[i]); if(p.dyn>0&&base.pow>0) return {...base,name:gmxName(p.me.id,base.type),pow:gmxPow(p.me.id,base.type,base.pow),acc:101,tag:gmxOn(p.me.id,base.type)?'超极巨招式':'极巨招式'};
@@ -5946,7 +5939,7 @@ function dTurn(){
         const hl=(D.__hl||[]).map(([o,m])=>{ const w=where(o); return w&&w[1]>=0?[w[0],w[1],m]:null; }).filter(Boolean);
         e.mv=sh.id; e.z=sh.tag?sh.name:null; e.semi=A.__semi2||null; e.cat=sh.pow>0?(SPECIAL.has(sh.id)?'sp':'ph'):'st'; e.tgs=hl.length?hl:[[tside,tslot,sh.pow>0?0:1]]; } A.__semi2=null; D.__hl=null; }
     if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length) { dWin(); break; }
-    if(!dAlive('m').length){ d.log.push('队伍全部倒下了。战败，没有惩罚，休息一下就好。'); d.over='lose'; if(d.onLose) d.onLose(); break; } }
+    if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); break; } }
   d.party.forEach(p=>{ if(p.dyn>0){ p.dyn--; if(p.dyn===0){ p.mx=maxhp(p.me); p.mh=p.mh>0?Math.max(1,Math.min(p.mx,Math.ceil(p.mh/1.5))):0; d.log.push(`${SP[p.me.id][0]} 极巨化结束了，变回原来的大小。`); } } });
   if(!d.over){ dWxEnd(); wxTick(d); statEnd2(); }
   d.sel=[]; d.pm=null; d.menu='main';
@@ -6179,12 +6172,12 @@ function urgDone(q,extra){ const u=UG(); q.st='done'; u.total=(u.total||0)+1; pr
   lines.push(tgain(15)); save(); return lines; }
 function urgAct(i){ const u=UG(), q=u.list[i]; if(!q) return; const now=Date.now();
   if(q.k==='battle'&&q.st==='open'){ startBattle({kind:'wild',bg:q.a,foe:{id:q.sp,lv:q.lv},title:`紧急任务 · ${q.t}`,tag:'紧急任务',onWin:()=>{ if(q.st!=='open') return ''; const L=urgDone(q); return '紧急任务完成：'+L.join('；'); }}); return; }
-  if(q.k==='send'&&q.st==='open'){ const free=S.mons.filter(m=>!isBusy(m)&&!isResting(m)&&!inAnyTeam(m.uid)).sort((a,b)=>urgTyOk(b,q.ty)-urgTyOk(a,q.ty)||b.lv-a.lv);
+  if(q.k==='send'&&q.st==='open'){ const free=S.mons.filter(m=>!isBusy(m)&&!inAnyTeam(m.uid)).sort((a,b)=>urgTyOk(b,q.ty)-urgTyOk(a,q.ty)||b.lv-a.lv);
     if(!free.some(m=>urgTyOk(m,q.ty))) return toast(`没有空闲的 ${q.ty.join(' / ')} 系宝可梦（队伍里、派遣中、培育中的不能派）`);
     monPop(free,`派去处理「${q.t}」（1–3 只，至少 1 只是 ${q.ty.join(' / ')} 系）`,us=>{ const L=[].concat(us).map(mon).filter(Boolean).slice(0,3); if(!L.length) return; if(!L.some(m=>urgTyOk(m,q.ty))) return toast(`至少要有 1 只 ${q.ty.join(' / ')} 系`); q.mons=L.map(m=>m.uid); q.st='going'; q.ready=Date.now()+q.min*60000; toast(`派出 ${L.map(nameOf).join('、')}，${q.min} 分钟后回来`); save(); rUrg(); renderShell(); },m=>urgTyOk(m,q.ty)?`${q.ty.filter(t=>t===SP[m.id][2]||t===SP[m.id][8]).join('/')}系 ✓`:'',{multi:3}); return; }
   if(q.k==='send'&&q.st==='going'){ if(q.ready>now) return; rwRun(`紧急任务完成：${q.t}`,()=>{ const ms=(q.mons||[]).map(mon).filter(Boolean); ms.forEach(m=>{ addExp(m,100+(S.tl||1)*5); bond(m,5); }); q.mons=[]; return urgDone(q,`${ms.map(nameOf).join('、')} 回来了，各 +${100+(S.tl||1)*5} 经验`); }); rUrg(); renderShell(); return; }
   if(q.k==='give'&&q.st==='open'){ if((S.items[q.it]||0)<q.n) return toast(`${ITEMS[q.it][0]} 不够（要 ${q.n} 个，你有 ${S.items[q.it]||0} 个）`); rwRun(`紧急任务完成：${q.t}`,()=>{ S.items[q.it]-=q.n; return urgDone(q,`交出 ${ITEMS[q.it][0]} ×${q.n}`); }); rUrg(); renderShell(); return; }
-  if(q.k==='mon'&&q.st==='open'){ const c=S.mons.filter(m=>urgTyOk(m,[q.ty])&&!isBusy(m)&&!isResting(m)&&!inAnyTeam(m.uid)&&!m.fav&&!m.shiny).sort((a,b)=>a.lv-b.lv);
+  if(q.k==='mon'&&q.st==='open'){ const c=S.mons.filter(m=>urgTyOk(m,[q.ty])&&!isBusy(m)&&!inAnyTeam(m.uid)&&!m.fav&&!m.shiny).sort((a,b)=>a.lv-b.lv);
     if(!c.length) return toast(`没有可以交出去的 ${q.ty} 系宝可梦（队伍里、最爱、异色、派遣中的不能交）`);
     monPop(c,`交一只 ${q.ty} 系宝可梦给「${q.t}」（交出去就不会回来了）`,uid=>{ const m=mon([].concat(uid)[0]); if(!m) return; if(!confirm(`确定把 ${nameOf(m)} Lv${m.lv} 交出去吗？交出去就不会回来了。`)) return; rwRun(`紧急任务完成：${q.t}`,()=>{ const nm=nameOf(m); removeMons([m.uid]); return urgDone(q,`${nm} 去新的地方帮忙了`); }); rUrg(); renderShell(); }); return; } }
 const URG_KIND={battle:['平息暴走','#d8473a'],send:['派遣处理','#3b82c4'],give:['紧急补给','#c9962f'],mon:['寻找帮手','#7b5ba8']};
@@ -7096,11 +7089,11 @@ const GSEC={
   gBox(gH('粘糕和基础点数','传说道具'),`<p>每个粘糕让一项能力的<b>基础点数 +10</b>，每种粘糕最多吃 3 个（+30），6 种都能各吃 3 个；<b>净空粘糕</b>把全部基础点数清空，清掉后可以重新吃。在宝可梦详情的「粘糕」里用。</p><div class="row" style="gap:6px">${Object.keys(MOCHI).map(k=>`<span class="chip">${gIt(k,22)} ${ITEMS[k][0]}</span>`).join(' ')}</div><p class="muted">哪里来：道馆重赛同一位馆主三个难度合计 9 星送 1 个（自己选）、抽道具的传说档、每月任务全部完成的大奖，也可以在「背包 → 制作」用树果做。粘糕不能卖、不能拍卖、不能交换。</p>`),
   gBox(gH('特性'),`<p>每只宝可梦都有特性，在战斗里自动发动（比如猛火：HP 少时火系招式变强；压迫感：对手每次出招多用 1 点 PP；日照、降雨这类特性还会开天气）。有 2 种特性的宝可梦，可以在宝可梦详情里用 ${gIt('abcap',22)} <b>特性胶囊</b>（传说道具，商场 ${priceOf('abcap').toLocaleString()} 金币）随机换特性，有 5% 几率换成<b>隐藏特性</b>。</p>`),
   gBox(gH('进化'),`<div class="row" style="gap:8px;align-items:center">${gSp(4,48)}<span>→</span>${gSp(5,48)}<span class="muted">Lv16</span><span>→</span>${gSp(6,48)}<span class="muted">Lv36</span></div><ul class="gul"><li><b>等级进化</b>：升到那个等级就能在宝可梦详情里点进化。</li><li><b>道具进化</b>：${gSp(25,36)}→${gSp(26,36)} 要${gIt('i83')}雷之石；在背包的「进化道具」分页，先点道具，再选宝可梦。</li><li><b>交换进化</b>：要${gIt('link')}交换连接线。</li><li><b>亲密度进化</b>：亲密度到 100（喂食、训练、赢战斗、亲密度树果）。${gSp(133,36)}</li><li><b>地区形态</b>：阿罗拉的样子等形态在图鉴里同一个条目切换。</li></ul>`),
-  gBox(gH('培育中心','孵蛋'),`<p>把<b>同一系的一公一母</b>（或两只同种类的无性别宝可梦）放进培育栏，一段时间后孵出这一系的第一形态（有进化的 Lv5，没有进化的 Lv10），有机会出异色，性格大概率随父母。神兽 / 幻兽不能培育；队伍里、派遣中、休息中的不能选，培育时两只都不能做别的事。训练家 Lv${FEAT.nursery} 开放。</p>`+gTable(['稀有度','金币','时间'],[1,2,3].map(r=>[['','普通','稀有','超稀有'][r],NUR_COST[r],nurT(NUR_MIN[r])]))+`<p>培育栏开始有 ${NUR_BASE} 个，最多 ${NUR_MAX} 个，第 3、4 个用金币买（${NUR_BUY.map(x=>x.toLocaleString()).join(' / ')} 金币）。每个培育栏可以升级到 Lv5，孵出异色的几率更高：</p>`+gTable(['培育栏等级','孵出异色','升级费用'],[1,2,3,4,5].map(l=>['Lv'+l,'+'+Math.round(NUR_SHINY[l]*100)+'%',NUR_UP[l].toLocaleString()+' 金币']))),
+  gBox(gH('培育中心','孵蛋'),`<p>把<b>同一系的一公一母</b>（或两只同种类的无性别宝可梦）放进培育栏，一段时间后孵出这一系的第一形态（有进化的 Lv5，没有进化的 Lv10），有机会出异色，性格大概率随父母。神兽 / 幻兽不能培育；队伍里、派遣中的不能选，培育时两只都不能做别的事。训练家 Lv${FEAT.nursery} 开放。</p>`+gTable(['稀有度','金币','时间'],[1,2,3].map(r=>[['','普通','稀有','超稀有'][r],NUR_COST[r],nurT(NUR_MIN[r])]))+`<p>培育栏开始有 ${NUR_BASE} 个，最多 ${NUR_MAX} 个，第 3、4 个用金币买（${NUR_BUY.map(x=>x.toLocaleString()).join(' / ')} 金币）。每个培育栏可以升级到 Lv5，孵出异色的几率更高：</p>`+gTable(['培育栏等级','孵出异色','升级费用'],[1,2,3,4,5].map(l=>['Lv'+l,'+'+Math.round(NUR_SHINY[l]*100)+'%',NUR_UP[l].toLocaleString()+' 金币']))),
 gBox(gH('酋雷姆合体','黑暗石 / 光明石 / 基因之楔'),`<p>第一次得到<b>捷克罗姆</b>送<b>黑暗石</b>，第一次得到<b>莱希拉姆</b>送<b>光明石</b>，第一次得到<b>酋雷姆</b>送<b>基因之楔</b>。都是专属道具，带上以后自己属性的攻击招式威力 ×1.2（捷克罗姆、莱希拉姆不变身）。黑暗石、光明石是共用的：捷克罗姆 / 莱希拉姆和酋雷姆都能带。</p><ul class="gul"><li>酋雷姆带<b>黑暗石 / 光明石</b>：点「战斗」后可以合体成<b>闇黑酋雷姆 / 焰白酋雷姆</b>，不花回合，一场一次，变了就不能变回。</li><li>酋雷姆带<b>基因之楔</b>：战斗中可以在酋雷姆 / 闇黑酋雷姆 / 焰白酋雷姆之间自由切换，每次切换花一回合（这回合不能出招）。</li><li>合体后冰封世界 → 冰冻伏特 / 极寒冷焰，鬼面 → 交错闪电 / 交错火焰；战斗结束变回原样。</li></ul>`),
 gBox(gH('小智版甲贺忍蛙','牵绊变身'),`<p>抽宝可梦抽到<b>超稀有</b>时，有 5% 的几率换成带特性<b>「牵绊变身」</b>的<b>呱呱泡蛙</b>（算超稀有，一定是雄性，宝可梦详情里会标出来；活动卡池只有水 / 恶系的周才会出），进化后一直保留。</p><p>带这个特性的<b>甲贺忍蛙</b>在战斗里<b>用招式打倒对手</b>后，当场变成<b>小智版甲贺忍蛙</b>（攻击 145、特攻 153、速度 132），「飞水手里剑」威力 15 → 20，而且固定连打 3 下。一场只变一次，战斗结束变回原样。打倒的是最后一只（野外对手只有一只）时战斗直接结束，不会变身。带牵绊变身的甲贺忍蛙不能 Mega 进化。</p>`),
 gBox(gH('经验培育','培育中心第三页'),`<p>训练家卡片 <b>1 星</b>开放。只有 <b>1 个场地</b>，不能升级，最多放 <b>6 只</b>宝可梦。选 6 / 12 / 18 / 24 小时，<b>培育完成后一次结算经验</b>：每只每小时 200 经验 × 属性加成。可以提前结束，按已满的小时数结算。</p>`+gTable(['场地里同属性的数量（算自己）','加成'],[[1,'×1'],[2,'×1.2'],[3,'×1.4'],[4,'×1.6'],[5,'×1.8'],[6,'×2（最多）']])+`<p class="muted">双属性的宝可梦取比较多的那个属性。培育中的宝可梦不能做别的事；满 100 级就不再加经验。</p>`),
-gBox(gH('性格培育','培育中心第二页'),`<p>把<b>一只宝可梦</b>和<b>一个性格薄荷</b>放进性格栏，时间到了，这只宝可梦的性格变成薄荷的性格。薄荷放进去时就用掉。</p>`+gTable(['宝可梦稀有度','时间'],[1,2,3,4].map(t=>[NAT_TN[t],NAT_H[t]+' 小时']))+`<p>性格栏开始有 ${NAT_BASE} 个，最多 ${NAT_MAX} 个，后面的用金币买（${NAT_BUY.map(x=>x.toLocaleString()).join(' / ')} 金币）。每个性格栏可以升到 Lv5，培育时间依次缩短 5% / 10% / 15% / 20% / 25%（升级费用 ${NAT_UP.slice(1).map(x=>x.toLocaleString()).join(' / ')} 金币）。队伍里、派遣中、休息中的宝可梦不能选，培育期间这只也不能做别的事。薄荷从珍宝阁「常驻 · 道具（薄荷）」抽，25 种性格都能抽到。</p>`),
+gBox(gH('性格培育','培育中心第二页'),`<p>把<b>一只宝可梦</b>和<b>一个性格薄荷</b>放进性格栏，时间到了，这只宝可梦的性格变成薄荷的性格。薄荷放进去时就用掉。</p>`+gTable(['宝可梦稀有度','时间'],[1,2,3,4].map(t=>[NAT_TN[t],NAT_H[t]+' 小时']))+`<p>性格栏开始有 ${NAT_BASE} 个，最多 ${NAT_MAX} 个，后面的用金币买（${NAT_BUY.map(x=>x.toLocaleString()).join(' / ')} 金币）。每个性格栏可以升到 Lv5，培育时间依次缩短 5% / 10% / 15% / 20% / 25%（升级费用 ${NAT_UP.slice(1).map(x=>x.toLocaleString()).join(' / ')} 金币）。队伍里、派遣中的宝可梦不能选，培育期间这只也不能做别的事。薄荷从珍宝阁「常驻 · 道具（薄荷）」抽，25 种性格都能抽到。</p>`),
   gBox(gH('其他培育要点'),`<ul class="gul"><li><b>异色</b>：很少见，图鉴里单独记录。</li><li><b>携带道具</b>：超级石、Z 纯晶要让宝可梦携带，战斗时才能用。<b>宝石</b>放在单独的宝石栏，不占携带道具；阿尔宙斯的<b>石板</b>不用携带，收集到的都能用。</li><li><b>重复的宝可梦</b>可以兑换成经验、道具、金币或星尘（队伍和最爱里的不行）。</li><li><b>技能</b>：一只最多 4 个，升级会学新技能，也可以用 TM；有的宝可梦有专属招式。</li></ul>`)].join(''),
  unlock:()=>[
   gBox(gH('训练家等级决定开放什么'),`<p>你现在是训练家 <b>Lv${S.tl||1}</b>。训练家经验来自签到、任务、对战和捕捉，每升 1 级送 100 金币、5 星尘。</p>`+gTable(['功能','开放等级','说明'],[['对战（NPC、玩家）',FEAT.arena,`对战 → 对战。每天 ${ARN_DAY} 次，赢了得经验、金币和段位分`],
@@ -7119,6 +7112,7 @@ gBox(gH('性格培育','培育中心第二页'),`<p>把<b>一只宝可梦</b>和
    ['2v2 双打',DUO_LV,'对战 → 对战，页面里的「2v2 双打」'],
    ['化石复原',FEAT.fossil,`主页 → 化石复原。把矿洞挖到的化石放进复原机，等 ${FOS_MIN} 分钟复原成古代宝可梦；Lv40 开第 2 台，之后用金币再买 ${FOS_BUY.length} 台`],
    ['传奇训练家',FEAT.legend,'对战 → 传奇训练家。每位有特定条件和等级要求，第一次打赢奖励丰厚']].sort((a,b)=>a[1]-b[1]))),
+  gBox(gH('宝可梦的状态和宝可梦中心','牧场 → 宝可梦中心'),`<p>打完一场，宝可梦的<b>HP、异常状态（中毒、麻痹、灼伤、睡眠、冰冻）、招式 PP</b> 都会带到下一场，不会自己恢复。到<b>「牧场 → 宝可梦中心」</b>免费、马上全部治好。</p><ul class="gul"><li>倒下的宝可梦不能出战；队伍页、出战确认窗会显示 HP 和状态。</li><li>队伍全部倒下（眼前一片漆黑）：关掉对战后会回到宝可梦中心、全部治好，掉一点金币（队伍最高等级 × 按徽章数 8～120 的倍数）。</li><li>剧毒在对战结束后变回普通中毒；抓到的宝可梦保持被抓时的 HP 和状态，用治愈球抓会回满。</li></ul>`),
   gBox(gH('道馆、四天王的等级要求'),`<p>每位馆主、四天王的训练家等级要求约为他们<b>平均等级的 55%</b>。比如小刚平均 Lv13，要求 Lv7。四天王还要先集齐该地区<b>全部徽章</b>。</p><div class="row" style="gap:6px">${TR.regions.map((r,ri)=>`<span class="chip">${bImg(ri,0,20)} ${r.region_zh} <b>${r.gyms.length}</b> 枚</span>`).join('')}</div>`),
   gBox(gH('战斗道具：通关才开放'),`<p>战斗里用的药品、强化、树果要<b>通关到一定程度</b>才能买、才能获得（没开放的，宝箱和奖励里也不会出）。</p>`+gTable(['条件','开放的道具'],[['赢下同一地区 3 个道馆',['potion','br_oran','m_xatk','m_xdef','br_sitrus']],['赢下同一地区 5 个道馆',['m_super','m_xspd','br_leppa','m_ether','br_liechi','br_ganlon','br_salac']],['集齐同一地区 8 个道馆',['m_revive','m_hyper','br_lum','m_elixir']],['拿下 1 个地区的冠军',['m_max','m_maxrevive']],['拿下 3 个地区的冠军',['m_full']]].map(([c,l])=>[c,l.map(k=>`<span class="chip">${gIt(k,22)} ${ITEMS[k][0]}</span>`).join(' ')]))),
   gBox(gH('变身能力：极巨化、太晶化、Mega、Z 招式'),gTable(['能力','怎么开放','怎么用'],[['Mega 进化',`让宝可梦携带对应的超级石 ${gIt('ms_venusaurite')}，要超级手环`,'战斗里点一次'],['原始回归（盖欧卡、固拉多）',`带上专属道具蓝色 / 红色宝珠 ${gIt('ms_blue-orb')}${gIt('ms_red-orb')}（在宝可梦详情的「专属道具」里带，要超级手环）`,'开启强烈的大雨 / 大日照'],['Z 招式',`携带对应的 Z 纯晶 ${gIt('zc_electrium-z')}，要 Z 手环`,'对应属性的技能变成 Z 招式'],['极巨化','赢下伽勒尔 3 个道馆',`3 回合，HP ×1.5；有超极巨形态的 ${Object.keys(GMX).length} 种（喷火龙、皮卡丘、卡比兽……）会超极巨化，对应属性的招式变成专属超极巨招式；和原作一样，只有剑 / 盾里出现的宝可梦能极巨化（共 ${SWSH.size-3} 种，苍响、藏玛然特、无极汰那除外）`],['太晶化','赢下帕底亚 3 个道馆','变成太晶属性，该属性技能 ×2']])+`<p class="muted">训练家 Lv50 以后，对战 NPC 和 2v2 对手也会使用特殊形态（Mega、极巨化、太晶化），整场只用一次，在对方第一次出招时发动。</p><p class="muted"><b>Mega 进化、极巨化、太晶化每只宝可梦只能三选一</b>：在宝可梦详情的「战斗设定 → 特殊形态」里选好，战斗里这只就只能用选中的这一种；携带道具（超级石、Z 纯晶）不影响这个选择，Z 招式仍然看携带的 Z 纯晶。</p><p class="muted">四个手环 / 腕带默认各有 1 个，可以反复使用。一场战斗每种能力只能用一次。</p>`),
@@ -7331,12 +7325,12 @@ function teamPop(title,go,dbl){ let el=$('#tpop');
     el.addEventListener('change',e=>{ const s=e.target.closest('[data-tpt]'); if(!s) return; fixTeam(); S.ti=+s.value; S.team=S.teams[S.ti].u; el._sel=null; fixTeam(); save(); el._draw(); });
     document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!el.hidden&&$('#mpick').hidden){ el.hidden=true; el._go=null; } }); }
   el._go=go; el.hidden=false; el._sel=null;
-  el._draw=()=>{ fixTeam(); const ms=S.team.map(mon).filter(Boolean), usable=ms.filter(m=>!isBusy(m)).length, act=dbl?4:1;
+  el._draw=()=>{ fixTeam(); const ms=S.team.map(mon).filter(Boolean), okN=ms.filter(m=>!isBusy(m)&&!isFnt(m)).length, usable=dbl?okN>=2:okN>0, fnN=ms.filter(isFnt).length, act=dbl?4:1;   /* 倒下的不能出战（宝可梦的状态带到下一场，Kris 2026-11-19） */
     el.innerHTML=`<div class="mpc" style="width:min(760px,100%)"><div class="row" style="justify-content:space-between"><b style="font:16px var(--pix)">出战队伍</b><button class="btn alt" data-tpx="1">取消</button></div><div class="muted" style="margin:4px 0 8px">${title}。${dbl?'2v2 双打：队伍前 4 只会上场（前 2 只先出场）。':'第一只首发，倒下后换下一只。'}可以切换队伍、拖动卡片换位（手机上点「⇄ 换位」再点目标位置）、移出或加入。</div>
     <div class="row" style="margin-bottom:8px"><label class="muted" for="tpt">使用队伍</label><select id="tpt" data-tpt="1" style="padding:5px 8px;border-radius:6px;border:1px solid var(--line);font:inherit;max-width:100%">${S.teams.map((t,k)=>`<option value="${k}" ${k===S.ti?'selected':''}>${t.n}（${k===S.ti?S.team.length:t.u.length}/6）</option>`).join('')}</select></div>
-    <div class="tpl">${ms.map((m,i)=>`<div class="tpr ${i===0?'lead':''} ${isBusy(m)?'busy':''} ${el._sel===i?'sel':''}" data-tslot="${i}" draggable="true"><span class="tpn">${i===0?'首发':i+1}</span><img src="${spfM(m,m.shiny)}" alt=""><div style="min-width:0"><b>${SP[m.id][0]}</b>${gTag(m)} <span class="muted">Lv${m.lv}</span> ${m.shiny?'<span class="tag r4">异色</span>':''}${isBusy(m)?' <span class="tag r3">派遣中，不能出战</span>':''}${dbl&&i>=4?' <span class="tag">不上场</span>':''}<div class="muted">${typeStr(m.id)}系 · HP ${maxhp(m)} · ${getMoves(m).map(x=>MV[x][0]).slice(0,4).join(' / ')}</div></div><span class="row" style="flex:none"><button class="btn alt" data-tpsel="${i}" ${ms.length>1?'':'disabled'}>${el._sel===i?'取消换位':'⇄ 换位'}</button><button class="btn alt" data-tpr="${m.uid}" ${ms.length>teamMin()?'':'disabled'}>移出</button></span></div>`).join('')}
+    <div class="tpl">${ms.map((m,i)=>`<div class="tpr ${i===0?'lead':''} ${isBusy(m)||isFnt(m)?'busy':''} ${el._sel===i?'sel':''}" data-tslot="${i}" draggable="true"><span class="tpn">${i===0?'首发':i+1}</span><img src="${spfM(m,m.shiny)}" alt=""><div style="min-width:0"><b>${SP[m.id][0]}</b>${gTag(m)} <span class="muted">Lv${m.lv}</span> ${m.shiny?'<span class="tag r4">异色</span>':''}${isBusy(m)?' <span class="tag r3">派遣中，不能出战</span>':''} ${hpTag(m)}${dbl&&i>=4?' <span class="tag">不上场</span>':''}<div class="muted">${typeStr(m.id)}系 · HP ${curHp(m)}/${maxhp(m)} · ${getMoves(m).map(x=>MV[x][0]).slice(0,4).join(' / ')}</div></div><span class="row" style="flex:none"><button class="btn alt" data-tpsel="${i}" ${ms.length>1?'':'disabled'}>${el._sel===i?'取消换位':'⇄ 换位'}</button><button class="btn alt" data-tpr="${m.uid}" ${ms.length>teamMin()?'':'disabled'}>移出</button></span></div>`).join('')}
     ${ms.length<6?`<div class="tpr empty" data-tslot="end"><span class="muted">还有 ${6-ms.length} 个空位</span><button class="btn" data-tpadd="1" ${S.mons.length>ms.length?'':'disabled'}>加入队伍</button></div>`:''}</div>
-    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn alt" data-tpx="1">取消</button><button class="btn red" data-tpgo="1" ${usable?'':'disabled'}>${usable?'开始战斗':'没有能出战的宝可梦'}</button></div></div>`; };
+    <div class="row" style="margin-top:12px;justify-content:flex-end">${!usable&&fnN?'<span class="muted" style="margin-right:auto">倒下的宝可梦要先到宝可梦中心治疗</span><button class="btn alt" data-tpx="1" data-go="pcenter">去宝可梦中心</button>':''}<button class="btn alt" data-tpx="1">取消</button><button class="btn red" data-tpgo="1" ${usable?'':'disabled'}>${usable?'开始战斗':dbl&&okN===1?'能出战的不到 2 只':'没有能出战的宝可梦'}</button></div></div>`; };
   el._draw(); }
 { const _sb=startBattle; startBattle=function(cfg){ if(window.__noTeamPop||(cfg&&cfg.noPop)) return _sb(cfg); teamPop(cfg&&cfg.title||'战斗',()=>_sb(cfg),false); };
   const _sd=startDouble; startDouble=function(...a){ if(window.__noTeamPop) return _sd(...a); teamPop(a[0]||'2v2 双打',()=>_sd(...a),true); }; }
@@ -9170,7 +9164,7 @@ function xKO(C,o){ const x=C.hp(o); if(x<=0) return; if(C===SC1){ C.set(o,0); C.
   const d=D, pi=d.party.findIndex(p=>p.me===o);
   if(pi>=0){ const p=d.party[pi], sl=d.my.indexOf(pi); p.mh=0; d.log.push(`${SP[o.id][0]} 倒下了。`); if(sl>=0){ let nx=-1; for(let i=0;i<d.party.length;i++){ if(d.party[i].mh>0&&!d.my.includes(i)){ nx=i; break; } } if(nx>=0){ d.my[sl]=nx; d.part.add(nx); d.log.push(`去吧，${SP[d.party[nx].me.id][0]}！`); wxEnter(d.party[nx].me.id,true,d.party[nx].me); } else d.my[sl]=-1; } return; }
   const fi=d.foes.indexOf(o); if(fi<0) return; const sl=d.fo.indexOf(fi); o.fh=0; d.log.push(`对方的 ${SP[o.id][0]} 倒下了！`); d.xp+=o.lv*9+10; if(sl>=0){ d.fo[sl]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(sl); } }
-function xDblCheck(){ const d=D; if(!d||d.over) return; if(!dAlive('m').length){ d.log.push('队伍全部倒下了。战败，没有惩罚，休息一下就好。'); d.over='lose'; if(d.onLose) d.onLose(); return; } if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length&&!(d.need||[]).length) dWin(); }
+function xDblCheck(){ const d=D; if(!d||d.over) return; if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); return; } if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length&&!(d.need||[]).length) dWin(); }
 
 /* ---------- 威力会变的招式 / 固定伤害 ---------- */
 function xPow(a,d,sh){ const id=sh.id, C=xC();
@@ -9652,7 +9646,7 @@ function xpnSettle(silent,early){ const N=nurSt(), F=N&&N.xp; if(!F) return 0; c
   F.done=h; save(); return ups; }
 function xpnStart(){ const N=xpnSt(), q=N.xq; if(N.xp) return; if(!xpnOpen()) return toast(`训练家卡片 ${XPN_STAR} 星开放`);
   const ms=q.mons.map(mon).filter(Boolean); if(!ms.length) return toast('先放至少 1 只宝可梦');
-  const bad=ms.find(m=>!natFree(m)); if(bad) return toast(`${nameOf(bad)} 在队伍里、派遣中、培育中或休息中，先换别的`);
+  const bad=ms.find(m=>!natFree(m)); if(bad) return toast(`${nameOf(bad)} 在队伍里、派遣中或培育中，先换别的`);
   if(ms.every(m=>m.lv>=100)) return toast('放进去的宝可梦都满级了');
   const mult={}; ms.forEach(m=>mult[m.uid]=xpnMult(m,ms));
   N.xp={mons:ms.map(m=>m.uid),hrs:q.hrs,start:Date.now(),done:0,mult,g:{},lv0:Object.fromEntries(ms.map(m=>[m.uid,m.lv]))}; N.xq={mons:[],hrs:q.hrs};
@@ -15716,7 +15710,7 @@ nav#subnav [data-tab="map"]{display:none!important}
   let twSel=null;
   function twStart(){ const T=TW(); if(T.run) return twStep(); if(T.n>=TW_DAY) return toast('今天的 3 次挑战都用完了，明天再来');
     const ms=(twSel||[]).map(mon).filter(Boolean); if(ms.length!==TW_PICK) return toast(`先从队伍里选 ${TW_PICK} 只上塔`);
-    const bad=ms.find(m=>isBusy(m)||isResting(m)); if(bad) return toast(`${SP[bad.id][0]} 现在不能出战（探索中或在休息）`);
+    const bad=ms.find(m=>isBusy(m)||isFnt(m)); if(bad) return toast(`${SP[bad.id][0]} 现在不能出战（${isFnt(bad)?'倒下了，先到宝可梦中心治疗':'探索中'}）`);
     T.n++; T.run={floor:1,uids:ms.map(m=>m.uid),carry:null,seed:Date.now()%1e9,got:{coins:0,stars:0}}; save(); twStep(); }
   function twStep(){ const T=TW(), R=T.run; if(!R) return render(); const f=R.floor, F=twFoe(R,f);
     if(!R.uids.some(u=>(S.team||[]).includes(u))) { toast('上塔的宝可梦已经不在队伍里了，先把它们放回队伍'); return render(); }
@@ -15740,7 +15734,7 @@ nav#subnav [data-tab="map"]{display:none!important}
     $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${BG_IMG.arena})"></div><h2 class="xt">对战塔</h2><div class="muted">从队伍里选 <b>${TW_PICK} 只</b>上塔，一层一个训练家，<b>层与层之间 HP 不回复</b>，倒下的不能再上场，3 只都倒下就结束。越往上对手越强：第 55 层到 Lv100，之后每层对手 HP 再加 4%。每 10 层是塔主（最后一只会太晶化，第 30 层起还会带神兽）。每天能挑战 ${TW_DAY} 次，最高层永久记录。</div>
       <div class="row" style="margin-top:8px"><span class="chip">最高纪录 <b>第 ${T.best} 层</b></span><span class="chip">本周最高 <b>第 ${T.wk.best} 层</b></span><span class="chip">今天还能挑战 <b>${Math.max(0,left)}</b> / ${TW_DAY} 次</span></div></div>
       ${R?`<div class="card"><h2>挑战进行中</h2><div class="muted">正打到第 ${R.floor} 层 · 这次已拿到 ${rtext(R.got)||'—'}</div><div class="row" style="margin-top:8px">${R.uids.map(mon).filter(Boolean).map(m=>{ const h=R.carry&&R.carry[m.uid]!=null?R.carry[m.uid]:maxhp(m); return `<span class="chip"><img src="${spfM(m,m.shiny)}" alt="" style="width:32px;height:32px;image-rendering:pixelated"> ${SP[m.id][0]} ${h}/${maxhp(m)}</span>`; }).join('')}</div><div class="row" style="margin-top:10px"><button class="btn red" id="twgo">继续挑战第 ${R.floor} 层</button><button class="btn alt" data-tw="quit">结束挑战</button></div></div>`
-      :`<div class="card"><h2>选 ${TW_PICK} 只上塔 <span class="muted" style="font-weight:400">（已选 ${twSel.length}/${TW_PICK}）</span></h2><div class="twpick">${tm.map(m=>{ const on=twSel.includes(m.uid), off=isBusy(m)||isResting(m); return `<button class="twm ${on?'on':''}" data-twp="${m.uid}" ${off?'disabled title="探索中或在休息"':''}><img src="${spfM(m,m.shiny)}" alt=""><b>${esc(nameOf(m))}</b><small>Lv${m.lv}</small></button>`; }).join('')||'<div class="muted">队伍里没有宝可梦</div>'}</div><div class="row" style="margin-top:10px"><button class="btn red" id="twgo" ${twSel.length===TW_PICK&&left>0?'':'disabled'}>${left>0?'开始挑战（第 1 层）':'今天的次数用完了'}</button></div></div>`}
+      :`<div class="card"><h2>选 ${TW_PICK} 只上塔 <span class="muted" style="font-weight:400">（已选 ${twSel.length}/${TW_PICK}）</span></h2><div class="twpick">${tm.map(m=>{ const on=twSel.includes(m.uid), off=isBusy(m)||isFnt(m); return `<button class="twm ${on?'on':''}" data-twp="${m.uid}" ${off?`disabled title="${isFnt(m)?'倒下了，先到宝可梦中心治疗':'探索中'}"`:''}><img src="${spfM(m,m.shiny)}" alt=""><b>${esc(nameOf(m))}</b><small>Lv${m.lv}</small></button>`; }).join('')||'<div class="muted">队伍里没有宝可梦</div>'}</div><div class="row" style="margin-top:10px"><button class="btn red" id="twgo" ${twSel.length===TW_PICK&&left>0?'':'disabled'}>${left>0?'开始挑战（第 1 层）':'今天的次数用完了'}</button></div></div>`}
       <div class="card"><h2>奖励</h2><div class="muted">每通过一层：金币 30 + 层数×8，星尘 = 层数。第一次打到每个第 10 层：额外金币、稀有道具 1 份、神奇糖果 2 个；第 50、100 层是大奖（稀有道具 3 份、神奇糖果 5 个）。打到 10 / 30 / 50 / 100 层还会得到称号。</div>
         <div class="twmile">${[10,20,30,40,50,60,70,80,90,100].map(f=>`<span class="chip ${T.mile[f]?'on':''}">${T.mile[f]?'✓ ':''}第 ${f} 层</span>`).join('')}${next>100?`<span class="chip">第 ${next} 层</span>`:''}</div></div></section>`;
     document.querySelectorAll('[data-twp]').forEach(b=>b.onclick=()=>{ const u=+b.dataset.twp; if(twSel.includes(u)) twSel=twSel.filter(x=>x!==u); else if(twSel.length<TW_PICK) twSel.push(u); else { twSel.shift(); twSel.push(u); } rTower(); });
@@ -16275,6 +16269,85 @@ ${[0,1,2,3,4,5,6,7].map(k=>`.btin i:nth-child(${k+1}){animation-delay:${(.68+k*.
   document.head.appendChild(st);
 })();
 /* ===== 第十七阶段结束 ===== */
+/* ===== 第十八阶段（Kris 2026-11-19）：宝可梦的状态带到下一场 + 宝可梦中心 =====
+   · 对战中每次画面停下来（不在回放），就把上场宝可梦现在的 HP、异常状态、PP 写回牧场里的那只（中途关掉也不会回满）
+   · 队伍全倒（眼前一片漆黑）：关掉对战后扣一点金币、全部治好、回到宝可梦中心（跟 GBA 一样）
+   · 宝可梦中心：免费、马上治好全部宝可梦（HP、异常状态、PP） */
+function pSync(st){ if(!st||!st.party) return; const sing=st===B;
+  st.party.forEach((p,i)=>{ const m=p.real; if(!m||m.test||!S.mons.includes(m)) return;
+    const act=sing&&i===st.cur, me=act?st.me:p.me, mh=act?st.mh:p.mh, mx=act?st.mx:p.mx, pp=act?st.pp:p.pp, mvs=act?st.mvs:p.mvs;
+    if(mh<=0) m.hpr=0; else if(mh>=mx) delete m.hpr; else m.hpr=Math.min(.999,Math.max(.01,mh/mx));
+    const sta=mh>0&&me&&me.sta?(st.over&&me.sta==='tox'?'psn':me.sta):'';   /* 剧毒：对战结束后变回普通中毒 */
+    if(sta){ m.sta=sta; if(sta==='slp') m.slpT=Math.max(0,me.slpT||0); else delete m.slpT; } else { delete m.sta; delete m.slpT; }
+    if(mvs&&pp){ const o={}; mvs.forEach((id,j)=>{ if(pp[j]!=null&&pp[j]<MV[id][4]) o[id]=Math.max(0,pp[j]); }); if(Object.keys(o).length) m.pp=o; else delete m.pp; } });
+  if(st.whiteout&&!st.__wo){ st.__wo=1; S.wo=1; } }
+{ const _br=bRender; bRender=function(){ const r=_br.apply(this,arguments); try{ if(B&&!B.busy) pSync(B); }catch(e){} return r; }; }
+setInterval(()=>{ try{ if(B&&!B.busy) pSync(B); if(typeof D!=='undefined'&&D&&!D.busy) pSync(D); }catch(e){} },400);   /* 回放结束时用的是内部的画面函数，这里再补一次 */
+{ const _dr=dRender; dRender=function(){ const r=_dr.apply(this,arguments); try{ if(typeof D!=='undefined'&&D&&!D.busy) pSync(D); }catch(e){} return r; }; }
+/* 全倒：等对战关掉再处理（扣钱 = 队伍最高等级 × 徽章数对应的倍数，跟 GBA 一样，最多扣到 0） */
+try{ S.mons.forEach(m=>{ delete m.rest; }); }catch(e){}   /* 旧存档里「战败休息」的时间不用了 */
+const WO_MUL=[8,16,24,36,48,64,80,100,120];
+function woLoss(){ const lv=Math.max(1,...S.team.map(mon).filter(Boolean).map(m=>m.lv)), bd=Math.min(8,Object.keys(S.badges||{}).length); return Math.min(S.coins,lv*WO_MUL[bd]); }
+function doWhiteout(){ if(!S.wo) return; delete S.wo; const c=woLoss(); S.coins-=c; S.mons.forEach(healMon); save(); PCJUST={wo:c}; go('pcenter'); }
+setInterval(()=>{ try{ if(S.wo&&!B&&!(typeof D!=='undefined'&&D)&&$('#modal').hidden) doWhiteout(); }catch(e){} },300);
+/* 宝可梦中心有几只要治疗（队伍里的），显示在「牧场 → 宝可梦中心」旁边 */
+{ const _po=pendingOf; pendingOf=function(){ const r=_po.apply(this,arguments); try{ const n=S.team.map(mon).filter(m=>m&&needHeal(m)).length; if(n) r.pcenter=n; }catch(e){} return r; }; }
+/* 队伍页上方：有倒下或受伤的就提醒一句，能直接去宝可梦中心 */
+function pcHint(){ const ms=S.team.map(mon).filter(m=>m&&needHeal(m)); if(!ms.length) return ''; const fn=ms.filter(isFnt).length;
+  return `<div class="card pchint"><span>${fn?`<b>${fn} 只倒下了</b>，不能上场。`:''}${ms.length-fn?`${ms.length-fn} 只受了伤或 PP 用掉了。`:''}到宝可梦中心可以免费治好。</span><button class="btn" data-go="pcenter">去宝可梦中心</button></div>`; }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-go="pcenter"]'); if(b) go('pcenter'); });
+let PCJUST=null, PCBUSY=false;
+function rCenter(){
+  const tm=S.team.map(mon).filter(Boolean), box=S.mons.filter(m=>!S.team.includes(m.uid)&&needHeal(m)), need=S.mons.filter(needHeal), just=PCJUST; PCJUST=null;
+  const bar=m=>{ const r=monHpR(m), c=r>.5?'#4caf50':r>.2?'#f2b01e':'#e04a3a'; return `<div class="pcbar"><i style="width:${isFnt(m)?0:Math.max(3,Math.round(r*100))}%;background:${c}"></i></div><small>${isFnt(m)?'倒下':`HP ${curHp(m)} / ${maxhp(m)}`}</small>`; };
+  const ppRow=m=>getMoves(m).map(id=>{ const l=ppLeft(m,id), x=MV[id][4]; return `<span class="pcpp ${l===0?'z':l<x?'lo':''}">${MV[id][0]} <b>${l}/${x}</b></span>`; }).join('');
+  const row=(m,i)=>`<div class="pcm ${isFnt(m)?'fnt':''}" data-pci="${i}"><img src="${spm(m)}" alt=""><div class="pci"><div class="pcn"><b>${nameOf(m)}</b> <span class="muted">Lv${m.lv}</span> ${m.sta&&STA_TAG[m.sta]?`<span class="tag" style="background:${STA_TAG[m.sta][1]};color:#fff;border-color:${STA_TAG[m.sta][1]}">${STA_TAG[m.sta][0]}</span>`:''}${isFnt(m)?'<span class="tag r4">倒下</span>':''}</div>${bar(m)}<div class="pcpps">${ppRow(m)}</div></div></div>`;
+  const msg=just&&just.wo!=null?`队伍全部倒下了……你急急忙忙跑回了宝可梦中心${just.wo?`，慌乱中掉了 <b>${just.wo.toLocaleString()}</b> 金币`:''}。宝可梦们已经治好了，下次小心一点！`
+    :just&&just.heal?'久等了！你的宝可梦已经恢复精神了。期待你再来！'
+    :need.length?'欢迎来到宝可梦中心！要让你的宝可梦休息一下吗？':'欢迎来到宝可梦中心！你的宝可梦都很有精神。';
+  $('#main').innerHTML=`<section class="panel"><div class="card pch"><div class="pcroof" aria-hidden="true"></div><div class="pcin">
+    <div class="pcdesk"><img class="pcchan ${just?'hop':''}" src="${spf(113,false)}" alt=""><div class="pcmach" aria-hidden="true">${[0,1,2,3,4,5].map(i=>`<i class="pcs ${i<tm.length?'has':''}">${i<tm.length?iImg(tm[i].ball||'ball',22):''}</i>`).join('')}<span class="pcscr"></span></div></div>
+    <div class="pctalk"><p>${msg}</p><button class="btn pcgo" id="pcheal" ${need.length&&!PCBUSY?'':'disabled'}>${need.length?'治疗全部宝可梦':'不需要治疗'}</button>
+    <div class="muted pcnote">免费、马上治好：HP、异常状态（中毒、麻痹、灼伤、睡眠、冰冻）、招式 PP。宝可梦的状态打完不会自己恢复，会带到下一场。</div></div></div></div>
+    <div class="card"><h2>队伍（${tm.length}/6）</h2><div class="pclist">${tm.map(row).join('')||'<div class="muted">队伍是空的</div>'}</div>
+    ${box.length?`<div class="muted" style="margin-top:10px">牧场里另外还有 ${box.length} 只需要治疗（${box.slice(0,6).map(nameOf).join('、')}${box.length>6?'……':''}），会一起治好。</div>`:''}</div></section>`;
+  const b=$('#pcheal'); if(b) b.onclick=()=>{ if(PCBUSY) return; PCBUSY=true; b.disabled=true;
+    const ss=[...document.querySelectorAll('.pcmach .pcs.has')], scr=document.querySelector('.pcscr'), still=matchMedia('(prefers-reduced-motion: reduce)').matches, step=still?0:330;
+    document.querySelector('.pctalk p').textContent='好的，请把宝可梦交给我们一会儿……';
+    ss.forEach((x,i)=>setTimeout(()=>x.classList.add('in'),i*step));
+    setTimeout(()=>{ if(scr) scr.classList.add('on'); ss.forEach(x=>x.classList.add('glow')); },ss.length*step+150);
+    setTimeout(()=>{ S.mons.forEach(healMon); save(); PCBUSY=false; PCJUST={heal:1}; if(tab==='pcenter') rCenter(); renderShell(); },ss.length*step+(still?200:1700)); };
+}
+{ const st=document.createElement('style'); st.textContent=`
+.pch{padding:0;overflow:hidden}
+.pcroof{height:22px;background:repeating-linear-gradient(90deg,#e8505a 0 28px,#f27c84 28px 56px);border-bottom:4px solid #b8323c}
+.pcin{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:18px;align-items:center;padding:18px}
+.pcdesk{position:relative;height:150px;border-radius:14px;background:linear-gradient(#fff6f0 0 58%,#f0d8c8 58% 62%,#e0c0ac 62%);display:flex;align-items:flex-end;justify-content:space-between;padding:0 16px 16px}
+.pcchan{width:84px;height:84px;object-fit:contain;image-rendering:pixelated;margin-bottom:24px}.pcchan.hop{animation:pchop .5s ease 2}
+.pcmach{position:relative;display:grid;grid-template-columns:repeat(3,28px);gap:6px;padding:10px 12px 22px;background:#5a6a80;border:3px solid #2e3a4a;border-radius:10px 10px 4px 4px;margin-bottom:30px}
+.pcs{width:28px;height:28px;border-radius:50%;background:#2e3a4a;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 0 rgba(0,0,0,.35)}
+.pcs img{width:22px;height:22px;image-rendering:pixelated;opacity:0;transform:translateY(-14px);transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
+.pcs.in img{opacity:1;transform:none}.pcs.glow{animation:pcglow .5s ease-in-out 3}
+.pcscr{position:absolute;left:10px;right:10px;bottom:5px;height:9px;border-radius:3px;background:#2e3a4a}.pcscr.on{background:#7fe08a;box-shadow:0 0 10px #7fe08a;animation:pcblink .25s steps(2) 6}
+.pctalk p{margin:0 0 12px;padding:12px 14px;background:#fff;border:3px solid #485070;border-radius:10px;box-shadow:inset 0 0 0 2px #c8d4ec;font-size:15px;line-height:1.7;color:#383848}
+.pcgo{font-size:15px;padding:10px 22px}.pcnote{margin-top:10px;font-size:12.5px}
+.pclist{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.pcm{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.pcm img{width:56px;height:56px;object-fit:contain;image-rendering:pixelated;flex:none}.pcm.fnt img{filter:grayscale(1);opacity:.55}
+.pci{flex:1;min-width:0}.pcn{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pcbar{height:8px;background:#e8e4da;border-radius:4px;overflow:hidden;margin:5px 0 2px}.pcbar i{display:block;height:100%;border-radius:4px;transition:width .5s}
+.pci small{font-size:12px;color:var(--mut)}
+.pcpps{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.pcpp{font-size:11.5px;padding:1px 6px;border-radius:6px;background:#f2efe6;color:var(--mut)}.pcpp b{color:var(--ink);font-weight:600}.pcpp.lo b{color:#c27a0a}.pcpp.z b{color:#d8473a}
+.pchint{display:flex;align-items:center;justify-content:space-between;gap:12px;border-color:#e8505a;background:#fff6f5}
+.hpmini{display:inline-block;width:46px;height:6px;border-radius:3px;background:#e8e4da;overflow:hidden;vertical-align:middle;margin-left:4px}.hpmini i{display:block;height:100%}
+@keyframes pchop{50%{transform:translateY(-10px)}}
+@keyframes pcglow{50%{box-shadow:0 0 12px 3px #ffe08a}}
+@keyframes pcblink{50%{opacity:.4}}
+@media(max-width:700px){.pcin{grid-template-columns:1fr}.pchint{flex-direction:column;align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){.pcchan.hop,.pcs.glow,.pcscr.on{animation:none}.pcs img{transition:none}}`; document.head.appendChild(st); }
+/* 不弹「出战队伍」确认窗的战斗（对战塔、特效测试）：能上场的都倒下了，就在开场动画之前挡下来（放在最外层，等全部脚本跑完再包） */
+setTimeout(()=>{ const _sb=startBattle; startBattle=function(cfg){ try{ if(cfg&&cfg.noPop&&!S.team.map(mon).some(m=>m&&!isBusy(m)&&!isFnt(m)&&(!cfg.only||cfg.only(m))&&!(cfg.carry&&cfg.carry[m.uid]===0))&&S.team.map(mon).some(m=>m&&isFnt(m))) return toast('队伍里能上场的宝可梦都倒下了，先到「牧场 → 宝可梦中心」治疗'); }catch(e){} return _sb.apply(this,arguments); }; },0);
+/* ===== 第十八阶段结束 ===== */
 /* 保险（Kris 2026-11-18）：弹窗打开了、内容却没画出来（中途出错）时，不要留下一个空白框挡住画面——直接关掉 */
 (function(){ const md=document.getElementById('modal'), bt=document.getElementById('battle'); if(!md||!bt) return;
   const chk=()=>{ if(!md.hidden&&!bt.children.length&&!bt.textContent.trim()){ md.hidden=true; console.warn('空白弹窗已自动关闭'); try{ evoAsking=null; tmPopFor=null; sigPopFor=null; }catch(e){} } };
