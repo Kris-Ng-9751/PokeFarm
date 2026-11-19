@@ -8814,7 +8814,8 @@ function abfxLine(t){ const acts=[]; let m=t.match(/(对方的 )?([^\s，。！�
   return acts; }
 function abfxCheck(){ const host=document.querySelector('#battle .garena'); if(!fxOn()||!host){ document.body.classList.remove('wxhold'); return; } const dbl=host.classList.contains('dbl'), st=dbl?D:B; if(!st) return;
   wxHoldSync(st);
-  const lines=[...document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div')].map(x=>x.textContent), seen=ABFX.seen.get(st)||0; ABFX.seen.set(st,lines.length); if(lines.length<=seen) return;
+  if(!document.querySelector(dbl?'#dlog .gsc':'#blog .gsc')) return;   /* 选招式时战斗记录不显示：不算（以前会把「看过几句」记成 0，回来把威吓的箭头和音效再放一次，Kris 2026-11-19） */
+  const lines=[...document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div')].map(x=>x.textContent), seen=ABFX.seen.get(st)||0; if(lines.length<=seen) return; ABFX.seen.set(st,lines.length);
   let k=0; const w0=entWait(); lines.slice(seen).forEach(t=>abfxLine(t).forEach(([ty,a])=>{ let show=true, wx=false;
     if(ty==='ban'){ wx=WXABN.has(a.ab); const key=`${a.foe?'f':'m'}|${a.name}|${a.ab}`, set=ABFX.shown.get(st)||new Set(); ABFX.shown.set(st,set); if(set.has(key)) show=false; else set.add(key); }   /* 特性名的标签：同一局里同一只宝可梦只弹一次（Kris 2026-11-18：换了对手也不再弹） */
     if(!show&&!wx) return;
@@ -15842,9 +15843,10 @@ const BGMA={"mega":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   /* 对战中升级：战斗记录真的显示出「获得 xx 经验，升到 Lv」时才放小曲（经验在算回合时就加了，那时攻击动画还没播） */
   const LVSEEN=new WeakMap();
   setInterval(()=>{ try{ if(!inBattle()) return; const st=(typeof D!=='undefined'&&D&&D.my)?D:(typeof B!=='undefined'?B:null); if(!st) return;
+    if(!document.querySelector('#blog .gsc,#dlog .gsc')) return;   /* 选招式时战斗记录不显示，这时不算（以前会当成少了，回来再放一次） */
     const n=[...document.querySelectorAll('#blog .gsc>div,#dlog .gsc>div')].filter(d=>/经验，升到 Lv\d+/.test(d.textContent)).length, s=LVSEEN.get(st)||0;
     if(n>s){ if(st.busy) return; if(st.over&&SND.bgm&&!(FS&&/victory$/.test(FS.name)&&AC.currentTime-FS.t0>.5)) return;   /* 打赢的话：等胜利音乐开始了再放，跟 GBA 一样胜利曲先响、升级小曲插进来 */
-      LVSEEN.set(st,n); if(!jingle('levelup',4500)) sfx('level',null,1200); } else if(n<s) LVSEEN.set(st,n); }catch(e){} },250);
+      LVSEEN.set(st,n); if(!jingle('levelup',4500)) sfx('level',null,1200); } }catch(e){} },250);
   /* 能力变化、逃走（Kris 2026-11-19）：战斗记录真的显示出「xx 的攻击提升了 / 下降了」时放能力变化音效；
      那一句是招式带出来的（「使用了 剑舞，……提升了」），等招式特效放完再响。野生宝可梦逃走（「逃走了……」「被打飞了，逃走了！」）放逃走音效；
      我方从野生对战逃跑，按下「逃跑」成功就马上放。特性带来的能力变化（威吓、下载……）跟着宝可梦身上的箭头特效一起响（要等它出场、特性发动） */
@@ -15852,13 +15854,15 @@ const BGMA={"mega":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   const mvDur=t=>{ if(typeof fxOn!=='function'||!fxOn()) return 0; const m=t.match(/使用了 (.+?)(?:，|。|！|$)/); if(!m) return 0;
     if(!MVN){ MVN={}; Object.keys(MV).forEach(id=>{ if(MV[id]&&MVN[MV[id][0]]==null) MVN[MV[id][0]]=+id; }); } const id=MVN[m[1].trim()], fd=id!=null&&FXDUR[id]; return fd?fd.total+260:300; };
   setInterval(()=>{ try{ if(!inBattle()) return; const st=(typeof D!=='undefined'&&D&&D.my)?D:(typeof B!=='undefined'?B:null); if(!st) return;
-    const rows=[...document.querySelectorAll('#blog .gsc>div,#dlog .gsc>div:not(.dask)')].filter(d=>!d.classList.contains('gfxwait')&&!d.classList.contains('wxpend')),
-      abLine=t=>typeof abfxLine==='function'&&typeof fxOn==='function'&&fxOn()&&abfxLine(t).some(a=>a[0]==='st'),
-      sr=rows.filter(d=>STRE.test(d.textContent)&&!abLine(d.textContent)), fr=rows.filter(d=>FLRE.test(d.textContent));
-    let o=STSEEN.get(st); if(!o){ o=st.turns?{s:sr.length,f:fr.length}:{s:0,f:0}; STSEEN.set(st,o); }   /* 打到一半重新打开的对战：之前的不再放 */
-    if(sr.length>o.s){ const t=sr[sr.length-1].textContent, up=/提升|提高/.test(t.match(STRE)[2]); setTimeout(()=>{ if(inBattle()) sfx(up?'statUp':'statDown',null,250); },mvDur(t)); }
-    if(fr.length>o.f) sfx('flee',null,600);
-    o.s=sr.length; o.f=fr.length; }catch(e){} },100);
+    const lg=document.querySelector('#blog .gsc')||document.querySelector('#dlog .gsc'); if(!lg) return;   /* 选招式时战斗记录不显示，这时不算 */
+    const rows=[...lg.children].filter(d=>!d.classList.contains('dask')),
+      abLine=t=>typeof abfxLine==='function'&&typeof fxOn==='function'&&fxOn()&&abfxLine(t).some(a=>a[0]==='st');
+    let o=STSEEN.get(st); if(!o){ o={k:st.turns?rows.length:0}; STSEEN.set(st,o); }   /* 打到一半重新打开的对战：之前的不再放 */
+    /* 按战斗记录第几句来记（Kris 2026-11-19：以前按「有几句」来数，选招式时记录不显示、数目变 0，回来又把旧的那句再放一次） */
+    let k=o.k; for(;k<rows.length;k++){ const d=rows[k], t=d.textContent; if(d.classList.contains('gfxwait')||d.classList.contains('wxpend')) break;
+      if(STRE.test(t)&&!abLine(t)){ const up=/提升|提高/.test(t.match(STRE)[2]); setTimeout(()=>{ if(inBattle()) sfx(up?'statUp':'statDown',null,250); },mvDur(t)); }
+      if(FLRE.test(t)) sfx('flee',null,600); }
+    o.k=Math.max(o.k,k); }catch(e){} },100);
   if(typeof abfxStat==='function'){ const _as=abfxStat; abfxStat=function(img,up){ try{ sfx(up?'statUp':'statDown',null,250); }catch(e){} return _as.apply(this,arguments); }; }
   if(typeof bTurn==='function'){ const _bt=bTurn; bTurn=function(m){ const b=typeof B!=='undefined'?B:null, w=m==='run'&&b&&!b.over&&b.cfg&&b.cfg.kind==='wild'; const r=_bt.apply(this,arguments); try{ if(w&&B===b&&b.over) sfx('flee',null,600); }catch(e){} return r; }; }
   /* 要播哪一首：合成的牧场曲，或音档 */
