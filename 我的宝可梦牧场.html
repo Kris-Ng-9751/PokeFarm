@@ -16077,7 +16077,7 @@ const BGMA={"fish":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   /* 点按钮 */
   /* 能点的东西都有按键声（Kris 2026-11-19：队伍、我的宝可梦、图鉴里的宝可梦卡片是 div，以前没声）：
      按钮 / 链接 / 分页，或者鼠标移上去会变成小手的元素（cursor:pointer）；输入框、画布（农场地图）不算 */
-  document.addEventListener('click',e=>{ const t=e.target; if(!t||!t.closest) return; let b=t.closest('button,[role=tab],a[href],[data-hgo],[data-tab],[data-grp],summary');
+  document.addEventListener('click',e=>{ const t=e.target; if(!t||!t.closest) return; let b=t.closest('button,[role=tab],[role=button],a[href],[data-hgo],[data-tab],[data-grp],summary');   /* [role=button]：队伍页左边的宝可梦（拖得动，鼠标是抓手不是小手）（Kris 2026-11-20） */
     if(!b&&!t.closest('canvas,input,select,textarea,.mnpop')){ try{ if(getComputedStyle(t).cursor==='pointer') b=t; }catch(er){} }
     if(b&&!b.disabled&&!b.closest('.mnpop')) sfx('tap',null,40); },true);
   /* 出招：放招式特效时按属性出声；特效关掉时，冲刺 / 蓄力也有声 */
