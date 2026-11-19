@@ -15840,40 +15840,14 @@ const BGMA={"medal":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAA
   const PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
   const nn=x=>{ const m=/^([A-G])([#b]?)(-?\d)$/.exec(x); if(!m) return null; return 12*(+m[3]+1)+PC[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0); };
   const parse=str=>str.trim().split(/\s+/).map(x=>x==='-'?-1:x==='.'?0:nn(x));
-  function phrase(str,step,o){ if(!live()) return; const L=parse(str), t0=(o.t!=null?o.t:AC.currentTime)+.01; L.forEach((n,i)=>{ if(n>0){ let len=1; while(L[i+len]===-1) len++; note({...o,n,t:t0+i*step,d:step*len*.96}); } }); }
 
-  /* ---------- 音效（GBA 风格，原创） ---------- */
-  const T=()=>AC.currentTime;
-  const MOVEK={火:'blaze',龙:'blaze',恶:'dark',水:'splash',冰:'ice',电:'zap',草:'leaf',虫:'leaf',妖精:'ice',超能力:'psy',幽灵:'psy',地面:'quake',岩石:'quake',格斗:'thud',钢:'metal',毒:'dark',飞行:'wind',一般:'wind'};
+  /* ---------- 音效：全部用 Kris 给的音档 / GBA 原版资料做的取样（Kris 2026-11-19：不要合成的音效） ---------- */
   const SFX={
-    tap:()=>{ if(TAPB){ const s=AC.createBufferSource(), g=AC.createGain(); s.buffer=TAPB; g.gain.value=.55; s.connect(g); g.connect(MST); s.start(); return; } note({w:'p50',n:88,d:.035,v:.1,s:1}); note({w:'p50',n:95,d:.045,v:.09,s:1,t:T()+.035}); },   /* 按键声：Kris 给的宝可梦按键音（Kris 2026-11-19）；还没解码好时用合成的 */
-    move:(ty)=>{ const k=MOVEK[ty]||'wind', t=T();
-      if(k==='blaze'){ nz({r:1.6,r2:.35,d:.45,v:.22}); note({w:'p12',n:60,sl:48,d:.35,v:.1}); }
-      else if(k==='splash'){ for(let i=0;i<6;i++) note({w:'p12',n:84-i*3,d:.05,v:.1,t:t+i*.04,s:1}); nz({r:2.4,r2:1.2,d:.3,v:.1}); }
-      else if(k==='ice'){ for(let i=0;i<6;i++) note({w:'bell',n:[88,91,95,100,95,91][i],d:.09,v:.08,t:t+i*.045}); }
-      else if(k==='zap'){ for(let i=0;i<5;i++) nz({short:true,r:i%2?3:1.6,d:.05,v:.18,t:t+i*.05}); note({w:'p12',n:84,sl:96,d:.25,v:.07}); }
-      else if(k==='leaf'){ for(let i=0;i<6;i++) note({w:'p25',n:[76,79,83,88,83,79][i],d:.05,v:.09,t:t+i*.04,s:1}); }
-      else if(k==='psy'){ note({w:'p25',n:72,d:.4,v:.1,vib:60,vd:0,vr:14}); note({w:'p12',n:79,d:.4,v:.06,vib:60,vd:0,vr:11,t:t+.05}); }
-      else if(k==='quake'){ nz({r:.3,r2:.12,d:.5,v:.32}); note({w:'wave',n:36,sl:28,d:.45,v:.25}); }
-      else if(k==='thud'){ nz({r:.9,r2:.4,d:.15,v:.28}); note({w:'p50',n:52,sl:40,d:.12,v:.15}); }
-      else if(k==='metal'){ nz({short:true,r:2.2,r2:1.4,d:.22,v:.18}); note({w:'bell',n:84,d:.25,v:.1}); }
-      else if(k==='dark'){ note({w:'p50',n:55,sl:43,d:.3,v:.12}); nz({r:.8,r2:.3,d:.3,v:.14}); }
-      else { nz({r:.7,r2:2.4,d:.22,v:.16}); } },
-    swish:()=>nz({r:.6,r2:2.2,d:.18,v:.14}),
-    hit:()=>{ if(smpPlay('hit')) return; nz({r:1.6,r2:.22,d:.24,v:.75}); note({w:'p50',n:50,sl:28,d:.18,v:.45,s:1}); note({w:'wave',n:38,sl:26,d:.2,v:.5,s:1}); },
-    hitSuper:()=>{ if(smpPlay('hitSuper')) return; const t=T(); nz({r:2.2,r2:.3,d:.2,v:.8}); note({w:'p50',n:57,sl:36,d:.14,v:.45,s:1}); nz({r:1.8,r2:.18,d:.3,v:.8,t:t+.1}); note({w:'p50',n:52,sl:28,d:.2,v:.45,s:1,t:t+.1}); note({w:'wave',n:38,sl:24,d:.28,v:.55,s:1,t:t+.1}); },
+    tap:()=>{ if(TAPB){ const s=AC.createBufferSource(), g=AC.createGain(); s.buffer=TAPB; g.gain.value=.55; s.connect(g); g.connect(MST); s.start(); } },   /* 按键声：Kris 给的宝可梦按键音（Kris 2026-11-19）；不再用合成的 */
+    hit:()=>{ smpPlay('hit'); },
+    hitSuper:()=>{ smpPlay('hitSuper'); },
     statUp:()=>{ smpPlay('statUp'); }, statDown:()=>{ smpPlay('statDown'); }, flee:()=>{ smpPlay('flee'); },
-    hitWeak:()=>{ if(smpPlay('hitWeak')) return; nz({r:.7,r2:.2,d:.15,v:.45}); note({w:'wave',n:36,sl:28,d:.12,v:.3,s:1}); },
-    faint:()=>{ note({w:'p50',n:81,sl:45,slt:.55,d:.6,v:.16,s:.9}); nz({r:.5,r2:.12,d:.5,v:.1,t:T()+.35}); },
-    throw:()=>note({w:'p12',n:60,sl:96,d:.32,v:.12,s:1}),
-    absorb:()=>{ note({w:'p25',n:100,sl:64,d:.3,v:.12,s:1}); nz({short:true,r:2.6,r2:.8,d:.25,v:.1}); },
-    shake:()=>{ nz({short:true,r:1.2,d:.05,v:.22}); note({w:'p50',n:69,d:.05,v:.12,s:1,t:T()+.05}); },
-    caught:()=>{ phrase('G5 B5 D6 G6 - D6 G6 - - -',.085,{w:'p25',v:.15,vib:14}); phrase('B4 D5 G5 B5 - G5 B5 - - -',.085,{w:'p12',v:.08}); phrase('G3 - - - - D3 G3 - - -',.085,{w:'wave',v:.2}); },
-    broke:()=>{ nz({r:2.2,r2:.5,d:.25,v:.25}); note({w:'p50',n:62,sl:43,d:.25,v:.14}); },
-    level:()=>{ phrase('C5 E5 G5 C6 - G5 C6 E6 - - -',.07,{w:'p25',v:.14,vib:12}); phrase('E4 G4 C5 E5 - C5 E5 G5 - - -',.07,{w:'p12',v:.07}); },
-    coin:()=>{ note({w:'p25',n:88,d:.07,v:.13,s:1}); note({w:'p25',n:93,d:.3,v:.13,t:T()+.07}); },
-    lose:()=>{ phrase('E5 - D#5 - D5 - C#5 - - - - -',.13,{w:'p25',v:.13,vib:10}); phrase('A2 - - - G#2 - - - A2 - - -',.13,{w:'wave',v:.2}); },
-    evo:()=>{ phrase('C5 E5 G5 C6 E5 G5 C6 E6 G5 C6 E6 G6 - - -',.06,{w:'bell',v:.1}); phrase('C4 - - - E4 - - - G4 - - - C5 - -',.06,{w:'str',v:.08,a:.05}); },
+    hitWeak:()=>{ smpPlay('hitWeak'); },
   };
   let lastS={};
   /* 按键音（Kris 2026-11-19 给的 Pokémon plink，裁掉前后空白、22kHz 单声道 WAV，按下去马上响） */
@@ -15974,7 +15948,7 @@ const BGMA={"medal":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAA
     if(!document.querySelector('#blog .gsc,#dlog .gsc')) return;   /* 选招式时战斗记录不显示，这时不算（以前会当成少了，回来再放一次） */
     const n=[...document.querySelectorAll('#blog .gsc>div,#dlog .gsc>div')].filter(d=>/经验，升到 Lv\d+/.test(d.textContent)).length, s=LVSEEN.get(st)||0;
     if(n>s){ if(st.busy) return; if(st.over&&SND.bgm&&!(FS&&/victory$/.test(FS.name)&&AC.currentTime-FS.t0>.5)) return;   /* 打赢的话：等胜利音乐开始了再放，跟 GBA 一样胜利曲先响、升级小曲插进来 */
-      LVSEEN.set(st,n); if(!jingle('levelup',4500)) sfx('level',null,1200); } }catch(e){} },250);
+      LVSEEN.set(st,n); jingle('levelup',4500); } }catch(e){} },250);
   /* 能力变化、逃走（Kris 2026-11-19）：战斗记录真的显示出「xx 的攻击提升了 / 下降了」时放能力变化音效；
      那一句是招式带出来的（「使用了 剑舞，……提升了」），等招式特效放完再响。野生宝可梦逃走（「逃走了……」「被打飞了，逃走了！」）放逃走音效；
      我方从野生对战逃跑，按下「逃跑」成功就马上放。特性带来的能力变化（威吓、下载……）跟着宝可梦身上的箭头特效一起响（要等它出场、特性发动） */
@@ -16019,17 +15993,15 @@ const BGMA={"medal":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAA
     if(!b&&!t.closest('canvas,input,select,textarea,.mnpop')){ try{ if(getComputedStyle(t).cursor==='pointer') b=t; }catch(er){} }
     if(b&&!b.disabled&&!b.closest('.mnpop')) sfx('tap',null,40); },true);
   /* 出招：放招式特效时按属性出声；特效关掉时，冲刺 / 蓄力也有声 */
-  { const _fx=fxPlay; fxPlay=function(mv){ try{ const id=typeof mv==='number'?mv:+mv; const ty=MV[id]?MV[id][1]:null; sfx('move',ty,120); }catch(e){} return _fx.apply(this,arguments); }; }
   /* 打中、倒下、捕捉、胜负：看战斗画面上的变化 */
   let superNext=false, weakNext=false;
   const watchLog=()=>{ const lg=document.querySelector('#blog .gsc')||document.querySelector('#dlog .gsc')||document.querySelector('#blog')||document.querySelector('#dlog'); if(!lg) return; const L=[...lg.children].map(x=>x.textContent);
     const sig=L.join('\n'); if(sig===watchLog.last) return; const prev=watchLog.lines||[]; watchLog.last=sig; watchLog.lines=L;
     let k=0; while(k<prev.length&&k<L.length&&prev[k]===L[k]) k++; const nw=L.slice(k); if(nw.length>6) return;   /* 整页重画（新战斗）不当成新消息 */
-    nw.forEach(t=>{ if(/效果拔群/.test(t)) superNext=true; if(/效果不好/.test(t)) weakNext=true; if(/倒下/.test(t)&&!/全部倒下/.test(t)) setTimeout(()=>sfx('faint',null,300),120); /* 关掉背景音乐时打赢不再放合成的胜利音效（Kris 2026-11-19：不要合成的声音） */ if(/全部倒下|战败/.test(t)) sfx('lose',null,3000); }); };
-  const mo=new MutationObserver(ms=>{ let hit=false, swing=false; ms.forEach(m=>{ if(m.type==='attributes'){ const el=m.target, c=el.classList; if(!c) return; const was=m.oldValue||''; if(c.contains('hit')&&!/\bhit\b/.test(was)) hit=true; if((c.contains('lunge')||c.contains('charge'))&&!/\b(lunge|charge)\b/.test(was)) swing=true; } });
+    nw.forEach(t=>{ if(/效果拔群/.test(t)) superNext=true; if(/效果不好/.test(t)) weakNext=true; }); };   /* 倒下、打赢、输了不再放合成的音效（Kris 2026-11-19：不要合成的声音） */
+  const mo=new MutationObserver(ms=>{ let hit=false; ms.forEach(m=>{ if(m.type==='attributes'){ const el=m.target, c=el.classList; if(!c) return; const was=m.oldValue||''; if(c.contains('hit')&&!/\bhit\b/.test(was)) hit=true; } });
     try{ watchLog(); }catch(e){}
     if(hit) hitSnd();
-    if(swing&&!fxOn()) sfx('swish',null,120);
     try{ cryWatch(); }catch(e){} });
   const host=()=>document.getElementById('battle');
   const arm=()=>{ const h=host(); if(!h||h.__snd) return; h.__snd=1; mo.observe(h,{subtree:true,childList:true,attributes:true,attributeFilter:['class'],attributeOldValue:true}); };
@@ -16049,21 +16021,20 @@ const BGMA={"medal":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAA
         let at=a?a.t0+950:Math.max(now,window.__btIntroEnd||0)+250; at=Math.max(at,last+550); last=at;
         cry(+x.split(':').pop().replace(/^[fm]/,''),Math.max(0,(at-now)/1000)); }); },80); }
   /* 捕捉：丢球、吸进去、摇晃、成功 / 挣脱 */
-  { const _ca=catchAnim; catchAnim=function(key,ok,done){ sfx('throw'); const T=[setTimeout(()=>sfx('absorb'),650),setTimeout(()=>sfx('shake'),1400),setTimeout(()=>sfx('shake'),2050),setTimeout(()=>sfx('shake'),2700)];
-      return _ca.call(this,key,ok,function(){ T.forEach(clearTimeout); if(ok){ HOLD=true; bgmStop(); if(SND.sfx&&typeof BGMA!=='undefined'&&BGMA.caught){ filePlay('caught'); if(window.__sndDebug) (window.__sndLog=window.__sndLog||[]).push('caught'); } else sfx('caught',null,500); } else sfx('broke',null,500);   /* 捕捉成功后不再叫（Kris 2026-11-18） */ return done.apply(this,arguments); }); }; }
+  { const _ca=catchAnim; catchAnim=function(key,ok,done){   /* 丢球、摇晃、挣脱不再放合成的音效；捕捉成功放 GBA 原版小曲 */
+      return _ca.call(this,key,ok,function(){ if(ok){ HOLD=true; bgmStop(); if(SND.sfx&&typeof BGMA!=='undefined'&&BGMA.caught){ filePlay('caught'); if(window.__sndDebug) (window.__sndLog=window.__sndLog||[]).push('caught'); } }   /* 捕捉成功后不再叫（Kris 2026-11-18） */ return done.apply(this,arguments); }); }; }
   /* 升级、领奖励、进化 */
   let RWING=false, LVPEND=false;   /* 领奖励的同时升级（探索、矿洞……给经验）：先放「得到道具」，放完再放升级小曲 */
-  { const _ae=addExp; addExp=function(m){ const o=m&&m.lv, r=_ae.apply(this,arguments); if(m&&m.lv>o&&!inBattle()){ if(RWING) LVPEND=true; else if(!jingle('levelup',4500)) sfx('level',null,1200); }   /* 升级：用 GBA 原版升级小曲（没有就用合成音效）；对战中的升级等战斗记录显示「升到 Lv」那一行才放（下面） */ return r; }; }
+  { const _ae=addExp; addExp=function(m){ const o=m&&m.lv, r=_ae.apply(this,arguments); if(m&&m.lv>o&&!inBattle()){ if(RWING) LVPEND=true; else jingle('levelup',4500); }   /* 升级：用 GBA 原版升级小曲；对战中的升级等战斗记录显示「升到 Lv」那一行才放（下面） */ return r; }; }
   /* 进化：放 Kris 提供的「恭喜！你的宝可梦进化了」小曲，播完再回到背景音乐（Kris 2026-11-18） */
-  { const _ev=evolve; evolve=function(m,to){ const before=m&&m.id, r=_ev.apply(this,arguments); if(m&&m.id!==before&&m.id===to){ if(SND.sfx&&live()&&typeof BGMA!=='undefined'&&BGMA.evolved){ JHOLD=true; bgmStop(); filePlay('evolved'); clearTimeout(evolve.__t); evolve.__t=setTimeout(()=>{ JHOLD=false; bgmSync(); },6200); } else sfx('evo',null,2000); } return r; }; }
+  { const _ev=evolve; evolve=function(m,to){ const before=m&&m.id, r=_ev.apply(this,arguments); if(m&&m.id!==before&&m.id===to){ if(SND.sfx&&live()&&typeof BGMA!=='undefined'&&BGMA.evolved){ JHOLD=true; bgmStop(); filePlay('evolved'); clearTimeout(evolve.__t); evolve.__t=setTimeout(()=>{ JHOLD=false; bgmSync(); },6200); } } return r; }; }
   /* 领奖励（Kris 2026-11-19）：签到、任务、委托、探索、矿洞、钓鱼、化石复原、研究……所有「领取」都放 GBA「得到了道具」的小曲（背景音乐先压下去）；
-     农场亲手收获也放（自动种植在背后收获的不放）。没有音档时用原来的金币声 */
-  const getItem=()=>{ if(!jingle('item',2400,{force:1})) sfx('coin',null,300); };   /* 每次领都要响：前一首没放完就切过来 */
+     农场亲手收获也放（自动种植在背后收获的不放） */
+  const getItem=()=>{ jingle('item',2400,{force:1}); };   /* 每次领都要响：前一首没放完就切过来 */
   { const _rw=rwRun; rwRun=function(){ RWING=true; LVPEND=false; let r; try{ r=_rw.apply(this,arguments); }finally{ RWING=false; }
-      if(r!==false){ getItem(); if(LVPEND) setTimeout(()=>{ if(!jingle('levelup',4500,{force:1})) sfx('level',null,1200); },2450); } else if(LVPEND){ if(!jingle('levelup',4500)) sfx('level',null,1200); } LVPEND=false; return r; }; }
+      if(r!==false){ getItem(); if(LVPEND) setTimeout(()=>jingle('levelup',4500,{force:1}),2450); } else if(LVPEND) jingle('levelup',4500); LVPEND=false; return r; }; }
   { let hv=0; document.addEventListener('click',e=>{ if(e.target&&e.target.closest&&e.target.closest('[data-harv]')) hv=performance.now(); },true);
     const _pg=prog; prog=function(k){ const r=_pg.apply(this,arguments); try{ if(k==='harvest'&&performance.now()-hv<400){ hv=0; getItem(); } }catch(e){} return r; }; }
-  { const _t=toast; toast=function(t){ if(/升到 Lv/.test(String(t))) sfx('level',null,1200); return _t.apply(this,arguments); }; }
 
   /* ---------- 顶栏的声音按钮 ---------- */
   /* 右上角「菜单」（Kris 2026-11-19）：原本的喇叭按钮和「中 / EN」合在一起，点开是「语言」和「声音」 */
@@ -16082,7 +16053,7 @@ const BGMA={"medal":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAA
       <button type="button" class="mnhome" data-gohome><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>回到首页</button>`;
     p.hidden=false;
     p.querySelectorAll('[data-setlang]').forEach(c=>c.onclick=()=>{ const k=c.dataset.setlang; if(k===L) return; try{ localStorage.setItem('ose.ranch.lang',k); }catch(err){ return toast('这个浏览器不能保存语言设置'); } location.reload(); });
-    p.querySelectorAll('[data-snd]').forEach(c=>c.onchange=()=>{ SND[c.dataset.snd]=c.checked?1:0; keep(); vols(); bgmSync(); if(c.dataset.snd==='sfx'&&c.checked) sfx('coin'); if(c.dataset.snd==='cry'&&c.checked) cry(25); });
+    p.querySelectorAll('[data-snd]').forEach(c=>c.onchange=()=>{ SND[c.dataset.snd]=c.checked?1:0; keep(); vols(); bgmSync(); if(c.dataset.snd==='sfx'&&c.checked) sfx('tap'); if(c.dataset.snd==='cry'&&c.checked) cry(25); });
     const v=p.querySelector('[data-sndv]'); v.oninput=()=>{ SND.vol=v.value/100; keep(); vols(); }; v.onchange=()=>sfx('tap');
     p.querySelector('[data-gohome]').onclick=()=>{ sfx('tap'); goHome(); };
     btnSync(); }
@@ -16098,7 +16069,7 @@ const BGMA={"medal":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAA
     setTimeout(()=>{ if(url) location.href=url; else location.reload(); },400); }
   { const _rs=renderShell; renderShell=function(){ const r=_rs.apply(this,arguments); try{ btnSync(); }catch(e){} return r; }; }
   setTimeout(()=>{ try{ btnSync(); }catch(e){} },0);
-  { const _g=GSEC.start; GSEC.start=()=>_g()+[gBox(gH('声音'),`<p>右上角「菜单」里的「声音」可以分别开关<b>背景音乐</b>（牧场一首；野生宝可梦、训练家、道馆馆主 / 四天王、冠军 / 传奇训练家、世界 Boss 的对战和胜利各用 GBA 原曲）、<b>音效</b>（按钮、出招、打中、捕捉、升级、领奖励）和<b>宝可梦叫声</b>（宝可梦出场时），也能调音量。一开始三样都是开的；设定记在这台设备上。浏览器规定要先点一下画面才会出声。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
+  { const _g=GSEC.start; GSEC.start=()=>_g()+[gBox(gH('声音'),`<p>右上角「菜单」里的「声音」可以分别开关<b>背景音乐</b>（牧场一首；野生宝可梦、训练家、道馆馆主 / 四天王、冠军 / 传奇训练家、世界 Boss 的对战和胜利各用 GBA 原曲）、<b>音效</b>（按钮、打中、能力提升 / 下降、逃走、捕捉成功、升级、领奖励、拿到徽章、Mega 进化）和<b>宝可梦叫声</b>（宝可梦出场时），也能调音量。一开始三样都是开的；设定记在这台设备上。浏览器规定要先点一下画面才会出声。</p>`)].join(''); }   /* 原本的章节是字串，接在后面（Kris 2026-11-18：之前用 ... 展开把字拆成一个一个，指南变乱码） */
 
   const st=document.createElement('style'); st.textContent=`
 .mnbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;margin-left:auto;border:1px solid var(--line);border-radius:999px;background:var(--card,#fff);color:var(--ink2,#666);font:700 13px var(--sans);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}.mnbtn:hover,.mnbtn[aria-expanded=true]{color:var(--leaf)}
