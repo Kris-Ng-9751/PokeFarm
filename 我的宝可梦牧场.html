@@ -242,6 +242,7 @@ code{font-family:ui-monospace,monospace;background:#eee9cf;padding:0 4px;border-
 .ginfo.f{left:3%;top:6%;width:40%}.ginfo.m{right:3%;bottom:5%;width:42%}
 .gn{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:14px}.gn.small{font-size:12px}
 .ghp{height:9px;background:#e6e1c9;border-radius:5px;overflow:hidden;display:block}.ghp i{display:block;height:100%;transition:width .3s}
+#battle .gsp.healfx{animation:healfx 1s ease-out}@keyframes healfx{0%,100%{filter:none}35%{filter:brightness(1.5) drop-shadow(0 0 10px #7dff9a) drop-shadow(0 0 4px #c8ffd0)}}   /* 用回复道具：宝可梦发一下绿光 */
 .ghp i.g{background:#4fae4a}.ghp i.y{background:#e5b92e}.ghp i.r{background:#d8473a}.ghp.s{height:6px;margin:2px 0}
 .ghr{display:flex;align-items:center;gap:6px}.ghr .ghp{flex:1}.hpl{font-size:11px;font-weight:700;color:var(--ink2)}
 .gxp{height:5px;background:#e6e1c9;border-radius:3px;overflow:hidden}.gxp i{display:block;height:100%;background:#3b82c4}
@@ -1428,7 +1429,7 @@ const BERRY={
  br_leppa:{g:20,p:100,t:'bat',d:'战斗中回复招式 PP（每个技能 +10）'},br_liechi:{g:45,p:200,t:'bat',d:'战斗中攻击 ×1.5（整场）'},br_ganlon:{g:45,p:200,t:'bat',d:'战斗中受到的伤害 ×0.67（整场）'},br_salac:{g:45,p:200,t:'bat',d:'战斗中先出手（整场）'},
  br_persim:{g:8,p:60,t:'lure',v:1,d:'放在野外当诱饵，立刻引来一只野生宝可梦'},br_aspear:{g:40,p:250,t:'lure',v:2,d:'引来一只更稀有的野生宝可梦（超稀有以上机率更高）'},
  br_lansat:{g:60,p:400,t:'cb',d:'下一次捕捉的成功率 ×1.5'},br_starf:{g:90,p:600,t:'star',v:30,d:'直接得到 30 星尘'},br_pomeg:{g:30,p:250,t:'evd',s:4,d:'亲密度 +10；降低HP的努力值 10 点（给一只宝可梦用，战斗里不能用）'},br_kelpsy:{g:30,p:250,t:'evd',s:5,d:'亲密度 +10；降低攻击的努力值 10 点（给一只宝可梦用，战斗里不能用）'},br_qualot:{g:30,p:250,t:'evd',s:6,d:'亲密度 +10；降低防御的努力值 10 点（给一只宝可梦用，战斗里不能用）'},br_hondew:{g:30,p:250,t:'evd',s:8,d:'亲密度 +10；降低特攻的努力值 10 点（给一只宝可梦用，战斗里不能用）'},br_grepa:{g:30,p:250,t:'evd',s:9,d:'亲密度 +10；降低特防的努力值 10 点（给一只宝可梦用，战斗里不能用）'},br_tamato:{g:30,p:250,t:'evd',s:7,d:'亲密度 +10；降低速度的努力值 10 点（给一只宝可梦用，战斗里不能用）'}};
-const MED={m_super:['超级伤药','战斗中回复 100 HP',120,12,'heal',100],m_hyper:['厉害伤药','战斗中回复 200 HP',300,20,'heal',200],m_max:['全满药','战斗中完全回复 HP',600,30,'heal',9999],m_full:['全复药','战斗中完全回复 HP（比全满药多治一切异常，原型里等同）',900,35,'heal',9999],
+const MED={m_super:['超级伤药','战斗中回复 100 HP',120,12,'heal',100],m_hyper:['厉害伤药','战斗中回复 200 HP',300,20,'heal',200],m_max:['全满药','战斗中完全回复 HP',600,30,'heal',9999],m_full:['全复药','战斗中完全回复 HP，还会治好中毒、麻痹、灼伤、睡眠、冰冻、混乱',900,35,'heal',9999],
  m_revive:['活力碎片','战斗中让倒下的宝可梦以一半 HP 复活',500,15,'revive',.5],m_maxrevive:['活力块','战斗中让倒下的宝可梦完全复活',1200,30,'revive',1],
  m_ether:['PP 补剂','战斗中每个技能回复 10 PP',150,12,'pp',10],m_elixir:['PP 全补剂','战斗中每个技能 PP 全满',400,25,'pp',99],
  m_xatk:['力量强化','战斗中攻击 ×1.5（整场）',150,8,'xatk'],m_xdef:['防御强化','战斗中受到的伤害 ×0.67（整场）',150,8,'xdef'],m_xspd:['速度强化','战斗中先出手（整场）',150,10,'xspd'],
@@ -2743,6 +2744,11 @@ const dynV=b=>b.dyn>0||!!(b.stg&&b.dynEndN&&b.stg.n<b.dynEndN), mxV=b=>(!(b.dyn>
 const fdynV=b=>!!b.foe&&(b.foe.dyn>0||!!(b.stg&&b.fDynEndN&&b.stg.n<b.fDynEndN)), fxV=b=>(b.foe&&!(b.foe.dyn>0)&&b.fDynMx&&fdynV(b))?b.fDynMx:b.fx;
 function dynTick(b){ if(!(b.dyn>0)) return; b.dyn--; if(b.dyn===0){ b.dynMx=b.mx; b.mx=maxhp(b.me); b.mh=b.mh>0?Math.max(1,Math.min(b.mx,Math.ceil(b.mh/1.5))):0; if(b.bd) b.bd.m=b.mh; b.log.push('极巨化结束了，变回原来的大小。'); b.dynEndN=b.log.length; if(b.beats) b.beats.push({who:'me',n:b.log.length,mh:b.bd?b.bd.m:b.mh,fh:b.bd?b.bd.f:b.fh,dynEnd:1}); } }
 function beatsOn(){ const b=B; b.beats=[]; b.bd={m:b.mh,f:b.fh}; b.bd0={m:b.mh,f:b.fh}; }
+/* 战斗里用回复道具（Kris 2026-11-20）：全复药连异常状态（中毒、麻痹、灼伤、睡眠、冰冻、混乱）一起治好；
+   回复也是回放里的一拍：先放「回复了 HP」、血条慢慢涨上去，之后对方才出招 */
+function healCure(k,o){ if(k!=='m_full'||!o) return ''; const n=o.sta&&STA_TAG[o.sta]?STA_TAG[o.sta][0]:'', c=o.cnf>0; if(!n&&!c) return ''; o.sta=''; delete o.slpT; delete o.toxN; o.cnf=0; return [n,c?'混乱':''].filter(Boolean).join('、'); }
+function healBeat(b,side){ if(!b.beats||!b.bd) return; if(side==='m') b.bd.m=b.mh; else b.bd.f=b.fh; b.beats.push({who:side==='m'?'me':'foe',n:b.log.length,mh:b.bd.m,fh:b.bd.f,heal:side}); }
+function healAnim(bar,sp,from,to){ if(sp&&fxOn()){ sp.classList.remove('healfx'); void sp.offsetWidth; sp.classList.add('healfx'); } if(bar&&bar.animate&&fxOn()) bar.animate([{width:from+'%'},{width:to+'%'}],{duration:900,easing:'ease-out'}); }
 const _bRender=bRender;
 bRender=function(){ const b=B; if(b&&b.beats&&b.beats.length&&!b.busy){ const bs=b.beats; b.beats=null; return bReplay(b,bs); } if(b&&!b.busy){ b.beats=null; b.__n0=b.log.length; } return _bRender.apply(this,arguments); };   /* __n0：这回合开始前战斗记录有几句（藏「去吧」之后那几句时，只看这回合的） */
 /* 打倒对方宝可梦（Kris 2026-11-19）：回放完先让它叫一声，再往下沉倒下；之后才轮到对方派下一只 / 收回宝可梦、训练家出来。
@@ -2765,6 +2771,10 @@ function bReplay(b,bs){ b.busy=true; let i=0; const st={over:b.over,pick:b.pick,
     if(fb){ const p=q(fh,fxV(b)); fb.style.width=p+'%'; fb.className=c(p); } if(mb){ const p=q(mh,mxV(b)); mb.style.width=p+'%'; mb.className=c(p); } if(mt) mt.textContent=`${Math.max(0,mh)} / ${mxV(b)}`; };
   const step=()=>{ if(B!==b) return; if(i>=bs.length){ b.stg=null; b.__n0=b.log.length; if(b.__fntPend&&fxOn()){ b.__fntPend=0; _bRender(); return foeFaint(b,()=>{ if(B!==b) return; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; bSendNext(); } else _bRender(); }); } b.__fntPend=0; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; return bSendNext(); } return _bRender(); }
     const e=bs[i++]; if(e.dynEnd){ pm=e.mh; pf=e.fh; } if(e.castFx&&window.castStep) castStep(b,e); b.stg={n:e.n,mh:pm,fh:pf}; _bRender(); { const w=entWait(); if(w>0&&(e.id||e.mv)){ logHoldTail('#blog',i>=2?bs[i-2].n:(b.__n0!=null?b.__n0:e.n),e.n); i--; return setTimeout(step,w); } }   /* 有宝可梦正在从精灵球出场：等它完全出来再出招（Kris 2026-10-31） */   /* 血条先保持出招前的样子，打中的那一刻（命中特效结束、对手开始闪）再扣 */
+    if(e.heal){ const sd=e.heal, bar=document.querySelector(`#battle .ginfo.${sd} .ghp i`), sp=document.querySelector('#battle .gsp.'+(sd==='m'?'me':'foe')), mt=document.querySelector('#battle .ginfo.m .gn.small span:last-child'), q=(h,x)=>Math.max(0,Math.round(100*h/x)), m0=pm, f0=pf, emh=e.mh, efh=e.fh;
+      setTimeout(()=>{ if(B!==b) return; if(b.stg){ b.stg.mh=emh; b.stg.fh=efh; } hpShow(emh,efh); const bar2=document.querySelector(`#battle .ginfo.${sd} .ghp i`); healAnim(bar2,sp,sd==='m'?q(m0,mxV(b)):q(f0,fxV(b)),sd==='m'?q(emh,mxV(b)):q(efh,fxV(b)));
+        if(sd==='m'&&mt&&fxOn()){ const t0=performance.now(), tick=()=>{ if(B!==b||!mt.isConnected) return; const k=Math.min(1,(performance.now()-t0)/900), v=Math.round(m0+(emh-m0)*(1-Math.pow(1-k,2))); mt.textContent=`${v} / ${mxV(b)}`; if(k<1) requestAnimationFrame(tick); }; tick(); } },200);   /* 我方的 HP 数字跟着一路数上去 */
+      pm=emh; pf=efh; return setTimeout(step,fxOn()?1400:700); }   /* 回复：没有招式特效，宝可梦发一下绿光，血条 0.9 秒涨上去，放完才轮到下一拍（对方出招） */
     const id=e.id, still=id&&FXSTILL.has(id)&&fxOn(), cat=id?(!MV[id][2]?'st':SPECIAL.has(id)?'sp':'ph'):null, contact=!e.z&&!e.semi&&((cat==='ph'&&!NOCONTACT.has(MV[id][0]))||(cat==='sp'&&SPCONTACT.has(MV[id][0]))), bite=!e.z&&cat==='ph'&&/牙|咬|爪|拳/.test(MV[id][0]), chg=!still&&!e.z&&!e.semi&&(cat==='sp'||cat==='st'||bite), pad=chg&&fxOn()?420:0;   /* Z 招式自己带开场蓄力和冲刺，不再另外冲一下 */   /* 牙 / 咬 / 爪 / 拳类物理招式也先蓄力，再冲上去（Kris 2026-10-28） */   /* 物理招式冲一下；特殊 / 变化招式蓄力 0.4 秒再出招 */
     const a=document.querySelector('#battle .gsp.'+(e.who==='me'?'me':'foe')); if(e.semi&&!(fxOn()&&FXF[e.semi])&&window.semiVis) semiVis(b,e.who==='me',e.semi.startsWith('semi1')); if(a&&cat&&!still&&!e.semi){ const k=e.z&&/^(超)?极巨/.test(e.z)?'charge':contact&&fxOn()?(bite?'charge':null):(cat==='ph'&&!bite?'lunge':'charge');   /* 极巨 / 超极巨招式：站在原地蓄力出招，不往前冲（Kris 2026-11-18） */ a.classList.remove('lunge','charge'); void a.offsetWidth; if(k) a.classList.add(k);
       if(contact&&fxOn()){ const fd0=e.mv&&FXDUR[e.mv], hit=(fd0?(fd0.reach||fd0.hit):260)+pad, out=fd0&&fd0.hit>=1100?270:200, st0=Math.max(pad,hit-out), mh0=fd0&&(e.hits||1)>1?((e.hits||1)-1)*(fd0.gap||240):0; setTimeout(()=>{ if(B!==b) return; a.classList.remove('lunge','charge'); fxDash(a,e.who==='me',hit-st0,((fd0&&fd0.hold)||140)+mh0); },st0); } }   /* 连击：停在对手面前的时间加长，好打完每一下 */   /* 接触类招式：出招的宝可梦跟着拳头 / 巨口 / 爪痕一起冲到对手面前，打中那一刻到位，停一下再退回（Kris 2026-10-28） */
@@ -4666,7 +4676,7 @@ function foeGim(){
 }
 function foeAct(pre){
   const b=B, f=b.foe; foeGim(); let sh;
-  if(b.cfg.foeItems&&b.cfg.foeItems.length&&b.fh>0&&b.fh<b.fx*.35){ const k=b.cfg.foeItems.shift(), it=BI.find(x=>x[0]===k); const a=it?(it[2]==='healp'?Math.ceil(b.fx*it[3]):it[3]>=9999?b.fx:it[3]||30):30; b.fh=f.fh=Math.min(b.fx,b.fh+a); b.log.push(`对方使用了${ITEMS[k]?ITEMS[k][0]:'伤药'}，${SP[f.id][0]} 回复了 HP`); return; }
+  if(b.cfg.foeItems&&b.cfg.foeItems.length&&b.fh>0&&b.fh<b.fx*.35){ const k=b.cfg.foeItems.shift(), it=BI.find(x=>x[0]===k); const a=it?(it[2]==='healp'?Math.ceil(b.fx*it[3]):it[3]>=9999?b.fx:it[3]||30):30; b.fh=f.fh=Math.min(b.fx,b.fh+a); const cure=healCure(k,f); b.log.push(`对方使用了${ITEMS[k]?ITEMS[k][0]:'伤药'}，${SP[f.id][0]} 回复了 HP${cure?`，${cure}也治好了`:''}`); healBeat(b,'f'); return; }
   if(f.zNow){ f.zNow=0; const best=b.fmv.map(plain).sort((x,y)=>y.pow-x.pow)[0]; sh={...best,name:ZN[best.type],pow:zPow(best.pow),acc:101}; b.log.push('对方全身充满了 Z 力量！'); }
   else { /* 难度第一期：对方 75% 的回合挑「预计伤害最大」的招式（算属性克制、命中率），其余随机，不再全凭运气；有变化招式时先看要不要用（foeChoose） */
     const base=pre||foeChoose();
@@ -4731,7 +4741,7 @@ function bTurn(m){
   if(m==='run'){ b.log.push(b.cfg.kind==='wild'?'顺利逃跑了。':'你认输了。'); b.over='end'; if(b.cfg.kind!=='wild'&&b.cfg.onLose) b.cfg.onLose(); return bRender(); }
   if(typeof m==='string'&&m.startsWith('pl:')){ const k=m.slice(3); if(b.me.id!==493||(k&&!plOwned(k))||(b.me.plate||'')===k) return bRender(); b.plPop=false; const _o=document.querySelector('#bme'), _old=_o&&_o.getAttribute('src'), _t0=arcT(b.me); b.me={...b.me,plate:k||undefined}; b.turns=(b.turns||0)+1; b.log.push(k?`阿尔宙斯换上了${ITEMS[k][0]}，${PLATES[k]==='legend'?'全身充满了传说石板的力量！':'变成了 '+PLATES[k]+' 属性！'+PLATES[k]+'属性招式威力 ×1.2'}`:'阿尔宙斯放下了石板，变回一般属性。'); if(_old&&fxOn()&&arcT(b.me)!==_t0){ const t=arcT(b.me)||'一般', c=TYC[t]||'#ccc'; b.kyFx={n:b.log.length,old:_old,id:493,col:['#1a1a1a',c,c,'#ffffff']}; } if(b.mh>0) foeAct(); }
   else if(typeof m==='string'&&m.startsWith('i:')){ const k=m.slice(2), it=BI.find(x=>x[0]===k); if(!it||!biOK(k)||!(S.items[k]>0)) return bRender(); const nm=SP[b.me.id][0], t=it[2], v=it[3];
-    if(t==='heal'||t==='healp'){ if(b.mh<=0) return; const a=t==='heal'?(v>=9999?b.mx:v):Math.ceil(b.mx*v); b.mh=Math.min(b.mx,b.mh+a); b.log.push(`使用了${ITEMS[k][0]}，${nm} 回复了 ${a>=b.mx?'全部':a} HP`); }
+    if(t==='heal'||t==='healp'){ if(b.mh<=0) return; const a=t==='heal'?(v>=9999?b.mx:v):Math.ceil(b.mx*v), cure=healCure(k,b.me); b.mh=Math.min(b.mx,b.mh+a); b.log.push(`使用了${ITEMS[k][0]}，${nm} 回复了 ${a>=b.mx?'全部':a} HP${cure?`，${cure}也治好了`:''}`); healBeat(b,'m'); }
     else if(t==='revive'){ const i=b.party.findIndex((p,j)=>j!==b.cur&&p.mh<=0); if(i<0){ b.log.push('没有倒下的宝可梦。'); return bRender(); } const p=b.party[i]; p.mh=Math.max(1,Math.ceil(p.mx*v)); b.log.push(`使用了${ITEMS[k][0]}，${SP[p.me.id][0]} 复活了！`); }
     else if(t==='pp'){ b.pp=b.pp.map((x,j)=>Math.min(MV[b.mvs[j]][4],x+v)); b.log.push(`使用了${ITEMS[k][0]}，技能的 PP 回复了`); }
     else if(t==='xatk'){ b.xatk=1; b.log.push(`使用了${ITEMS[k][0]}，${nm} 的攻击提升了！`); }
@@ -5915,6 +5925,7 @@ function dRender(){
 /* 双打也一样：每个人出招记一拍（日志到哪一行、全场 HP 和站位），回合算完后一拍一拍放出来 */
 const _dRender=dRender;
 dRender=function(){ const d=D; if(d&&d.beats&&d.beats.length&&!d.busy){ const bs=d.beats; d.beats=null; return dReplay(d,bs); } if(d&&!d.busy) d.beats=null; return _dRender.apply(this,arguments); };
+function dHealBeat(s,sl){ const d=D; if(!d.beats) return; d.beats.push({heal:[s,sl],sv:dSemiNow(),n:d.log.length,pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:[...d.my],fo:[...d.fo]}); }   /* 双打用回复道具：也是一拍（Kris 2026-11-20） */
 function dBeat(as,asl,ds,dsl){ const d=D; if(!d.beats) return; d.beats.push({as,asl,ds,dsl,sv:dSemiNow(),n:d.log.length,pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:[...d.my],fo:[...d.fo]}); }
 /* 特效程序里写死的「#battle .gsp.me / .gsp.foe / #bme / #bfoe」，双打放特效时暂时改指到这一拍的两只精灵 */
 function dMapSet(M){ window.__dmap=M||null; }
@@ -5940,6 +5951,9 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
   const step=()=>{ if(D!==d){ dMapSet(null); return; } if(i>=bs.length){ dMapSet(null); d.__shownN=null; d.__slot0=null; d.busy=false; Object.assign(d,st); return dRender(); }
     const e=bs[i++], hp0=prev, same=e.pm.every((v,k)=>v===hp0.pm[k])&&e.fh.every((v,k)=>v===hp0.fh[k]);
     const pre=i>=2?bs[i-2]:(d.__slot0||null); show(e,hp0,pre&&pre.my&&pre.fo?pre:null); { const w=entWait(); if(w>0&&e.as!=null){ logHoldTail('#dlog',pre&&pre.n!=null?pre.n:e.n,e.n); i--; return setTimeout(step,w); } }   /* 双打（Kris 2026-11-18）：以前一招打倒对手时，那只在特效放之前就从画面消失，特效找不到目标就整个没放 */
+    if(e.heal){ const [hs,hsl]=e.heal, ix=hs==='m'?e.my[hsl]:e.fo[hsl], o=hs==='m'?d.party[ix]:d.foes[ix], h0=hs==='m'?hp0.pm[ix]:hp0.fh[ix], h1=hs==='m'?e.pm[ix]:e.fh[ix], mx=o?(hs==='m'?o.mx:o.fx):1, q=h=>Math.max(0,Math.round(100*h/mx));
+      prev={pm:e.pm,fh:e.fh}; setTimeout(()=>{ if(D!==d||!d.busy) return; show(e,prev); healAnim(document.querySelector(`#battle .ginfo.d${hs}${hsl} .ghp i`),document.querySelector(`#battle .gsp.d${hs}${hsl}`),q(h0),q(h1)); },200);
+      return setTimeout(step,fxOn()?1400:700); }   /* 回复：血条慢慢涨上去、发一下绿光，之后才出招 */
     prev={pm:e.pm,fh:e.fh};
     const a=document.querySelector(`#battle .gsp.d${e.as}${e.asl}`), fromMe=e.as==='m', tg=(e.tgs&&e.tgs.length?e.tgs:[[e.ds,e.dsl,1]]);
     /* 双打招式特效（Kris 2026-11-18）：和单打放同一套特效。特效程序找的是「我方 / 对方」精灵，这里把它们暂时对到这一拍出招和挨打的那两只（dMapSet）；范围招式对每只目标各放一次 */
@@ -6002,7 +6016,7 @@ function dTurn(){
   const d=D, acts=[]; d.turns++; d.beats=[];
   d.sel.forEach(x=>{ if(x.sw!==undefined){ const old=d.party[d.my[x.slot]], nw=d.party[x.sw]; if(!nw||nw.mh<=0||d.my.includes(x.sw)){ d.log.push('换人失败了。'); return; } dRevertDyn(old); d.my[x.slot]=x.sw; if(d.__slot0) d.__slot0.my[x.slot]=x.sw; d.part.add(x.sw); d.log.push(`${SP[old.me.id][0]}，回来！去吧，${SP[nw.me.id][0]}！`);   /* 换人在回合一开始就做完：回放第一拍场上已经是换上来的那只，先放它出场，再轮到别人出招（Kris 2026-11-19） */ wxEnter(nw.me.id,true,nw.me); }
     else if(x.item){ const k=x.item, it=BI.find(y=>y[0]===k), p=d.party[d.my[x.slot]]; if(!it||!(S.items[k]>0)||!biOK(k)) return; const t=it[2], v=it[3], nm=SP[p.me.id][0];
-      if(t==='heal'||t==='healp'){ const a=t==='heal'?(v>=9999?p.mx:v):Math.ceil(p.mx*v); p.mh=Math.min(p.mx,p.mh+a); d.log.push(`使用了${ITEMS[k][0]}，${nm} 回复了 ${a>=p.mx?'全部':a} HP`); }
+      if(t==='heal'||t==='healp'){ const a=t==='heal'?(v>=9999?p.mx:v):Math.ceil(p.mx*v), cure=healCure(k,p.me); p.mh=Math.min(p.mx,p.mh+a); d.log.push(`使用了${ITEMS[k][0]}，${nm} 回复了 ${a>=p.mx?'全部':a} HP${cure?`，${cure}也治好了`:''}`); dHealBeat('m',x.slot); }
       else if(t==='revive'){ const f=d.party.find(q=>q.mh<=0); if(!f){ d.log.push('没有倒下的宝可梦。'); return; } f.mh=Math.max(1,Math.ceil(f.mx*v)); d.log.push(`使用了${ITEMS[k][0]}，${SP[f.me.id][0]} 复活了！`); }
       else if(t==='pp'){ p.pp=p.pp.map((q,j)=>Math.min(MV[p.mvs[j]][4],q+v)); d.log.push(`使用了${ITEMS[k][0]}，${nm} 的 PP 回复了`); }
       else if(t==='xatk'){ d.xatk=1; d.log.push(`使用了${ITEMS[k][0]}，我方的攻击提升了！`); }
@@ -6017,7 +6031,7 @@ function dTurn(){
     const ai=(a.side==='m'?d.my:d.fo)[a.slot]; if(ai<0) continue;
     { const o=a.side==='m'?(d.party[ai]||{}).me:d.foes[ai]; if(o&&o._chg){ a.mv=o._chg; if(o._chgT!=null) a.tg=o._chgT; a.z=false; } }   /* 两回合招式的第 2 回合：一定放出蓄好的那招，打第 1 回合选的目标 */ const att=a.side==='m'?d.party[ai]:d.foes[ai], ahp=a.side==='m'?att.mh:att.fh; if(ahp<=0) continue;
     if(a.side==='f'){ dFoeGim(att);
-      if(d.foeItems&&d.foeItems.length&&att.fh>0&&att.fh<att.fx*.35){ const k=d.foeItems.shift(), it=BI.find(x=>x[0]===k); const hv=it?(it[2]==='healp'?Math.ceil(att.fx*it[3]):it[3]>=9999?att.fx:it[3]||30):30; att.fh=Math.min(att.fx,att.fh+hv); d.log.push(`对方使用了${ITEMS[k]?ITEMS[k][0]:'伤药'}，${SP[att.id][0]} 回复了 HP`); dBeat('f',a.slot,'f',a.slot); continue; } }
+      if(d.foeItems&&d.foeItems.length&&att.fh>0&&att.fh<att.fx*.35){ const k=d.foeItems.shift(), it=BI.find(x=>x[0]===k); const hv=it?(it[2]==='healp'?Math.ceil(att.fx*it[3]):it[3]>=9999?att.fx:it[3]||30):30; att.fh=Math.min(att.fx,att.fh+hv); const cure=healCure(k,att); d.log.push(`对方使用了${ITEMS[k]?ITEMS[k][0]:'伤药'}，${SP[att.id][0]} 回复了 HP${cure?`，${cure}也治好了`:''}`); dHealBeat('f',a.slot); continue; } }
     const tside=a.side==='m'?'f':'m'; let tgt=(tside==='m'?d.my:d.fo)[a.tg], thp=tgt>=0?(tside==='m'?d.party[tgt].mh:d.foes[tgt].fh):0; let tslot=a.tg;
     if(thp<=0){ const al=dAlive(tside); if(!al.length) continue; [tgt,tslot]=al[0]; }
     const A=a.side==='m'?att.me:att, T=tside==='m'?d.party[tgt].me:d.foes[tgt], nm=(a.side==='m'?'':'对方的 ')+SP[A.id][0];
