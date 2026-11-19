@@ -1309,15 +1309,17 @@ const rollShiny=()=>Math.random()<SHINY_RATE;  /* test mode: every item and TM i
 function topUp(){ if(!TEST) return; for(const k in MINTS) S.items[k]=Math.max(S.items[k]||0,99);   /* 测试：全部薄荷都开放（Kris 2026-11-03） */
   for(const k in SIGN) S.items[k]=Math.max(S.items[k]||0,1);   /* 测试：每种专属道具 1 个 */ for(const k in ITEMS) if(!PLATES[k]&&!GEMS[k]&&!MINTS[k]&&!SIGN[k]) S.items[k]=((typeof BICOND!=='undefined'&&BICOND[k]&&!biOK(k))||(typeof RARE!=='undefined'&&RARE[k]&&!rareOK(k)))?0:999; S.tm=S.tm||{}; for(const k in TMS) S.tm[k]=1; S.coins=Math.max(S.coins,999999999); S.stars=Math.max(S.stars,999999999);   /* 开发者模式：金币、星尘 999999999（Kris 2026-11-04） */ }
 let learnMsgs=[];
-const initMoves=(id,lv)=>{ const all=[...new Set((LS[id]||[]).filter(x=>x[0]<=lv).map(x=>x[1]))], out=[]; let ns=0;   /* 最近学会的 4 个，变化招式最多带 2 个，其余用攻击招式 */
+/* Mega 进化的样子没有自己的招式表（Kris 2026-11-20：世界 Boss 超级拉帝欧斯只会撞击）：用进化前那只的招式表 */
+let MEGABASE=null; const lsOf=id=>{ const L=LS[id]; if(L&&L.length) return L; if(!MEGABASE){ MEGABASE={}; for(const b in MEGA) (MEGA[b]||[]).forEach(f=>MEGABASE[f]=+b); } const b=MEGABASE[id]; return b&&LS[b]?LS[b]:(L||[]); };
+const initMoves=(id,lv)=>{ const all=[...new Set(lsOf(id).filter(x=>x[0]<=lv).map(x=>x[1]))], out=[]; let ns=0;   /* 最近学会的 4 个，变化招式最多带 2 个，其余用攻击招式 */
   for(let i=all.length-1;i>=0&&out.length<4;i--){ const m=all[i], st=!MV[m][2]; if(st&&ns>=2) continue; if(st) ns++; out.unshift(m); }
   if(!out.some(m=>MV[m][2]>0)){ if(out.length>=4) out.shift(); out.unshift(33); }
   return out.length?out:[33]; };
 /* 可以重新学的招式（Kris 2026-10-29）：所有宝可梦都能随时学回自己招式表里、等级已经够了但还不会的招式（包括进化时学会的）。点「学会」直接学（有空格），满了就选要替换哪一个 */
-function relearnHtml(m,mv){ const pend=m.pend||[], L=[...new Set((LS[m.id]||[]).filter(x=>x[0]<=m.lv).map(x=>x[1]))].filter(id=>MV[id]&&!mv.includes(id)&&!pend.includes(id)); if(!L.length) return '';
-  return `<details class="relearn"><summary>可以重新学的招式（${L.length} 个）</summary>${L.map(id=>{ const lv=(LS[m.id].find(x=>x[1]===id)||[0])[0]; return `<div class="mvlearn"><b>${MV[id][0]}</b> <span class="muted">${lv?'Lv'+lv:'进化时'} · ${mvLine(id)}</span><div class="row" style="margin-top:6px">${mv.length<4?`<button class="btn" data-relearn="${id}">学会</button>`:mv.map((x,i)=>`<button class="btn alt" data-relearn="${id}" data-slot="${i}">替换 ${MV[x][0]}</button>`).join('')}</div></div>`; }).join('')}</details>`; }
+function relearnHtml(m,mv){ const pend=m.pend||[], L=[...new Set(lsOf(m.id).filter(x=>x[0]<=m.lv).map(x=>x[1]))].filter(id=>MV[id]&&!mv.includes(id)&&!pend.includes(id)); if(!L.length) return '';
+  return `<details class="relearn"><summary>可以重新学的招式（${L.length} 个）</summary>${L.map(id=>{ const lv=(lsOf(m.id).find(x=>x[1]===id)||[0])[0]; return `<div class="mvlearn"><b>${MV[id][0]}</b> <span class="muted">${lv?'Lv'+lv:'进化时'} · ${mvLine(id)}</span><div class="row" style="margin-top:6px">${mv.length<4?`<button class="btn" data-relearn="${id}">学会</button>`:mv.map((x,i)=>`<button class="btn alt" data-relearn="${id}" data-slot="${i}">替换 ${MV[x][0]}</button>`).join('')}</div></div>`; }).join('')}</details>`; }
 const getMoves=m=>{ if(!m.mv) m.mv=initMoves(m.id,m.lv); return m.mv; };
-function checkLearn(m,old){ getMoves(m); for(const [lv,id] of (LS[m.id]||[])){ if(lv>old&&lv<=m.lv&&!m.mv.includes(id)){ if(m.mv.length<4){ m.mv.push(id); m.lnew=(m.lnew||[]).concat(id); } else { m.pend=m.pend||[]; if(!m.pend.includes(id)) m.pend.push(id); m.pf=m.pf||[]; if(!m.pf.includes(id)) m.pf.push(id); } } } }
+function checkLearn(m,old){ getMoves(m); for(const [lv,id] of lsOf(m.id)){ if(lv>old&&lv<=m.lv&&!m.mv.includes(id)){ if(m.mv.length<4){ m.mv.push(id); m.lnew=(m.lnew||[]).concat(id); } else { m.pend=m.pend||[]; if(!m.pend.includes(id)) m.pend.push(id); m.pf=m.pf||[]; if(!m.pf.includes(id)) m.pf.push(id); } } } }
 const rndTM=()=>{ const ks=Object.keys(TMS); const nw=ks.filter(k=>!S.tm[k]); const p=nw.length?nw:ks; return +p[Math.floor(Math.random()*p.length)]; };
 const mvLine=id=>`${MV[id][1]} · ${catName(id)} · ${window.MVNOTE&&MVNOTE[id]?MVNOTE[id]+' · ':(id===447||id===67)?'威力看对手体重 · ':MV[id][2]?'威力'+MV[id][2]+' · ':''}${MV[id][3]>100?'必中':'命中'+MV[id][3]} · PP${MV[id][4]}${SIG[id]?' · 专属':''}`;
 const bond=(m,n)=>{ if(m.ball==='b_luxury') n=Math.ceil(n*1.5); m.fr=Math.min(255,(m.fr||0)+n) };
@@ -2515,7 +2517,7 @@ function rArena(){
   $('#main').innerHTML=`<section class="panel">${pvpCard()}<div class="card"><div class="row cbn" style="justify-content:space-between;--bg:url(${XART.arena})"><h2 style="margin:0">对战 NPC</h2><span class="row" style="gap:8px">${arChip('npc')}<button class="btn alt" id="nref">刷新 NPC 对手（${refTxt('rn')}）</button></span></div><div class="muted" style="margin-bottom:8px">NPC 带的数量和你的队伍一样多（你现在带 ${S.team.length} 只）。每天 0 点刷新，对战和刷新次数也在 0 点重置。每天最多打 ${ARN_DAY} 次；手动刷新对手第一次免费，之后每次 ${REF_COST} 金币。打赢 NPC 加段位分。</div><div class="list">${S.npcs.map((o,i)=>row(o,'n'+i)).join('')}</div></div>${duoCard()}<div class="card"><div class="row cbn" style="justify-content:space-between;--bg:url(${XART.arena})"><h2 style="margin:0">对战玩家（异步）</h2>${arChip('pl')}</div><div style="height:8px"></div>${S.pvp.locked?'':'<div class="muted" style="margin-bottom:8px">还没有锁定队伍。到「我的对战阵容」锁定后，这里会显示你的阵容，别人才能挑战你。</div>'}<div class="muted" style="margin-bottom:8px">打的是对方阵容的快照，对方不用在线。${window.__POKEFARM_SYNC?'对手是 OSE Console 里设置了阵容的真实账号（要先到「我的对战阵容」设置并锁定队伍，别人才打得到你）。':'这里的对手是示例。'}</div><div class="list">${S.pvp.locked?pvpSelfRow():''}${players().map((o,i)=>row(o,'p'+i)).join('')||`<div class="muted">${PL.rows===null&&!PL.err?'正在读取…':PL.err||'还没有别的账号设置对战阵容。'}</div>`}</div></div></section>`;
   $('#nref').onclick=()=>{ if(!refPay('rn')) return; genNpcs(); toast('NPC 对手已刷新'); render(); };
   bindPvp(); bindDuo();
-  document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{ const k=b.dataset.b,o=(k[0]==='n'?S.npcs:players())[+k.slice(1)]; if(!o) return; { const pv=k[0]==='p'; if(!arLeft(pv?'pl':'npc')) return toast('今天的对战次数用完了，0 点刷新'); const ng=pv?null:npcGm(o.team); startBattle({cnt:pv?'pl':'npc',kind:pv?'pvp':'npc',foe:o.team[0],foes:o.team.map((x,i)=>({...x,gm:(pv&&o.gm&&i===o.team.length-1)?{k:o.gm}:(ng&&ng.ix===i?ng.gm:undefined)})),reward:o.r,title:o.n,av:pv?null:npcAv(o),foeItems:pv&&o.items?o.items.slice():null,onWin:pv?()=>pvpRate(o,true):()=>npcRate(o.rating),onLose:pv?()=>pvpRate(o,false):undefined}); } });
+  document.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{ const k=b.dataset.b,o=(k[0]==='n'?S.npcs:players())[+k.slice(1)]; if(!o) return; { const pv=k[0]==='p'; if(!arLeft(pv?'pl':'npc')) return toast('今天的对战次数用完了，0 点刷新'); const ng=pv?null:npcGm(o.team); startBattle({cnt:pv?'pl':'npc',kind:pv?'pvp':'npc',foe:o.team[0],foes:o.team.map((x,i)=>({...x,gm:(pv&&o.gm&&i===o.team.length-1)?{k:o.gm}:(ng&&ng.ix===i?ng.gm:undefined)})),reward:o.r,title:o.n,av:npcAv(o),foeItems:pv&&o.items?o.items.slice():null,onWin:pv?()=>pvpRate(o,true):()=>npcRate(o.rating),onLose:pv?()=>pvpRate(o,false):undefined}); } });
 }
 
 /* ---------- battle ---------- */
@@ -2758,9 +2760,12 @@ bRender=function(){ const b=B; if(b&&b.beats&&b.beats.length&&!b.busy){ const bs
 function foeFaint(b,done){ const sp=document.querySelector('#battle .gsp.foe'), id=b.foe&&b.foe.id; let fin=false; const end=()=>{ if(fin) return; fin=true; b.__fntShow=b.fcur+':'+id; fntSync(); done(); };
   const drop=()=>{ if(B!==b) return end(); const s2=document.querySelector('#battle .gsp.foe'); if(s2){ s2.classList.add('fnt'); } const fi=document.querySelector('#battle .ginfo.f'); if(fi) fi.classList.add('fntinfo'); setTimeout(end,520); };
   if(!sp||!id) return end(); (window.cryP?window.cryP(id):Promise.resolve()).then(()=>setTimeout(drop,120)); setTimeout(()=>{ if(!fin&&!(document.querySelector('#battle .gsp.foe.fnt'))) drop(); },3200); }
-function fntSync(){ const b=B; if(!b||!b.foe) return; const sp=document.querySelector('#battle .gsp.foe'); if(sp) sp.classList.toggle('fntd',b.__fntShow===b.fcur+':'+b.foe.id); const fi=document.querySelector('#battle .ginfo.f'); if(fi) fi.classList.toggle('fntinfo',b.__fntShow===b.fcur+':'+b.foe.id); }
+function meFaint(b,done){ const sp=document.querySelector('#battle .gsp.me'), id=b.me&&b.me.id, k=b.cur+':'+id; let fin=false; const end=()=>{ if(fin) return; fin=true; b.__mfntShow=k; fntSync(); done(); };
+  const drop=()=>{ if(B!==b) return end(); const s2=document.querySelector('#battle .gsp.me'); if(s2) s2.classList.add('fnt'); const fi=document.querySelector('#battle .ginfo.m'); if(fi) fi.classList.add('fntinfo'); setTimeout(end,560); };
+  if(!sp||!id) return end(); (window.cryP?window.cryP(id):Promise.resolve()).then(()=>setTimeout(drop,120)); setTimeout(()=>{ if(!fin&&!document.querySelector('#battle .gsp.me.fnt')) drop(); },3200); }
+function fntSync(){ const b=B; if(!b||!b.foe) return; { const ms=document.querySelector('#battle .gsp.me'), on=!!(b.me&&b.mh<=0&&b.__mfntShow===b.cur+':'+b.me.id); if(ms) ms.classList.toggle('fntd',on); const mi=document.querySelector('#battle .ginfo.m'); if(mi) mi.classList.toggle('fntinfo',on); } const sp=document.querySelector('#battle .gsp.foe'); if(sp) sp.classList.toggle('fntd',b.__fntShow===b.fcur+':'+b.foe.id); const fi=document.querySelector('#battle .ginfo.f'); if(fi) fi.classList.toggle('fntinfo',b.__fntShow===b.fcur+':'+b.foe.id); }
 { const _ss=sizeSprites; sizeSprites=function(){ const r=_ss.apply(this,arguments); try{ fntSync(); }catch(e){} return r; }; }
-{ const st=document.createElement('style'); st.textContent='#battle .gsp.foe.fnt{animation:fntdrop .45s ease-in forwards}#battle .gsp.foe.fntd,#battle .gsp.foe.fntd *{visibility:hidden!important}#blog .gfxwait,#dlog .gfxwait{display:none}#battle .ginfo.f.fntinfo{opacity:0;transition:opacity .3s}@keyframes fntdrop{from{transform:none;clip-path:inset(0 0 0 0)}to{transform:translateY(100%);clip-path:inset(0 0 100% 0)}}'; document.head.appendChild(st); }
+{ const st=document.createElement('style'); st.textContent='#battle .gsp.fnt{animation:fntdrop .45s ease-in forwards}#battle .gsp.fntd,#battle .gsp.fntd *,#battle .gsp.fnt.dn{visibility:hidden!important}#battle .ginfo.fntinfo{opacity:0;transition:opacity .3s}#blog .gfxwait,#dlog .gfxwait{display:none}#battle .ginfo.f.fntinfo{opacity:0;transition:opacity .3s}@keyframes fntdrop{from{transform:none;clip-path:inset(0 0 0 0)}to{transform:translateY(100%);clip-path:inset(0 0 100% 0)}}'; document.head.appendChild(st); }
 /* 两回合招式的第 2 回合（Kris 2026-11-18）：蓄力 / 躲起来之后，不用再按「战斗」，自己放出蓄好的招式 */
 function chgAuto(){ const b=B; if(!b||b.busy||b.over||b.pick||b.shift||(b.beats&&b.beats.length)||window.__opening) return; const id=b.me&&b.me._chg; if(!id||!MV[id]||b.__chgAuto===b.log.length+':'+id) return;
   b.__chgAuto=b.log.length+':'+id; setTimeout(()=>{ if(B!==b||b.busy||b.over||b.pick||b.shift||!b.me||b.me._chg!==id||document.querySelector('#modal').hidden) return; const k=getMoves(b.mon).findIndex(x=>+x===+id); bTurn(Math.max(0,k)); },650); }
@@ -2769,7 +2774,10 @@ function bReplay(b,bs){ b.busy=true; let i=0; const st={over:b.over,pick:b.pick,
   let pm=b.bd0?b.bd0.m:bs[0].mh, pf=b.bd0?b.bd0.f:bs[0].fh;
   const hpShow=(mh,fh)=>{ const q=(h,x)=>Math.max(0,Math.round(100*h/x)), c=p=>p>50?'g':p>20?'y':'r', fb=document.querySelector('#battle .ginfo.f .ghp i'), mb=document.querySelector('#battle .ginfo.m .ghp i'), mt=document.querySelector('#battle .ginfo.m .gn.small span:last-child');
     if(fb){ const p=q(fh,fxV(b)); fb.style.width=p+'%'; fb.className=c(p); } if(mb){ const p=q(mh,mxV(b)); mb.style.width=p+'%'; mb.className=c(p); } if(mt) mt.textContent=`${Math.max(0,mh)} / ${mxV(b)}`; };
-  const step=()=>{ if(B!==b) return; if(i>=bs.length){ b.stg=null; b.__n0=b.log.length; if(b.__fntPend&&fxOn()){ b.__fntPend=0; _bRender(); return foeFaint(b,()=>{ if(B!==b) return; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; bSendNext(); } else _bRender(); }); } b.__fntPend=0; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; return bSendNext(); } return _bRender(); }
+  const step=()=>{ if(B!==b) return; if(i>=bs.length){ b.stg=null; b.__n0=b.log.length;
+      const fin=()=>{ b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; return bSendNext(); } return _bRender(); };
+      const meF=next=>{ const k=b.cur+':'+(b.me&&b.me.id); if(b.mh<=0&&b.me&&fxOn()&&b.__mfntShow!==k){ _bRender(); return meFaint(b,()=>{ if(B===b) next(); }); } next(); };   /* 我方宝可梦倒下也有动作（Kris 2026-11-20）：对方先倒、我方再倒，之后才换人 / 结束 */
+      if(b.__fntPend&&fxOn()){ b.__fntPend=0; _bRender(); return foeFaint(b,()=>{ if(B!==b) return; meF(fin); }); } b.__fntPend=0; return meF(fin); }
     const e=bs[i++]; if(e.dynEnd){ pm=e.mh; pf=e.fh; } if(e.castFx&&window.castStep) castStep(b,e); b.stg={n:e.n,mh:pm,fh:pf}; _bRender(); { const w=entWait(); if(w>0&&(e.id||e.mv)){ logHoldTail('#blog',i>=2?bs[i-2].n:(b.__n0!=null?b.__n0:e.n),e.n); i--; return setTimeout(step,w); } }   /* 有宝可梦正在从精灵球出场：等它完全出来再出招（Kris 2026-10-31） */   /* 血条先保持出招前的样子，打中的那一刻（命中特效结束、对手开始闪）再扣 */
     if(e.heal){ const sd=e.heal, bar=document.querySelector(`#battle .ginfo.${sd} .ghp i`), sp=document.querySelector('#battle .gsp.'+(sd==='m'?'me':'foe')), mt=document.querySelector('#battle .ginfo.m .gn.small span:last-child'), q=(h,x)=>Math.max(0,Math.round(100*h/x)), m0=pm, f0=pf, emh=e.mh, efh=e.fh;
       setTimeout(()=>{ if(B!==b) return; if(b.stg){ b.stg.mh=emh; b.stg.fh=efh; } hpShow(emh,efh); const bar2=document.querySelector(`#battle .ginfo.${sd} .ghp i`); healAnim(bar2,sp,sd==='m'?q(m0,mxV(b)):q(f0,fxV(b)),sd==='m'?q(emh,mxV(b)):q(efh,fxV(b)));
@@ -5243,7 +5251,7 @@ function rGym(){
 function fightGym(ri,gi,go){ const R=TR.regions[ri], g=R.gyms[gi], key=ri+'-'+gi, first=!S.badges[key]; { const gt=gate(g.team,ri); if(gt) return toast(gt); }
   const rw=first?{coins:500+200*gi,stars:10+5*gi}:{coins:80+30*gi};
   const onw=()=>{ if(!first) return ''; S.badges[key]=1; const n=tmFor(g); S.tm[n]=1; return `获得 ${g.badge_zh||'徽章'}！还得到了 TM${String(n).padStart(2,'0')} ${MV[TMS[n]][0]}；`+tgain(60+gi*10); };
-  if(g.en.includes('&')){ startDouble(`${R.region_zh}道馆 · ${g.zh}（双打）`,g.team.map(([id,lv])=>({id,lv})),rw,undefined,onw,undefined,undefined,{gk:GMR[ri],gt:g.type_zh}); return; }
+  if(g.en.includes('&')){ startDouble(`${R.region_zh}道馆 · ${g.zh}（双打）`,g.team.map(([id,lv])=>({id,lv})),rw,undefined,onw,undefined,undefined,{gk:GMR[ri],gt:g.type_zh,av:trAv(g,g.team[g.team.length-1][0]),vs:1}); return; }
   if(!go) return gymPreview(ri,gi,rw,first);   /* 点「挑战」先看全部资讯，再开始（Kris 2026-11-04） */
   const st=gymStaff(ri,gi), avg=avgLv(g.team);   /* 先连战 2 位馆员，再挑战馆主；中间 HP 不回复（Kris 2026-11-04） */
   const fights=[...st.map(o=>({name:o.cls,team:o.foes.map(x=>x.id),foes:o.foes,lv:o.lv,tag:'道馆馆员',av:grNpc(o.cls,80)})),{name:'馆主 '+g.zh,team:g.team.map(x=>x[0]),foes:g.team.map(([id,lv])=>({id,lv})),lv:avg,gk:GMR[ri],tt:g.type_zh,av:trAv(g,g.team[g.team.length-1][0])}];
@@ -5492,7 +5500,7 @@ function dexDetail(id){
   const forms=FL.length>1?`<div class="row pd-forms" role="tablist" aria-label="形态">${FL.map(x=>`<button class="btn fchip ${x===v?'on':'alt'}" data-dform="${x}">${x===id?'普通':SP[x][0].replace(SP[id][0],'').replace(/[（）]/g,'')}${S.dex[x]?' ✓':''}</button>`).join('')}</div>`:'';   /* 形态按钮放在大图下面，不再显示样子的说明文字（Kris 2026-10-28） */
   const shOwn=(S.dexS||{})[v]||(S.dexS||{})[id], shBtn=`<div class="row pd-forms" aria-label="异色"><button class="btn fchip pd-shbtn ${dexShiny?'on':'alt'}" data-dshiny="1" aria-pressed="${dexShiny}">✦ 异色${shOwn?' ✓':''}</button></div>`;   /* 异色开关：打开后大图换成异色，角上的小图换成普通的 */
   const tys=[SP[v][2],SP[v][8]].filter(Boolean).map(t=>`<span class="pd-ty big" style="--c:${TYC[t]||'#888'}"><i>${t}</i></span>`).join('');
-  const lsn=(LS[v]||[]).slice().sort((x,y)=>x[0]-y[0]);
+  const lsn=lsOf(v).slice().sort((x,y)=>x[0]-y[0]);
   const learn=lsn.length?`<div class="dx-ls">${lsn.map(([lv,mid])=>`<div class="dx-lr"><b>Lv${lv}</b><span class="ty" style="background:${TYC[MV[mid][1]]||'#aaa'}">${MV[mid][1]}</span><span>${MV[mid][0]}</span><small class="muted">${catName(mid)} · ${MV[mid][2]?'威力'+MV[mid][2]+' · ':''}${MV[mid][3]>100?'必中':'命中'+MV[mid][3]}</small></div>`).join('')}</div>`:'<div class="muted">没有记录升级学会的招式</div>';
   $('#battle').innerHTML=`<div class="md-head">
     <div class="md-nav"><button class="btn alt" data-m="dn:prev" aria-label="上一只">◀</button><button class="btn alt" data-m="dn:next" aria-label="下一只">▶</button>${di>=0?`<span class="muted">${di+1}/${dl.length}</span>`:''}</div>
@@ -5887,12 +5895,12 @@ function duoCard(){
   if(!S.duos||S.duosDay!==today()||S.duos[0].rating===undefined||S.duosVer!==2) genDuos();
   return `<div class="card"><div class="row cbn" style="justify-content:space-between;--bg:url(${XART.arena})"><h2 style="margin:0">2v2 双打</h2><span class="row" style="gap:8px">${arChip('duo')}<button class="btn alt" id="dref">刷新对手（${refTxt('rd')}）</button></span></div><div class="muted" style="margin:6px 0 8px">两边各 2 只，每回合给两只各选招式和目标。至少带 2 只，最多用队伍前 4 只。每天最多打 ${ARN_DAY} 次，刷新对手第一次免费，之后每次 ${REF_COST} 金币。</div><div class="list">${S.duos.map((o,i)=>`<div class="item"><div class="l">${npcAv(o)}<div style="min-width:0"><b>${o.n}</b> ${o.rating!==undefined?`<span class="tag r3">${rankText(o.rating)}</span>`:''} <span class="muted">${o.team.length} 只</span><div class="row" style="gap:2px">${o.team.map(x=>`<img src="${SPR[x.id]}" alt="" style="width:40px;height:40px;image-rendering:pixelated">`).join('')}</div><div class="muted">${o.team.map(x=>SP[x.id][0]+' Lv'+x.lv).join('、')} · 奖励 ${rtextH(o.r)}</div></div></div><button class="btn red" data-duo="${i}" ${arLeft('duo')?'':'disabled'}>${arLeft('duo')?'双打对战':'今天打满了'}</button></div>`).join('')}</div></div>`;
 }
-function bindDuo(){ const r=$('#dref'); if(r) r.onclick=()=>{ if(!refPay('rd')) return; genDuos(); render(); }; document.querySelectorAll('[data-duo]').forEach(b=>b.onclick=()=>{ const o=S.duos[+b.dataset.duo]; if(!arLeft('duo')) return toast('今天的对战次数用完了，0 点刷新'); const ng=npcGm(o.team); startDouble(o.n,o.team,o.r,o.rating,undefined,undefined,'duo',{gm:o.gm,items:o.items,gk:ng&&ng.gm.k,gt:ng&&ng.gm.t}); }); }
+function bindDuo(){ const r=$('#dref'); if(r) r.onclick=()=>{ if(!refPay('rd')) return; genDuos(); render(); }; document.querySelectorAll('[data-duo]').forEach(b=>b.onclick=()=>{ const o=S.duos[+b.dataset.duo]; if(!arLeft('duo')) return toast('今天的对战次数用完了，0 点刷新'); const ng=npcGm(o.team); startDouble(o.n,o.team,o.r,o.rating,undefined,undefined,'duo',{gm:o.gm,items:o.items,gk:ng&&ng.gm.k,gt:ng&&ng.gm.t,av:npcAv(o)}); }); }
 function startDouble(title,team,reward,rating,onWin,onLose,ckey,opts){
   fixTeam(); const mine=S.team.map(mon).filter(m=>m&&!isBusy(m)&&!isFnt(m)).slice(0,4); if(mine.length<2) return toast(S.team.map(mon).some(m=>m&&isFnt(m))?'2v2 需要至少 2 只能上场的宝可梦：倒下的先到「牧场 → 宝可梦中心」治疗':'2v2 需要队伍里至少 2 只宝可梦（到「队伍」里再加）');
   if(ckey) cnt()[ckey]=(cnt()[ckey]||0)+1;
   D={title,reward,rate:rating,onWin,onLose,party:mine.map(real=>{ gOf(real); const mvs=getMoves(real).slice(); const me={...real}; delete me.tera; return {real,me,mh:Math.max(1,Math.round(maxhp(real)*monHpR(real))),mx:maxhp(real),mvs,pp:mvs.map(i=>ppLeft(real,i))}; }),foes:team.map(f=>({...f,g:gRoll(f.id),fx:maxhp(f),fh:maxhp(f),fmv:initMoves(f.id,f.lv)})),
-    my:[0,1],fo:[0,1],nm:2,nf:2,log:[`${title} 想要对战！`],over:null,sel:[],pm:null,part:new Set([0,1]),xp:0,turns:0};
+    my:[0,1],fo:[0,1],nm:2,nf:2,log:[`${title} 想要对战！`],over:null,sel:[],pm:null,part:new Set([0,1]),xp:0,turns:0,av:(opts&&opts.av)||null};   /* av：对方训练家的人物图（开场进场、打赢后走出来，和单打一样） */
   D.used={}; D.gu={}; D.foeItems=opts&&opts.items?opts.items.slice():null;
   if(opts&&opts.gk){ const fs=D.foes; let ix=-1; for(let i=fs.length-1;i>=0;i--){ if((opts.gk!=='mega'||MEGA[fs[i].id])&&(opts.gk!=='dyn'||!NODYN.has(fs[i].id))){ ix=i; break; } } if(ix>=0) fs[ix].gm={k:opts.gk,t:opts.gk==='tera'&&opts.gt&&CHART[opts.gt]?opts.gt:null}; }
   else if(opts&&opts.gm) D.foes[D.foes.length-1].gm={k:opts.gm};
@@ -5942,6 +5950,10 @@ function dZone(M,fn){ const z0=DZM, p0=window.__dmap; DZM=M; window.__dmap=M; tr
 (function(){ const R=s=>{ const M=window.__dmap; if(!M||typeof s!=='string'||!D) return s; return s.replace(/\.gsp\.me(?![\w-])/g,'.gsp.'+M.me).replace(/\.gsp\.foe(?![\w-])/g,'.gsp.'+M.foe).replace(/#bme(?![\w-])/g,'#battle .gsp.'+M.me).replace(/#bfoe(?![\w-])/g,'#battle .gsp.'+M.foe); };
   for(const P of [Document.prototype,Element.prototype]){ const q=P.querySelector, qa=P.querySelectorAll; P.querySelector=function(x){ return q.call(this,R(x)); }; P.querySelectorAll=function(x){ return qa.call(this,R(x)); }; } })();
 { const _dt=dTurn; dTurn=function(){ if(D) D.__slot0={my:[...D.my],fo:[...D.fo],n:D.log.length}; return _dt.apply(this,arguments); }; }   /* 记下这回合开始时场上是谁，回放第一拍用 */
+/* 双打的倒下动作（Kris 2026-11-20，和单打一样）：一只一只叫一声，再往下沉、血条框收起 */
+function dFaint(kos,done){ kos.forEach(([s,sl])=>{ document.querySelectorAll(`#battle .gsp.d${s}${sl},#battle .ginfo.d${s}${sl}`).forEach(x=>x.classList.remove('dn')); }); let k=0; const one=()=>{ if(k>=kos.length) return done(); const [s,sl,id]=kos[k++], sp=document.querySelector(`#battle .gsp.d${s}${sl}`), fi=document.querySelector(`#battle .ginfo.d${s}${sl}`);
+    if(sp) sp.classList.remove('dn'); if(fi) fi.classList.remove('dn'); if(sp&&s==='f'&&D) (D.__frs=D.__frs||[])[sl]={L:sp.offsetLeft,R:sp.offsetLeft+sp.offsetWidth,T:sp.offsetTop,B:sp.offsetTop+sp.offsetHeight};   /* 记下倒下的位置：打赢后对方训练家站这里 */ let fin=false; const drop=()=>{ if(fin) return; fin=true; if(sp) sp.classList.add('fnt'); if(fi) fi.classList.add('fntinfo'); setTimeout(one,560); };
+    (window.cryP?window.cryP(id):Promise.resolve()).then(()=>setTimeout(drop,120)); setTimeout(drop,3200); }; one(); }
 function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shift,menu:d.menu}; d.over=null; d.shift=null; d.menu='main';
   let prev=d.hp0||{pm:bs[0].pm,fh:bs[0].fh}; d.hp0=null;   /* 血条先保持出招前的样子，打中、闪完再扣（Kris 2026-11-04） */
   const show=(e,hp,pre)=>{ const r={pm:d.party.map(p=>p.mh),fh:d.foes.map(f=>f.fh),my:d.my,fo:d.fo,log:d.log}, sl=pre||e;   /* pre：出招前场上是谁（被打倒的那只先留在场上挨完这一招、放完特效，才换下去） */
@@ -5950,7 +5962,11 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
     d.party.forEach((p,k)=>p.mh=r.pm[k]); d.foes.forEach((f,k)=>f.fh=r.fh[k]); d.my=r.my; d.fo=r.fo; d.log=r.log; };
   const step=()=>{ if(D!==d){ dMapSet(null); return; } if(i>=bs.length){ dMapSet(null); d.__shownN=null; d.__slot0=null; d.busy=false; Object.assign(d,st); return dRender(); }
     const e=bs[i++], hp0=prev, same=e.pm.every((v,k)=>v===hp0.pm[k])&&e.fh.every((v,k)=>v===hp0.fh[k]);
-    const pre=i>=2?bs[i-2]:(d.__slot0||null); show(e,hp0,pre&&pre.my&&pre.fo?pre:null); { const w=entWait(); if(w>0&&e.as!=null){ logHoldTail('#dlog',pre&&pre.n!=null?pre.n:e.n,e.n); i--; return setTimeout(step,w); } }   /* 双打（Kris 2026-11-18）：以前一招打倒对手时，那只在特效放之前就从画面消失，特效找不到目标就整个没放 */
+    const pre=i>=2?bs[i-2]:(d.__slot0||null);
+    /* 这一拍被打倒的（Kris 2026-11-20）：先把血条扣完、留在场上，叫一声再往下沉，倒下了才换下一只 / 结束 */
+    const P0=pre&&pre.my&&pre.fo?pre:e, kos=[]; P0.my.forEach((pi,sl)=>{ if(pi>=0&&hp0.pm[pi]>0&&e.pm[pi]<=0&&d.party[pi]) kos.push(['m',sl,d.party[pi].me.id]); }); P0.fo.forEach((fi,sl)=>{ if(fi>=0&&hp0.fh[fi]>0&&e.fh[fi]<=0&&d.foes[fi]) kos.push(['f',sl,d.foes[fi].id]); });
+    const after=(T,stepT)=>{ if(kos.length&&fxOn()){ setTimeout(()=>{ if(D!==d||!d.busy) return; show(e,{pm:e.pm,fh:e.fh},P0); dFaint(kos,()=>{ if(D!==d) return; show(e,{pm:e.pm,fh:e.fh}); setTimeout(step,200); }); },T); return; }
+      if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,{pm:e.pm,fh:e.fh}); },T); setTimeout(step,stepT); }; show(e,hp0,pre&&pre.my&&pre.fo?pre:null); { const w=entWait(); if(w>0&&e.as!=null){ logHoldTail('#dlog',pre&&pre.n!=null?pre.n:e.n,e.n); i--; return setTimeout(step,w); } }   /* 双打（Kris 2026-11-18）：以前一招打倒对手时，那只在特效放之前就从画面消失，特效找不到目标就整个没放 */
     if(e.heal){ const [hs,hsl]=e.heal, ix=hs==='m'?e.my[hsl]:e.fo[hsl], o=hs==='m'?d.party[ix]:d.foes[ix], h0=hs==='m'?hp0.pm[ix]:hp0.fh[ix], h1=hs==='m'?e.pm[ix]:e.fh[ix], mx=o?(hs==='m'?o.mx:o.fx):1, q=h=>Math.max(0,Math.round(100*h/mx));
       prev={pm:e.pm,fh:e.fh}; setTimeout(()=>{ if(D!==d||!d.busy) return; show(e,prev); healAnim(document.querySelector(`#battle .ginfo.d${hs}${hsl} .ghp i`),document.querySelector(`#battle .gsp.d${hs}${hsl}`),q(h0),q(h1)); },200);
       return setTimeout(step,fxOn()?1400:700); }   /* 回复：血条慢慢涨上去、发一下绿光，之后才出招 */
@@ -5960,9 +5976,8 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
     const fm=fxOn()?((e.semi&&FXF[e.semi]&&FXDUR[e.semi])?e.semi:e.mv!=null?((e.z&&FXF['z:'+e.z])?'z:'+e.z:(FXDUR[e.mv]?e.mv:null)):null):null, fd=fm&&FXDUR[fm];
     if(e.chg&&!fd){ if(a){ a.classList.remove('lunge','charge'); void a.offsetWidth; a.classList.add('charge'); } return setTimeout(step,900); }   /* 蓄力的那一回合：原地蓄力 */
     if(!fd){ if(a){ a.classList.remove('lunge'); void a.offsetWidth; a.classList.add('lunge'); }
-      if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,prev); },560);
       setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl])=>{ const x=document.querySelector(`#battle .gsp.d${s}${sl}`); if(x){ x.classList.remove('hit'); void x.offsetWidth; x.classList.add('hit'); } }); },260);
-      return setTimeout(step,same?860:1000); }
+      return after(560,same?860:1000); }
     const mvn=MV[e.mv]?MV[e.mv][0]:'', isMax=!!(e.z&&/^(超)?极巨/.test(e.z)), contact=!e.z&&((e.cat==='ph'&&!NOCONTACT.has(mvn))||(e.cat==='sp'&&SPCONTACT.has(mvn)));
     const mapOf=([s,sl])=>fromMe?{me:'dm'+e.asl,foe:'d'+s+sl}:{foe:'df'+e.asl,me:'d'+s+sl}, mapTo=t=>dMapSet(mapOf(t));
     mapTo(tg[0]);
@@ -5971,8 +5986,7 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
     setTimeout(()=>{ if(D!==d) return; tg.forEach(t=>dZone(mapOf(t),()=>fxPlay(fm,fromMe))); mapTo(tg[0]); },180);   /* 每只目标各自记住对应，特效不会全挤到最后一只身上 */
     const bdur=e.cat==='st'?0:Math.max(0,...tg.map(t=>blinkN(t[2])*140));   /* 闪烁和命中音效等特效放完才来（Kris 2026-11-20）；闪完才扣血、换下倒下的（重画会把闪烁切掉） */
     setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl,mm])=>{ const n=e.cat==='st'?0:blinkN(mm); if(n) blink(`#battle .gsp.d${s}${sl}`,n); }); },fd.total+180);
-    if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,prev); },fd.total+180+bdur);
-    setTimeout(step,fd.total+420+bdur); };
+    after(fd.total+180+bdur,fd.total+420+bdur); };
   step(); }
 /* 双打的天气特性：和单打一样，出场就改天气，沙暴 / 冰雹每回合结束时伤害场上所有不免疫的宝可梦 */
 function dWxEnd(){ const d=D, w=d.wx; if(w!=='sand'&&w!=='hail') return; const imm=w==='sand'?['岩石','地面','钢']:['冰'], pn=WXN[w][0], hurt=o=>o.tera?!imm.includes(o.tera):!imm.some(t=>hasTy(o,t)); let any=0;
@@ -5981,7 +5995,7 @@ function dWxEnd(){ const d=D, w=d.wx; if(w!=='sand'&&w!=='hail') return; const i
   dAlive('f').forEach(([fi,fs])=>{ const f=d.foes[fi]; if(!hurt(f)) return; const x=Math.max(1,Math.floor(f.fx/16)); f.fh=Math.max(0,f.fh-x); d.log.push(`${pn}伤害了对方的 ${SP[f.id][0]}（-${x}）`); any=1;
     if(f.fh<=0){ d.log.push(`对方的 ${SP[f.id][0]} 倒下了！`); d.xp+=f.lv*9+10; d.fo[fs]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(fs); } });
   if(any) dBeat(null,0,null,0);
-  if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length) return dWin();
+  if(!dAlive('f').length&&d.nf>=d.foes.length) return dWin();   /* 对方还有没派出来的就还没赢（Kris 2026-11-20：两只同时被打倒、只剩一只没派时，以前直接算赢了） */
   if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); } }
 /* 双打的变身 / Z 招式 / 道具 / 对方王牌特殊能力：和单打同一套规则（每只宝可梦各自可以变身一次、一只只能选一种：Mega、极巨化、太晶化、Z 招式；变身在选招前生效） */
 function dRevertDyn(p){ if(p&&p.me){ p.me._chg=0; p.me._semi=0; } if(p.dyn>0){ p.dyn=0; p.mx=maxhp(p.me); p.mh=Math.min(p.mx,Math.ceil(p.mh/1.5)); } p.zOn=false; }
@@ -6052,7 +6066,7 @@ function dTurn(){
       else if(e&&act){ const where=o=>{ const pi=d.party.findIndex(p=>p.me===o); if(pi>=0) return ['m',d.my.indexOf(pi)]; const fi=d.foes.indexOf(o); return fi>=0?['f',d.fo.indexOf(fi)]:null; };
         const hl=(D.__hl||[]).map(([o,m])=>{ let w=where(o); if(!(w&&w[1]>=0)) w=D.__pos&&D.__pos.get(o); return w&&w[1]>=0?[w[0],w[1],m]:null; }).filter(Boolean);   /* 被打倒的也要算进打中的目标：才会闪、才有命中音效（Kris 2026-11-20：双打打倒对方时没有音效） */
         e.mv=sh.id; e.z=sh.tag?sh.name:null; e.semi=A.__semi2||null; e.cat=sh.pow>0?(SPECIAL.has(sh.id)?'sp':'ph'):'st'; e.tgs=hl.length?hl:[[tside,tslot,sh.pow>0?0:1]]; } A.__semi2=null; D.__hl=null; }
-    if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length) { dWin(); break; }
+    if(!dAlive('f').length&&d.nf>=d.foes.length) { dWin(); break; }
     if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); break; } }
   d.party.forEach(p=>{ if(p.dyn>0){ p.dyn--; if(p.dyn===0){ p.mx=maxhp(p.me); p.mh=p.mh>0?Math.max(1,Math.min(p.mx,Math.ceil(p.mh/1.5))):0; d.log.push(`${SP[p.me.id][0]} 极巨化结束了，变回原来的大小。`); } } });
   if(!d.over){ dWxEnd(); wxTick(d); statEnd2(); }
@@ -6849,8 +6863,22 @@ function bossFight(i,team,party){ if((team||party)&&TEAM_OFF) return toast('组�
   const tm=party?party.tm:team?S.bossTeam.map(j=>typeof j==='string'?OTHERS.find(o=>o.u===j):OTHERS[j]).filter(Boolean):[], k=tm.length, TI=BOSS_TIER[bossTier(b)];
   if(k+1<TI.need) return toast(`${TI.n} Boss 要至少 ${TI.need} 位训练家一起打（现在 ${k+1} 位），去「组队」邀请队友`);
   const hp=(b.kind==='p0'?P0_HP:BOSS_HP)*TI.hp*(1+.8*k), rm=(1+.35*tbk(k))*TI.rw;
-  const fm=b.form, fo={id:b.id,lv:b.lv,shiny:b.shiny,g:b.g,hpm:hp,sm:(b.kind==='p0'?P0_STAT:BOSS_STAT)*TI.st*(1+.1*k)}; if(fm){ if(fm.k==='mega') fo.id=fm.f; else if(fm.k==='etm') fo.id=10190; else if(fm.k==='dyn'){ fo.dyn=9999; fo.hpm=hp*1.5; } else if(fm.k==='tera') fo.tera=fm.t; }
-  startBattle({kind:'npc',tag:k?`世界 Boss · 组队（${k+1} 人）`:'世界 Boss',foe:{id:b.id,lv:b.lv},foes:[fo],title:`世界 Boss · ${SP[b.id][0]}`,team:k?tm:null,reward:{coins:Math.round((400+b.lv*20)*rm),stars:Math.round((20+b.lv/2|0)*rm),items:{m_xp2:1+tbk(k)}},onLose:party?()=>{ partyPost('finish',{id:party.pid,win:false}).then(()=>partyLoad()); }:undefined,onWin:()=>{ if(party) partyPost('finish',{id:party.pid,win:true}).then(()=>partyLoad()); b.def=true; b.tries+=2*tbk(k); prog('boss'); if(LIVE()&&b.key) sharedPost('complete',{kind:'boss',key:b.key,snap:{id:b.id,lv:b.lv,kind:b.kind,src:b.src,shiny:b.shiny,g:b.g,form:b.form}}); return `Boss 被击败了！回到「世界 Boss」页，你有 ${b.tries} 次捕捉机会；`+tgain(Math.round((b.lv+20)*rm)); }}); if(B&&fm){ B.log.push(fm.k==='etm'?`Boss 一上场就无极巨化了！一直维持到战斗结束`:fm.k==='mega'?`Boss 一上场就 Mega 进化了：${SP[fm.f][0]}！`:fm.k==='dyn'?`Boss 一上场就极巨化了！HP 更多，技能是极巨招式（整场不会结束）`:`Boss 一上场就太晶化了！变成 ${fm.t} 属性，${fm.t} 系技能威力 ×2`); bRender(); } }
+  const fm=b.form, fo={id:b.id,lv:b.lv,shiny:b.shiny,g:b.g,hpm:hp,sm:(b.kind==='p0'?P0_STAT:BOSS_STAT)*TI.st*(1+.1*k)};   /* 会变身的 Boss 先用原本的样子进场，进场后才变身（bossGim） */
+  startBattle({kind:'npc',tag:k?`世界 Boss · 组队（${k+1} 人）`:'世界 Boss',foe:{id:b.id,lv:b.lv},foes:[fo],bossFm:fm||null,title:`世界 Boss · ${SP[b.id][0]}`,team:k?tm:null,reward:{coins:Math.round((400+b.lv*20)*rm),stars:Math.round((20+b.lv/2|0)*rm),items:{m_xp2:1+tbk(k)}},onLose:party?()=>{ partyPost('finish',{id:party.pid,win:false}).then(()=>partyLoad()); }:undefined,onWin:()=>{ if(party) partyPost('finish',{id:party.pid,win:true}).then(()=>partyLoad()); b.def=true; b.tries+=2*tbk(k); prog('boss'); if(LIVE()&&b.key) sharedPost('complete',{kind:'boss',key:b.key,snap:{id:b.id,lv:b.lv,kind:b.kind,src:b.src,shiny:b.shiny,g:b.g,form:b.form}}); return `Boss 被击败了！回到「世界 Boss」页，你有 ${b.tries} 次捕捉机会；`+tgain(Math.round((b.lv+20)*rm)); }}); }
+/* 世界 Boss 变身（Kris 2026-11-20）：Mega、极巨化、无极巨化、太晶化都等 Boss 进场、叫完（开场流程结束）才变，放变身特效和音效；之后整场维持 */
+function bossGimGo(b,fm){ if(B!==b||!b.foe||b.over) return; if(b.busy){ b.__bossGim=0; return; } b.__gimDone=1;   /* 正在回放：等一下再变 */ const f=b.foe, nm=SP[f.id][0], o=document.querySelector('#bfoe'), old=o&&o.src; let k='mega'; b.__gimN=null;
+  if(fm.k==='mega'||fm.k==='etm'){ const ab0=abOf(f); f.id=fm.k==='etm'?10190:fm.f; const abNew=abOf(f)!==ab0;   /* 特性变了才再报一次（超级喷火龙 Y 的日照等），放在变身那句后面 */ const r=b.fh/b.fx; b.fx=f.fx=Math.round(maxhp(f)*(f.hpm||1)); b.fh=f.fh=Math.max(1,Math.round(r*b.fx)); S.seen=S.seen||{}; S.seen[f.id]=1;
+    if(fm.k==='etm'){ k='dyn'; b.log.push(`Boss ${nm} 无极巨化了！一直维持到战斗结束`); } else { k=gfxKind(f.id,'mega'); b.log.push(`Boss ${nm} 的超级石在发光……Mega 进化成了 ${SP[f.id][0]}！`); } b.__gimN=b.log.length-1; if(abNew) wxEnter(f.id,false,f); }
+  else if(fm.k==='dyn'){ k='dyn'; f.dyn=9999; f.hpm=(f.hpm||1)*1.5; b.fx=f.fx=Math.floor(b.fx*1.5); b.fh=f.fh=Math.floor(b.fh*1.5); b.log.push(`Boss ${nm} ${GMX[f.id]?'超极巨化了':'巨大化了'}！HP 更多，技能是极巨招式（整场不会结束）`); }
+  else if(fm.k==='tera'){ k='tera'; f.tera=fm.t; b.log.push(`Boss ${nm} 太晶化了！变成 ${fm.t} 属性，${fm.t} 系技能威力 ×2`); }
+  else return;
+  GFXQ.push({k,id:f.id,t:f.tera,sel:'#bfoe',old,n:b.__gimN!=null?b.__gimN:b.log.length-1,bt:b,info:'.ginfo.f',onm:nm}); bRender(); }
+setInterval(()=>{ const b=typeof B!=='undefined'?B:null; if(!b||!b.cfg||!b.cfg.bossFm||b.__bossGim||b.over||b.busy) return; if(window.__opening||window.__openHold||document.body.classList.contains('btwait')||$('#modal').hidden||!document.querySelector('#bfoe')) return;
+  b.__bossGim=1; setTimeout(()=>{ try{ bossGimGo(b,b.cfg.bossFm); }catch(e){ console.warn(e); } },300); },120);
+/* Boss 变身之前不能出招（Kris 2026-11-20）：开场结束到变身那 0.3 秒里点了招式，会变成 Boss 先打一下才变身。
+   这时点的招式先记着，等变身特效放完再自动出招 */
+{ const _bt=bTurn; bTurn=function(m){ const b=B; if(b&&b.cfg&&b.cfg.bossFm&&!b.__gimDone&&!b.over&&m!=='run'){ b.__gimQ=m; return; } return _bt.apply(this,arguments); }; }
+setInterval(()=>{ const b=typeof B!=='undefined'?B:null; if(!b||b.__gimQ==null||!b.__gimDone) return; if(b.over||b.pick||b.shift){ b.__gimQ=null; return; } if(b.busy||(b.beats&&b.beats.length)||entWait()>0) return; const m=b.__gimQ; b.__gimQ=null; bTurn(m); },150);
 function bossCard(b,i,st,now){ const leg=b.kind==='p0', lock=leg&&st<1, p=Math.round(bossBase(b)*(S.cb?1.5:1)*100), sid=bossSp(b), pct=b.def?100:Math.max(0,Math.min(100,(b.expire-now)/HOUR*100));
   const btns=b.def?`<button class="btn big" data-bcatch="${i}" ${lock?'disabled':''}>投球（剩 ${b.tries} 次）</button>`:`<button class="btn red big" data-bfight="${i}" ${lock?'disabled':''}>${lock?'要 1 星训练家':'挑战'}</button>`;
   return `<div class="bosshero ${leg?'leg':'rare'}${lock?' locked':''}"><div class="bh-art"><div class="bh-ring" ${b.def?'':`data-ring="${b.expire}"`} style="--p:${pct}"><img src="${spf(sid,b.shiny)}" alt=""></div><div class="bh-time">${b.def?'留到捉到或机会用完':`<span data-bl2="${b.expire}">${fmtT(b.expire-now)}</span> 后离开`}</div></div><div class="bh-body"><div class="bh-tags">${leg?'<span class="tag r4">神兽 Boss</span>':'<span class="tag r3">世界 Boss</span>'} ${bossTierTag(b)} ${b.shiny?shTag(1):''} ${formTag(b)}</div><h2>${SP[sid][0]}${gSym(b.g)} <small>Lv${b.lv}</small></h2><div class="muted">${b.src} · ${typeStr(b.id)} · ${b.def?`已击败 · 每次投球约 <b>${p}%</b> · 剩 ${b.tries} 次`:`HP 是普通宝可梦的 <b>${(leg?P0_HP:BOSS_HP)*BOSS_TIER[bossTier(b)].hp} 倍</b>，其他能力值 <b>×${((leg?P0_STAT:BOSS_STAT)*BOSS_TIER[bossTier(b)].st).toFixed(2).replace(/\.?0+$/,'')}</b>${BOSS_TIER[bossTier(b)].need>1?`，<b>${BOSS_TIER[bossTier(b)].need} 位</b>训练家起打`:''}`}</div><div class="row" style="margin-top:12px">${btns}</div>${lock?'<div class="bh-lock">🔒 需要训练家卡片 ★1 才能挑战</div>':''}</div></div>`; }
@@ -9336,7 +9364,7 @@ function xKO(C,o){ const x=C.hp(o); if(x<=0) return; if(C===SC1){ C.set(o,0); C.
   const d=D, pi=d.party.findIndex(p=>p.me===o);
   if(pi>=0){ const p=d.party[pi], sl=d.my.indexOf(pi); p.mh=0; d.log.push(`${SP[o.id][0]} 倒下了。`); if(sl>=0){ let nx=-1; for(let i=0;i<d.party.length;i++){ if(d.party[i].mh>0&&!d.my.includes(i)){ nx=i; break; } } if(nx>=0){ d.my[sl]=nx; d.part.add(nx); d.log.push(`去吧，${SP[d.party[nx].me.id][0]}！`); wxEnter(d.party[nx].me.id,true,d.party[nx].me); } else d.my[sl]=-1; } return; }
   const fi=d.foes.indexOf(o); if(fi<0) return; const sl=d.fo.indexOf(fi); o.fh=0; d.log.push(`对方的 ${SP[o.id][0]} 倒下了！`); d.xp+=o.lv*9+10; if(sl>=0){ d.fo[sl]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(sl); } }
-function xDblCheck(){ const d=D; if(!d||d.over) return; if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); return; } if(!dAlive('f').length&&d.nf+(d.need||[]).length>=d.foes.length&&!(d.need||[]).length) dWin(); }
+function xDblCheck(){ const d=D; if(!d||d.over) return; if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); return; } if(!dAlive('f').length&&d.nf>=d.foes.length) dWin(); }
 
 /* ---------- 威力会变的招式 / 固定伤害 ---------- */
 function xPow(a,d,sh){ const id=sh.id, C=xC();
@@ -15891,7 +15919,7 @@ nav#subnav [data-tab="map"]{display:none!important}
     T.n++; T.run={floor:1,uids:ms.map(m=>m.uid),carry:null,seed:Date.now()%1e9,got:{coins:0,stars:0}}; save(); twStep(); }
   function twStep(){ const T=TW(), R=T.run; if(!R) return render(); const f=R.floor, F=twFoe(R,f);
     if(!R.uids.some(u=>(S.team||[]).includes(u))) { toast('上塔的宝可梦已经不在队伍里了，先把它们放回队伍'); return render(); }
-    startBattle({kind:'npc',tag:'对战塔',title:`对战塔 第 ${f} 层 · ${F.name}`,foe:F.foes[0],foes:F.foes.map(x=>({...x})),reward:null,carry:R.carry,noPop:true,only:m=>R.uids.includes(m.uid),
+    startBattle({kind:'npc',tag:'对战塔',title:`对战塔 第 ${f} 层 · ${F.name}`,foe:F.foes[0],foes:F.foes.map(x=>({...x})),reward:null,carry:R.carry,noPop:true,av:grNpc(F.cls,80),only:m=>R.uids.includes(m.uid),
       onWin:()=>{ const b=B; R.carry=R.carry||{}; b.party.forEach(p=>{ R.carry[p.real.uid]=Math.max(0,p.mh); }); const msg=[]; const rw=twFloorRw(f); give(rw); R.got.coins+=rw.coins; R.got.stars+=rw.stars; msg.push(`第 ${f} 层通过！${rtext(rw)}`);
         if(f>T.best){ T.best=f; } if(f>T.wk.best) T.wk.best=f;
         if(f%10===0&&!T.mile[f]){ T.mile[f]=1; const m=twMileRw(f); give(m); msg.push(`第一次打到第 ${f} 层：${rtext(m)}`); }
@@ -16203,6 +16231,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
    对战 NPC、道馆（馆员和馆主）、四天王 / 冠军、传奇训练家：最后一只倒下、战斗结束时，双方的宝可梦都被收回（红光缩小），
    接着对方训练家从右边、我方训练家从左边走进来，站在原本宝可梦的位置。对方的人物图在开战时放进 B.cfg.av，我方用自己的训练家形象。 */
 (function(){
+  const dWon=()=>{ const d=typeof D!=='undefined'?D:null; return !!(d&&d.my&&d.over==='win'&&d.av&&!d.busy&&!document.querySelector('#modal').hidden); };   /* 双打打赢（Kris 2026-11-20）：一样收回宝可梦、训练家走出来 */
   const won=()=>{ const b=typeof B!=='undefined'?B:null; if(!b||!b.over||!b.cfg||!b.cfg.av||b.cfg.kind==='wild'||b.caughtOK) return false; const fs=b.foes&&b.foes.length?b.foes:[b.foe]; return fs.every(f=>f&&(f.fh!=null?f.fh:1)<=0); };
   /* 一边：宝可梦收回（红光缩小）、血条框收起、训练家走进来站在宝可梦的位置。side：'foe' 对方 / 'me' 我方 */
   function side(host,k,html,first){ const sp=host.querySelector('.gsp.'+k); if(!sp||!html) return; const tw=document.createElement('div'); tw.className='trwin '+k+(first?' in':''); tw.innerHTML=html; tw.setAttribute('aria-hidden','true');
@@ -16210,7 +16239,21 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
     else if(k==='foe') foeRect(host,sp,tw); else { tw.style.left=sp.offsetLeft+'px'; tw.style.width=sp.offsetWidth+'px'; tw.style.top=sp.offsetTop+'px'; tw.style.height=sp.offsetHeight+'px'; }   /* 背面图是半身像，贴着画面底边，跟 GBA 一样 */
     if(first&&!sp.classList.contains('fntd')){ sp.classList.add('trcall'); setTimeout(()=>sp.classList.add('trgone'),480); } else sp.classList.add('trgone');   /* 对方被打倒的那只已经倒下了，不用再收回（Kris 2026-11-19） */
     host.appendChild(tw); const fi=document.querySelector('#battle .ginfo.'+(k==='foe'?'f':'m')); if(fi) fi.classList.add(first?'trhide':'trgone'); }
-  function apply(){ if(!won()) return; const b=B, host=document.querySelector('#battle .garena'); if(!host||host.querySelector('.trwin:not(.thr)')) return;
+  /* 双打那一边：两只宝可梦（还在场上的）收回，训练家站在两只中间 */
+  function sideD(host,k,html,first){ const sps=[...host.querySelectorAll(k==='foe'?'.gsp.df0,.gsp.df1':'.gsp.dm0,.gsp.dm1')], rs=sps.map(x=>({L:x.offsetLeft,R:x.offsetLeft+x.offsetWidth,T:x.offsetTop,B:x.offsetTop+x.offsetHeight}));
+    if(k==='foe'&&D&&D.__frs) D.__frs.forEach(r=>{ if(r) rs.push(r); });   /* 对方都倒下了、场上没有精灵：用倒下时记下的位置 */
+    if(!rs.length||!html) return; const tw=document.createElement('div'); tw.className='trwin '+k+(first?' in':''); tw.innerHTML=html; tw.setAttribute('aria-hidden','true');
+    const L=Math.min(...rs.map(x=>x.L)), R=Math.max(...rs.map(x=>x.R)), T=Math.min(...rs.map(x=>x.T)), Bm=Math.max(...rs.map(x=>x.B)), H=host.clientHeight;
+    if(/class="bk"/.test(html)){ const z=bkSz(heroNow(),H); tw.style.left=Math.round((L+R)/2-z.w/2)+'px'; tw.style.width=z.w+'px'; tw.style.height=z.h+'px'; tw.style.bottom='0'; }
+    else if(k==='foe'){ const h=Math.round(H*.26), w=Math.max(R-L,Math.round(H*.5)); tw.style.left=Math.round((L+R)/2-w/2)+'px'; tw.style.width=w+'px'; tw.style.top=(Bm-h)+'px'; tw.style.height=h+'px'; }
+    else { tw.style.left=L+'px'; tw.style.width=(R-L)+'px'; tw.style.top=T+'px'; tw.style.height=(Bm-T)+'px'; }
+    sps.forEach(sp=>{ if(first&&!sp.classList.contains('fnt')&&!sp.classList.contains('dn')){ sp.classList.add('trcall'); setTimeout(()=>sp.classList.add('trgone'),480); } else sp.classList.add('trgone'); });
+    host.appendChild(tw); host.querySelectorAll(k==='foe'?'.ginfo.df0,.ginfo.df1':'.ginfo.dm0,.ginfo.dm1').forEach(fi=>fi.classList.add(first?'trhide':'trgone')); }
+  function applyD(){ if(!dWon()) return; const d=D, host=document.querySelector('#battle .garena'); if(!host||host.querySelector('.trwin:not(.thr)')) return;
+    const first=!d.__trWin; d.__trWin=1; const hero=heroNow();
+    sideD(host,'foe',d.av,first);
+    sideD(host,'me',hero&&TRBACK[hero]?`<img class="bk" src="data:image/png;base64,${TRBACK[hero][TRBK[hero].st]}" alt="">`:hero&&TCIMG[hero]?`<img src="data:image/png;base64,${TCIMG[hero]}" alt="">`:'',first); }
+  function apply(){ applyD(); if(!won()) return; const b=B, host=document.querySelector('#battle .garena'); if(!host||host.querySelector('.trwin:not(.thr)')) return;
     const first=!b.__trWin; b.__trWin=1; let hero=null; try{ hero=myCard().hero; }catch(e){}
     side(host,'foe',b.cfg.av,first);
     side(host,'me',hero&&TRBACK[hero]?`<img class="bk" src="data:image/png;base64,${TRBACK[hero][TRBK[hero].st]}" alt="">`:hero&&TCIMG[hero]?`<img src="data:image/png;base64,${TCIMG[hero]}" alt="">`:'',first); }   /* 我方：有背面图用背面图（面朝对方），没有背面图的才用正面图左右翻转 */
@@ -16239,6 +16282,10 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
   function foeEnter(host,av,slideMs){ const sp=host.querySelector('.gsp.foe'); if(!sp||!av) return null; const tw=document.createElement('div'); tw.className='trwin foe thr'; tw.setAttribute('aria-hidden','true'); tw.innerHTML=av;
     foeRect(host,sp,tw); host.appendChild(tw);
     tw.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:slideMs,easing:'linear'}); return tw; }
+  function foeEnterD(host,av,slideMs){ const sps=[...host.querySelectorAll('.gsp.df0,.gsp.df1')]; if(!sps.length||!av) return null; const tw=document.createElement('div'); tw.className='trwin foe thr'; tw.setAttribute('aria-hidden','true'); tw.innerHTML=av;
+    const L=Math.min(...sps.map(x=>x.offsetLeft)), R=Math.max(...sps.map(x=>x.offsetLeft+x.offsetWidth)), Bm=Math.max(...sps.map(x=>x.offsetTop+x.offsetHeight)), H=host.clientHeight, h=Math.round(H*.26), w=Math.max(R-L,Math.round(H*.5));
+    tw.style.left=Math.round((L+R)/2-w/2)+'px'; tw.style.width=w+'px'; tw.style.top=(Bm-h)+'px'; tw.style.height=h+'px'; host.appendChild(tw);
+    tw.animate([{transform:`translateX(${-R}px)`},{transform:'none'}],{duration:slideMs,easing:'linear'}); return tw; }
   const SLIDE=900;
   function openStart(){ window.__opening=true; document.body.classList.add('opn-lock','opn-hm','opn-if','opn-im'); }   /* 血条框也等宝可梦出来才显示 */
   function openEnd(){ window.__opening=false; document.body.classList.remove('opn-lock','opn-hm','opn-hf','opn-if','opn-im'); }
@@ -16251,7 +16298,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
       /* ① 双方进场 */
       const mtw=trEnter(host,SLIDE); let ftw=null;
       if(wild){ const sp=host.querySelector('.gsp.foe'); document.body.classList.remove('opn-hf'); if(sp) sp.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:SLIDE,easing:'linear'}); }
-      else if(!dbl&&st.cfg.av) ftw=foeEnter(host,st.cfg.av,SLIDE);
+      else if(dbl?st.av:st.cfg.av) ftw=dbl?foeEnterD(host,st.av,SLIDE):foeEnter(host,st.cfg.av,SLIDE);   /* 双打的对方训练家也先进场（Kris 2026-11-20） */
       await sleep(SLIDE+350); if(!alive()) return;
       /* ② 对方派出宝可梦，叫完 */
       if(!wild){ if(ftw){ ftw.animate([{transform:'none',opacity:1},{transform:'translateX(140%)',opacity:0}],{duration:380,easing:'ease-in',fill:'forwards'}); setTimeout(()=>ftw.remove(),400); await sleep(260); }
@@ -16296,7 +16343,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
   { const _tp=teamPop; teamPop=function(title,go,dbl){ const k=pend; pend=null; return _tp.call(this,title,function(){ if(k) try{ btIntro(k.k,k.av); openArm(k.k==='wild'); }catch(e){} return go.apply(this,arguments); },dbl); }; }
   const popWill=cfg=>!window.__noTeamPop&&!(cfg&&cfg.noPop);
   { const _sb=startBattle; startBattle=function(cfg){ const k={k:kindOf(cfg),av:cfg&&cfg.av}; if(popWill(cfg)) pend=k; else try{ btIntro(k.k,k.av); openArm(k.k==='wild'); }catch(e){} return _sb.apply(this,arguments); }; }
-  { const _sd=startDouble; startDouble=function(){ if(popWill(null)) pend={k:'trainer'}; else try{ btIntro('trainer'); openArm(false); }catch(e){} return _sd.apply(this,arguments); }; }
+  { const _sd=startDouble; startDouble=function(){ const o=arguments[7]||{}, k={k:o.vs&&o.av?'vs':'trainer',av:o.av};   /* 双打道馆也用 VS 转场（Kris 2026-11-20） */ if(popWill(null)) pend=k; else try{ btIntro(k.k,k.av); openArm(false); }catch(e){} return _sd.apply(this,arguments); }; }
   const mo=new MutationObserver(()=>{ try{ apply(); }catch(e){} });
   const arm=()=>{ const h=document.getElementById('battle'); if(h&&!h.__trw){ h.__trw=1; mo.observe(h,{childList:true,subtree:true}); } }; arm(); setInterval(arm,1500);
   const st=document.createElement('style'); st.textContent=`
