@@ -9005,7 +9005,7 @@ function entPlay(host,gsp,side,key,t0){ const hr=host.getBoundingClientRect(), r
 function entCheck(){ const host=document.querySelector('#battle .garena'); if(!host) return; const dbl=host.classList.contains('dbl'), st=dbl?(typeof D!=='undefined'&&D):B; if(!st) return;
   let keys=[];
   if(dbl) [0,1].forEach(i=>{ keys.push(['f'+i,st.fo[i],`.gsp.df${i}`,0]); keys.push(['m'+i,st.my[i],`.gsp.dm${i}`,0]); });
-  else { const wild=!st.cfg||st.cfg.kind==='wild'||host.classList.contains('bw'); keys.push(['f',st.fcur,'#bfoe',wild]); keys.push(['m',st.mon&&st.mon.uid,'#bme',0]); }
+  else { const wild=!st.cfg||st.cfg.kind==='wild'||/^世界 Boss/.test(st.cfg.tag||'')||host.classList.contains('bw'); keys.push(['f',st.fcur,'#bfoe',wild]);   /* 世界 Boss 跟野外一样直接出现，不用精灵球放出来（Kris 2026-11-20） */ keys.push(['m',st.mon&&st.mon.uid,'#bme',0]); }
   const prev=ENT.seen.get(st), now={}, first=!prev, nowT=performance.now(); let n=0;
   keys.forEach(([k,v,sel,skip])=>{ now[k]=v; const id=(dbl?'d':'s')+k; const e=host.querySelector(sel), gsp=e&&(e.classList.contains('gsp')?e:e.closest('.gsp'));
     if(!gsp||v==null||v<0) return;
@@ -16223,7 +16223,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
     try{
       await sleep((window.__btIntroEnd||0)-420-performance.now()); if(!alive()) return;   /* 转场开始淡出时就开始进场（Kris 2026-11-18：不要只剩野生宝可梦站在暗掉的画面上） */
       const host=document.querySelector('#battle .garena'); if(!host) return;
-      const wild=!dbl&&(!st.cfg||st.cfg.kind==='wild');
+      const wild=!dbl&&(!st.cfg||st.cfg.kind==='wild'||/^世界 Boss/.test(st.cfg.tag||''));   /* 世界 Boss 出场跟野外一样：从左边滑进来、叫一声（Kris 2026-11-20） */
       /* ① 双方进场 */
       const mtw=trEnter(host,SLIDE); let ftw=null;
       if(wild){ const sp=host.querySelector('.gsp.foe'); document.body.classList.remove('opn-hf'); if(sp) sp.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:SLIDE,easing:'linear'}); }
