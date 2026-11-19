@@ -281,6 +281,7 @@ nav#subnav button{font:500 13.5px var(--sans);border:0;border-bottom:3px solid t
 nav#subnav button:hover{color:var(--ink)}
 nav#subnav button[aria-selected=true]{color:var(--leaf);border-bottom-color:var(--leaf);background:transparent;font-weight:700}
 .nbadge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font:600 11px var(--sans)}
+.nbadge.nbhold{visibility:hidden}
 .note{position:relative;padding-right:30px}
 .note-x{position:absolute;top:2px;right:4px;width:24px;height:24px;border:0;background:transparent;color:var(--ink2);font-size:16px;cursor:pointer;border-radius:5px}
 .note-x:hover{background:#f2e6b8}
@@ -1546,7 +1547,11 @@ function renderShell(){
   const g=tab==='card'?['','',[]]:groupOf(tab), wildN=S.wild?wildField().length:0, PEND=pendingOf(); PENDSIG=JSON.stringify(PEND);
   $('#nav').innerHTML=GROUPS.filter(x=>x[0]!=='dev'||!window.__POKEFARM_SYNC).map(([k,n,ts])=>`<button role="tab" aria-selected="${k===g[0]}" data-grp="${k}"><span class="ni" aria-hidden="true">${pxIcon(k)}</span><span class="nl">${n}</span>${(()=>{ const x=ts.reduce((a,t)=>a+(PEND[t]||0),0)+(k==='adv'?wildN:0); return x?`<span class="nbadge" aria-label="${x} 项待处理">${x}</span>`:''; })()}</button>`).join('');
   const sub=$('#subnav'); sub.hidden=g[2].length<2;
-  sub.innerHTML=g[2].length<2?'':g[2].map(k=>`<button role="tab" aria-selected="${k===tab}" data-tab="${k}">${TABNAME[k]}${PEND[k]&&k!=='boss'?` <span class="nbadge" aria-label="${PEND[k]} 项待处理">${PEND[k]}</span>`:''}${k==='wild'&&wildN?` <span class="nbadge">${wildN}</span>`:''}${k==='boss'&&((S.bosses||[]).length+(PARTY.invites||[]).length+PEND.boss)?` <span class="nbadge">${S.bosses.length+PARTY.invites.length+PEND.boss}</span>`:''}${(FEAT[k]||0)>(S.tl||1)?` <small class="muted">Lv${FEAT[k]} 开放</small>`:''}</button>`).join('');
+  /* 会出现数字的分页：没有数字时也先留一个空位，数字出现 / 消失时分页条不会跳（Kris 2026-11-19） */
+  sub.innerHTML=g[2].length<2?'':g[2].map(k=>{ const bossN=k==='boss'?(S.bosses||[]).length+(PARTY.invites||[]).length+(PEND.boss||0):0;
+    const nb=k==='boss'?(bossN?` <span class="nbadge">${bossN}</span>`:''):k==='wild'?(wildN?` <span class="nbadge">${wildN}</span>`:''):PEND[k]?` <span class="nbadge" aria-label="${PEND[k]} 项待处理">${PEND[k]}</span>`:'';
+    const hold=!nb&&(k in PEND||k==='wild')?' <span class="nbadge nbhold" aria-hidden="true"></span>':'';
+    return `<button role="tab" aria-selected="${k===tab}" data-tab="${k}">${TABNAME[k]}${nb||hold}${(FEAT[k]||0)>(S.tl||1)?` <small class="muted">Lv${FEAT[k]} 开放</small>`:''}</button>`; }).join('');
 }
 function go(t){ if(!TABNAME[t]) t='ranch'; if(t==='card'&&tab!=='card') cardFrom=tab; tab=t; if(t!=='card') lastSub[groupOf(t)[0]]=t; try{localStorage.setItem('ose.ranch.sub',JSON.stringify(lastSub))}catch(e){} if(location.hash!=='#'+t) history.replaceState(null,'','#'+t); render(); window.scrollTo({top:0}); }
 /* 道馆、四天王、传奇训练家、对战的列表很长：放进固定高度的框里滚动，
@@ -16311,7 +16316,7 @@ function woLoss(){ const lv=Math.max(1,...S.team.map(mon).filter(Boolean).map(m=
 function doWhiteout(){ if(!S.wo) return; delete S.wo; const c=woLoss(); S.coins-=c; S.mons.forEach(healMon); save(); PCJUST={wo:c}; go('pcenter'); }
 setInterval(()=>{ try{ if(S.wo&&!B&&!(typeof D!=='undefined'&&D)&&$('#modal').hidden) doWhiteout(); }catch(e){} },300);
 /* 宝可梦中心有几只要治疗（队伍里的），显示在「牧场 → 宝可梦中心」旁边 */
-{ const _po=pendingOf; pendingOf=function(){ const r=_po.apply(this,arguments); try{ const n=S.team.map(mon).filter(m=>m&&needHeal(m)).length; if(n) r.pcenter=n; }catch(e){} return r; }; }
+{ const _po=pendingOf; pendingOf=function(){ const r=_po.apply(this,arguments); try{ r.pcenter=S.team.map(mon).filter(m=>m&&needHeal(m)).length;   /* 0 也记下来：分页条要先留数字的空位 */ }catch(e){} return r; }; }
 /* 队伍页上方：有倒下或受伤的就提醒一句，能直接去宝可梦中心 */
 function pcHint(){ const ms=S.team.map(mon).filter(m=>m&&needHeal(m)); if(!ms.length) return ''; const fn=ms.filter(isFnt).length;
   return `<div class="card pchint"><span>${fn?`<b>${fn} 只倒下了</b>，不能上场。`:''}${ms.length-fn?`${ms.length-fn} 只受了伤或 PP 用掉了。`:''}到宝可梦中心可以免费治好。</span><button class="btn" data-go="pcenter">去宝可梦中心</button></div>`; }
