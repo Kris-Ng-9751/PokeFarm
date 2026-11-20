@@ -707,7 +707,7 @@ button.item.rk:hover{border-color:var(--leaf);background:#f1f7e4}button.item.rk.
 .gchart{border-collapse:separate;border-spacing:2px;font-size:12px;text-align:center}.gchart th{padding:1px}.gchart td{width:26px;height:24px;border-radius:3px;background:#f3efe0}
 .gchart .g2{background:#7ac74c;color:#fff;font-weight:700}.gchart .gh5{background:#e2a03a;color:#fff;font-weight:700}.gchart .g0{background:#555;color:#fff;font-weight:700}.gchart .gc0{text-align:right;white-space:nowrap;padding-right:6px;font-size:11px;color:var(--ink2)}
 
-.tpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}.tpb{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px;border:2px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font:inherit;color:var(--ink)}.tpb small{color:var(--ink2);font-size:11px}.tpb:hover{border-color:var(--leaf)}.tpb.on{border-color:var(--leaf);background:#e6f2d8}
+/* 队伍按钮排成一行，左右拖动（Kris 2026-11-20） */.tpick{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding:2px 2px 8px;scrollbar-width:thin;cursor:grab}.tpick.drag{cursor:grabbing;user-select:none}.tpick .tpb{flex:0 0 100px}.tpb{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px;border:2px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font:inherit;color:var(--ink)}.tpb small{color:var(--ink2);font-size:11px}.tpb:hover{border-color:var(--leaf)}.tpb.on{border-color:var(--leaf);background:#e6f2d8}
 .tpr.sel{outline:3px solid var(--sun)}.tpr.dragging{opacity:.45}.tpr.dragover{outline:3px dashed var(--sun);background:#fbf3d6}.tpr[draggable=true]{cursor:grab}
 .chipbtn{display:inline-flex;align-items:center;gap:6px;font:inherit;color:inherit;cursor:pointer}.chipbtn img{width:22px;height:22px;object-fit:contain;image-rendering:pixelated}.chipbtn:hover,.chipbtn.on{border-color:var(--leaf);background:#e6f2d8}
 .dyday{font:600 13px var(--sans);color:var(--ink2);margin:12px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--line)}.dyday:first-child{margin-top:0}.dyrow{display:flex;gap:8px;align-items:baseline;padding:4px 0;font-size:13.5px}.dytm{width:42px;flex:none;color:var(--ink2);font-variant-numeric:tabular-nums}.dytag{flex:none;color:#fff;border-radius:5px;padding:0 7px;font-size:11.5px;font-weight:600}.dytx{min-width:0;word-break:break-word}.dylist{max-height:min(70vh,760px);overflow-y:auto;padding-right:4px;overscroll-behavior:contain}
@@ -1964,6 +1964,9 @@ let tsel=null, tview=0;   /* tview：队伍页现在看的是第几只 */
 function swapMove(a,b){ if(a===b||!mon(S.team[a])) return; if(b>=S.team.length){ const [u]=S.team.splice(a,1); S.team.push(u); } else { [S.team[a],S.team[b]]=[S.team[b],S.team[a]]; } fixTeam(); save(); }
 function moveSlot(a,b){ tsel=null; if(tview===a) tview=b>=S.team.length?S.team.length-1:b; else if(tview===b) tview=a; swapMove(a,b); render(); }   /* 看着的那只换了位置，右边继续显示它 */
 function copyToTeam(a,ti){ const u=S.team[a], T=S.teams[ti]; if(!u||!T||ti===S.ti) return; if(T.u.includes(u)) return toast(T.n+' 里已经有它了'); if(T.u.length>=6) return toast(T.n+' 已满 6 只'); T.u.push(u); save(); toast(`已加入 ${T.n}`); render(); }
+let TPD=null;   /* 队伍那一行用鼠标拖：拖动中的状态（只挂一次全局监听） */
+window.addEventListener('pointermove',e=>{ const d=TPD; if(!d||d.x0==null||!d.tp.isConnected) return; const dx=e.clientX-d.x0; if(!d.moved&&Math.abs(dx)>5){ d.moved=true; d.tp.classList.add('drag'); } if(d.moved) d.tp.scrollLeft=d.sl0-dx; });
+window.addEventListener('pointerup',()=>{ const d=TPD; if(!d) return; d.x0=null; d.tp.classList.remove('drag'); if(!d.moved) TPD=null; else setTimeout(()=>{ if(TPD===d) TPD=null; },0); });
 function rTeam(){
   fixTeam();
   /* 队伍页（Kris 2026-11-19 参考他给的图改版）：左边是队伍 6 只，点一只在中间、右边显示它的资料；拖动或点 ⇄ 换位置 */
@@ -2004,6 +2007,11 @@ function rTeam(){
     el.addEventListener('dragover',e=>{ e.preventDefault(); el.classList.add('dragover'); });
     el.addEventListener('dragleave',()=>el.classList.remove('dragover'));
     el.addEventListener('drop',e=>{ e.preventDefault(); el.classList.remove('dragover'); const a=+e.dataTransfer.getData('text/plain'); if(!isNaN(a)) moveSlot(a,i); }); });
+  /* 队伍一行：手机直接左右滑；电脑用鼠标按住左右拖（拖过就不算点了）。重画后停在原来的位置，第一次打开时把正在用的队伍转到看得到的地方 */
+  { const tp=document.querySelector('.tpick'); if(tp){ if(window.__tpX!=null) tp.scrollLeft=window.__tpX; else { const on=tp.querySelector('.tpb.on'); if(on) tp.scrollLeft=Math.max(0,on.offsetLeft-tp.offsetLeft-tp.clientWidth/2+on.offsetWidth/2); }
+    tp.addEventListener('scroll',()=>{ window.__tpX=tp.scrollLeft; },{passive:true});
+    tp.addEventListener('pointerdown',e=>{ if(e.pointerType!=='mouse'||e.button!==0) return; TPD={tp,x0:e.clientX,sl0:tp.scrollLeft,moved:false}; });
+    tp.addEventListener('click',e=>{ if(TPD&&TPD.moved&&TPD.tp===tp){ e.preventDefault(); e.stopPropagation(); TPD=null; } },true); } }
   document.querySelectorAll('.tpb').forEach(el=>{ const ti=+el.dataset.ti;
     el.addEventListener('dragover',e=>{ if(ti===S.ti) return; e.preventDefault(); el.classList.add('dragover'); });
     el.addEventListener('dragleave',()=>el.classList.remove('dragover'));
