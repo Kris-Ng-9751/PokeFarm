@@ -2775,9 +2775,11 @@ function bReplay(b,bs){ b.busy=true; let i=0; const st={over:b.over,pick:b.pick,
   const hpShow=(mh,fh)=>{ const q=(h,x)=>Math.max(0,Math.round(100*h/x)), c=p=>p>50?'g':p>20?'y':'r', fb=document.querySelector('#battle .ginfo.f .ghp i'), mb=document.querySelector('#battle .ginfo.m .ghp i'), mt=document.querySelector('#battle .ginfo.m .gn.small span:last-child');
     if(fb){ const p=q(fh,fxV(b)); fb.style.width=p+'%'; fb.className=c(p); } if(mb){ const p=q(mh,mxV(b)); mb.style.width=p+'%'; mb.className=c(p); } if(mt) mt.textContent=`${Math.max(0,mh)} / ${mxV(b)}`; };
   const step=()=>{ if(B!==b) return; if(i>=bs.length){ b.stg=null; b.__n0=b.log.length;
-      const fin=()=>{ b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; return bSendNext(); } return _bRender(); };
-      const meF=next=>{ const k=b.cur+':'+(b.me&&b.me.id); if(b.mh<=0&&b.me&&fxOn()&&b.__mfntShow!==k){ _bRender(); return meFaint(b,()=>{ if(B===b) next(); }); } next(); };   /* 我方宝可梦倒下也有动作（Kris 2026-11-20）：对方先倒、我方再倒，之后才换人 / 结束 */
-      if(b.__fntPend&&fxOn()){ b.__fntPend=0; _bRender(); return foeFaint(b,()=>{ if(B!==b) return; meF(fin); }); } b.__fntPend=0; return meF(fin); }
+      /* 「xx 倒下了」和后面的（经验、胜利……）等倒下动作放完才显示（Kris 2026-11-20）：对方那句等对方倒下，我方那句等我方倒下 */
+      const fl=re=>{ for(let j=b.__fntRev||0;j<b.log.length;j++) if(re.test(b.log[j])) return j; return -1; }, jf=fl(/倒下了！$/), jm=fl(/ 倒下了。$/), cap=n=>{ b.stg=n>=0?{n,mh:pm,fh:pf}:null; };
+      const fin=()=>{ b.stg=null; b.__fntRev=b.log.length; b.busy=false; Object.assign(b,st); if(b.__pendSend){ b.__pendSend=0; return bSendNext(); } return _bRender(); };
+      const meF=next=>{ const k=b.cur+':'+(b.me&&b.me.id); if(b.mh<=0&&b.me&&fxOn()&&b.__mfntShow!==k){ cap(jm); _bRender(); return meFaint(b,()=>{ if(B===b) next(); }); } next(); };   /* 我方宝可梦倒下也有动作（Kris 2026-11-20）：对方先倒、我方再倒，之后才换人 / 结束 */
+      if(b.__fntPend&&fxOn()){ b.__fntPend=0; cap(jf>=0&&jm>=0?Math.min(jf,jm):Math.max(jf,jm)); _bRender(); return foeFaint(b,()=>{ if(B!==b) return; meF(fin); }); } b.__fntPend=0; return meF(fin); }
     const e=bs[i++]; if(e.dynEnd){ pm=e.mh; pf=e.fh; } if(e.castFx&&window.castStep) castStep(b,e); b.stg={n:e.n,mh:pm,fh:pf}; _bRender(); { const w=entWait(); if(w>0&&(e.id||e.mv)){ logHoldTail('#blog',i>=2?bs[i-2].n:(b.__n0!=null?b.__n0:e.n),e.n); i--; return setTimeout(step,w); } }   /* 有宝可梦正在从精灵球出场：等它完全出来再出招（Kris 2026-10-31） */   /* 血条先保持出招前的样子，打中的那一刻（命中特效结束、对手开始闪）再扣 */
     if(e.heal){ const sd=e.heal, bar=document.querySelector(`#battle .ginfo.${sd} .ghp i`), sp=document.querySelector('#battle .gsp.'+(sd==='m'?'me':'foe')), mt=document.querySelector('#battle .ginfo.m .gn.small span:last-child'), q=(h,x)=>Math.max(0,Math.round(100*h/x)), m0=pm, f0=pf, emh=e.mh, efh=e.fh;
       setTimeout(()=>{ if(B!==b) return; if(b.stg){ b.stg.mh=emh; b.stg.fh=efh; } hpShow(emh,efh); const bar2=document.querySelector(`#battle .ginfo.${sd} .ghp i`); healAnim(bar2,sp,sd==='m'?q(m0,mxV(b)):q(f0,fxV(b)),sd==='m'?q(emh,mxV(b)):q(efh,fxV(b)));
@@ -5974,8 +5976,10 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
     const pre=i>=2?bs[i-2]:(d.__slot0||null);
     /* 这一拍被打倒的（Kris 2026-11-20）：先把血条扣完、留在场上，叫一声再往下沉，倒下了才换下一只 / 结束 */
     const P0=pre&&pre.my&&pre.fo?pre:e, kos=[]; P0.my.forEach((pi,sl)=>{ if(pi>=0&&hp0.pm[pi]>0&&e.pm[pi]<=0&&d.party[pi]) kos.push(['m',sl,d.party[pi].me.id]); }); P0.fo.forEach((fi,sl)=>{ if(fi>=0&&hp0.fh[fi]>0&&e.fh[fi]<=0&&d.foes[fi]) kos.push(['f',sl,d.foes[fi].id]); });
-    const after=(T,stepT)=>{ if(kos.length&&fxOn()){ setTimeout(()=>{ if(D!==d||!d.busy) return; show(e,{pm:e.pm,fh:e.fh},P0); dFaint(kos,()=>{ if(D!==d) return; show(e,{pm:e.pm,fh:e.fh}); setTimeout(step,200); }); },T); return; }
-      if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,{pm:e.pm,fh:e.fh}); },T); setTimeout(step,stepT); }; show(e,hp0,pre&&pre.my&&pre.fo?pre:null); { const w=entWait(); if(w>0&&e.as!=null){ logHoldTail('#dlog',pre&&pre.n!=null?pre.n:e.n,e.n); i--; return setTimeout(step,w); } }   /* 双打（Kris 2026-11-18）：以前一招打倒对手时，那只在特效放之前就从画面消失，特效找不到目标就整个没放 */
+    /* 「xx 倒下了」那句（和后面的）等倒下动作放完才显示（Kris 2026-11-20） */
+    const eH=(()=>{ if(!kos.length||!fxOn()) return e; const s0=pre&&pre.n!=null?pre.n:0; for(let j=s0;j<e.n;j++) if(/倒下了[！。]$/.test(d.log[j])) return {...e,n:j}; return e; })();
+    const after=(T,stepT)=>{ if(kos.length&&fxOn()){ setTimeout(()=>{ if(D!==d||!d.busy) return; show(eH,{pm:e.pm,fh:e.fh},P0); dFaint(kos,()=>{ if(D!==d) return; show(e,{pm:e.pm,fh:e.fh}); setTimeout(step,200); }); },T); return; }
+      if(!same) setTimeout(()=>{ if(D===d&&d.busy) show(e,{pm:e.pm,fh:e.fh}); },T); setTimeout(step,stepT); }; show(eH,hp0,pre&&pre.my&&pre.fo?pre:null); { const w=entWait(); if(w>0&&e.as!=null){ logHoldTail('#dlog',pre&&pre.n!=null?pre.n:e.n,e.n); i--; return setTimeout(step,w); } }   /* 双打（Kris 2026-11-18）：以前一招打倒对手时，那只在特效放之前就从画面消失，特效找不到目标就整个没放 */
     if(e.heal){ const [hs,hsl]=e.heal, ix=hs==='m'?e.my[hsl]:e.fo[hsl], o=hs==='m'?d.party[ix]:d.foes[ix], h0=hs==='m'?hp0.pm[ix]:hp0.fh[ix], h1=hs==='m'?e.pm[ix]:e.fh[ix], mx=o?(hs==='m'?o.mx:o.fx):1, q=h=>Math.max(0,Math.round(100*h/mx));
       prev={pm:e.pm,fh:e.fh}; setTimeout(()=>{ if(D!==d||!d.busy) return; show(e,prev); healAnim(document.querySelector(`#battle .ginfo.d${hs}${hsl} .ghp i`),document.querySelector(`#battle .gsp.d${hs}${hsl}`),q(h0),q(h1)); },200);
       return setTimeout(step,fxOn()?1400:700); }   /* 回复：血条慢慢涨上去、发一下绿光，之后才出招 */
@@ -6884,6 +6888,8 @@ function bossGimGo(b,fm){ if(B!==b||!b.foe||b.over) return; if(b.busy){ b.__boss
   GFXQ.push({k,id:f.id,t:f.tera,sel:'#bfoe',old,n:b.__gimN!=null?b.__gimN:b.log.length-1,bt:b,info:'.ginfo.f',onm:nm}); bRender(); }
 setInterval(()=>{ const b=typeof B!=='undefined'?B:null; if(!b||!b.cfg||!b.cfg.bossFm||b.__bossGim||b.over||b.busy) return; if(window.__opening||window.__openHold||document.body.classList.contains('btwait')||$('#modal').hidden||!document.querySelector('#bfoe')) return;
   b.__bossGim=1; setTimeout(()=>{ try{ bossGimGo(b,b.cfg.bossFm); }catch(e){ console.warn(e); } },300); },120);
+/* 每回合开始记下战斗记录到哪一行：这回合的「xx 倒下了」从这里往后找（Kris 2026-11-20） */
+{ const _bt=bTurn; bTurn=function(){ if(B&&!B.busy) B.__fntRev=B.log.length; return _bt.apply(this,arguments); }; }
 /* Boss 变身之前不能出招（Kris 2026-11-20）：开场结束到变身那 0.3 秒里点了招式，会变成 Boss 先打一下才变身。
    这时点的招式先记着，等变身特效放完再自动出招 */
 { const _bt=bTurn; bTurn=function(m){ const b=B; if(b&&b.cfg&&b.cfg.bossFm&&!b.__gimDone&&!b.over&&m!=='run'){ b.__gimQ=m; return; } return _bt.apply(this,arguments); }; }
@@ -9117,7 +9123,7 @@ function abTurnEnd2(C,list){ list.forEach(o=>{ if(!o||C.hp(o)<=0) return; const 
 { const _e2=statEnd2; statEnd2=function(){ const r=_e2.apply(this,arguments); try{ if(D&&!D.over) abTurnEnd2(SC2,[...dAlive('m').map(([pi])=>D.party[pi].me),...dAlive('f').map(([fi])=>D.foes[fi])]); }catch(e){} return r; }; }
 
 /* 特性发动的画面：看信息栏新出现的行，找出是谁的特性、谁的能力升降 */
-const ABFX={seen:new WeakMap(),shown:new WeakMap(),wxr:new WeakMap()}, ABNSET=new Set(Object.values(ABN).map(x=>x[0]));
+const ABFX={seen:new WeakMap(),shown:new WeakMap(),wxr:new WeakMap(),q:new WeakMap(),pend:new WeakMap()}, ABNSET=new Set(Object.values(ABN).map(x=>x[0]));
 function abfxSprite(foe,name){ const h=document.querySelector('#battle .garena'); if(!h) return null;
   if(!h.classList.contains('dbl')) return document.querySelector(foe?'#bfoe':'#bme');
   for(let i=0;i<2;i++){ const id=foe?(D.fo[i]>=0?D.foes[D.fo[i]].id:0):(D.my[i]>=0?D.party[D.my[i]].me.id:0); if(id&&SP[id][0]===name) return h.querySelector(`.gsp.d${foe?'f':'m'}${i} img`); }
@@ -9131,23 +9137,36 @@ function abfxStat(img,up,n){ const r=img.getBoundingClientRect(); if(!r.width) r
     const y0=up?r.height*.75:r.height*.05, y1=up?r.height*.05:r.height*.75; a.animate([{transform:`translateY(${y0}px)`,opacity:0},{opacity:1,offset:.25},{opacity:1,offset:.7},{transform:`translateY(${y1}px)`,opacity:0}],{duration:620,delay:w*180+c*40,easing:up?'ease-out':'ease-in',fill:'both'}); }
   try{ img.animate([{filter:'none'},{filter:`drop-shadow(0 0 7px ${up?'#5ab0ff':'#ff4a4a'}) brightness(${up?1.25:.85})`,offset:.3},{filter:`drop-shadow(0 0 7px ${up?'#5ab0ff':'#ff4a4a'}) brightness(${up?1.25:.85})`,offset:.7},{filter:'none'}],{duration:1100}); }catch(e){}
   setTimeout(()=>box.remove(),1300); }
-const ABST=/(对方的 )?([^\s，。！：、（）]+) 的(攻击|防御|特攻|特防|速度|命中率|闪避率)(极大幅|大幅)?(提升|下降|降低)(?:到了最大)?了/g;
-function abfxLine(t){ const acts=[]; let m=t.match(/(对方的 )?([^\s，。！：、（）]+) 的特性：([^！!，。]+)[！!]/), owner=null;
+/* 名字里可以有全角括号，像「帝牙卢卡（起源形态）」（Kris 2026-11-20：以前这类名字对不上，威吓没有箭头和下降音效） */
+const ABST=/(对方的 )?([^\s，。！：、]+) 的(攻击|防御|特攻|特防|速度|命中率|闪避率)(极大幅|大幅)?(提升|下降|降低)(?:到了最大)?了/g;
+function abfxLine(t){ const acts=[]; let m=t.match(/(对方的 )?([^\s，。！：、]+) 的特性：([^！!，。]+)[！!]/), owner=null;
   if(m) owner={foe:!!m[1],name:m[2],ab:m[3]};
   else { const m2=t.match(/^([^：\s]+)：/); if(m2&&ABNSET.has(m2[1])){ const s0=[...t.matchAll(ABST)][0]; if(s0) owner={foe:!!s0[1],name:s0[2],ab:m2[1]}; }
-    const m3=!owner&&t.match(/(对方的 )?([^\s，。！：、（）]+) 的([^\s，。！：、（）]+?)[：，]/); if(m3&&ABNSET.has(m3[3])) owner={foe:!!m3[1],name:m3[2],ab:m3[3]}; }
+    const m3=!owner&&t.match(/(对方的 )?([^\s，。！：、]+) 的([^\s，。！：、（）]+?)[：，]/); if(m3&&ABNSET.has(m3[3])) owner={foe:!!m3[1],name:m3[2],ab:m3[3]}; }
   if(!owner) return acts; acts.push(['ban',owner]);
   for(const s of t.matchAll(ABST)) acts.push(['st',{foe:!!s[1],name:s[2],up:s[5]==='提升',n:s[4]==='极大幅'?3:s[4]==='大幅'?2:1}]);
   if(/提升到了最大/.test(t)) acts.push(['st',{foe:owner.foe,name:owner.name,up:true,n:3}]);
   return acts; }
 function abfxCheck(){ const host=document.querySelector('#battle .garena'); if(!fxOn()||!host){ document.body.classList.remove('wxhold'); return; } const dbl=host.classList.contains('dbl'), st=dbl?D:B; if(!st) return;
-  wxHoldSync(st);
+  wxHoldSync(st); abPendSync(st);
   if(!document.querySelector(dbl?'#dlog .gsc':'#blog .gsc')) return;   /* 选招式时战斗记录不显示：不算（以前会把「看过几句」记成 0，回来把威吓的箭头和音效再放一次，Kris 2026-11-19） */
   const lines=[...document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div')].map(x=>x.textContent), seen=ABFX.seen.get(st)||0; if(lines.length<=seen) return; ABFX.seen.set(st,lines.length);
-  let k=0; const w0=entWait(); lines.slice(seen).forEach(t=>abfxLine(t).forEach(([ty,a])=>{ let show=true, wx=false;
+  const Q=ABFX.q.get(st)||[], P=ABFX.pend.get(st)||new Set(); ABFX.q.set(st,Q); ABFX.pend.set(st,P);
+  lines.slice(seen).forEach((t,j)=>{ const li=seen+j, acts=abfxLine(t); if(acts.length) P.add(li); acts.forEach(([ty,a],ai)=>{ let show=true, wx=false;
     if(ty==='ban'){ wx=WXABN.has(a.ab); const key=`${a.foe?'f':'m'}|${a.name}|${a.ab}`, set=ABFX.shown.get(st)||new Set(); ABFX.shown.set(st,set); if(set.has(key)) show=false; else set.add(key); }   /* 特性名的标签：同一局里同一只宝可梦只弹一次（Kris 2026-11-18：换了对手也不再弹） */
-    if(!show&&!wx) return;
-    const dl=w0+k*260; k++; const run=()=>{ if(!abfxReady(a.foe)) return setTimeout(run,150); if(wx){ ABFX.wxr.set(st,(ABFX.wxr.get(st)||0)+1); wxHoldSync(st); } if(!show) return; const img=abfxSprite(a.foe,a.name); if(!img) return; if(ty==='ban') abfxBanner(img,a.ab,a.foe); else abfxStat(img,a.up,a.n); }; setTimeout(run,dl); })); }
+    Q.push({ty,a,show,wx,li,first:ai===0}); }); });
+  abPendSync(st); abfxPump(st); }
+/* 特性按记录的先后一个一个发动（Kris 2026-11-20）：双方宝可梦都完全出场了才开始（以前对方一出来就发动，我方还在丢球）；
+   以前每个都各自等，一起放行时箭头会跑在「威吓」标签前面。还没发动的那一行战斗记录也先藏起来，发动时才出现 */
+function abfxPump(st){ if(st.__abT) return; const Q=ABFX.q.get(st); if(!Q||!Q.length) return; const it=Q[0];
+  if(!abfxReady(true)||!abfxReady(false)){ st.__abT=setTimeout(()=>{ st.__abT=0; abfxPump(st); },150); return; }
+  Q.shift(); const {ty,a,show,wx}=it;
+  if(it.first){ const P=ABFX.pend.get(st); if(P) P.delete(it.li); abPendSync(st); }
+  if(wx){ ABFX.wxr.set(st,(ABFX.wxr.get(st)||0)+1); wxHoldSync(st); }
+  let did=false; if(show){ const img=abfxSprite(a.foe,a.name); if(img){ did=true; if(ty==='ban') abfxBanner(img,a.ab,a.foe); else abfxStat(img,a.up,a.n); } }
+  st.__abT=setTimeout(()=>{ st.__abT=0; abfxPump(st); },did?260:0); }
+function abPendSync(st){ const host=document.querySelector('#battle .garena'); if(!host||(host.classList.contains('dbl')?D:B)!==st) return; const P=ABFX.pend.get(st), dbl=host.classList.contains('dbl');
+  document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div').forEach((d,i)=>d.classList.toggle('abpend',!!(P&&P.has(i)))); }
 /* 带天气特性的宝可梦（Kris 2026-11-18）：天气特效和「天气」标签等它完全出来、特性发动那一刻才换。
    战斗记录里每有一行「xx 的特性：日照！」这类天气特性，还没轮到它（宝可梦还没完全出来）就先把天气画面藏起来（body.wxhold） */
 const WXABN=new Set(Object.values(WXN).map(x=>x[1]));
@@ -9159,7 +9178,7 @@ function wxHoldSync(st){ const L=(st&&st.log)||[], r=ABFX.wxr.get(st)||0, idx=[]
   /* 战斗记录里的天气特性那一行也等发动了才显示（Kris 2026-11-19） */
   const host=document.querySelector('#battle .garena'), dbl=host&&host.classList.contains('dbl'); let k=0;
   document.querySelectorAll(dbl?'#dlog .gsc>div:not(.dask)':'#blog .gsc>div').forEach(d=>{ if(isWxLine(d.textContent)){ d.classList.toggle('wxpend',k>=r&&!(idx[k]!=null&&inPlace(idx[k]))); k++; } else if(d.textContent.startsWith('就决定是你了！')) d.classList.add('goyou'); }); }
-{ const st=document.createElement('style'); st.textContent='#battle .gsc>div.wxpend{display:none}body.opn-hm #battle .gsc>div.goyou{display:none}'; document.head.appendChild(st); }
+{ const st=document.createElement('style'); st.textContent='#battle .gsc>div.wxpend,#battle .gsc>div.abpend{display:none}body.opn-hm #battle .gsc>div.goyou{display:none}'; document.head.appendChild(st); }
 /* 开场流程中（转场、进场、丢球）先不弹特性标签 / 能力箭头，等那一边的宝可梦出来、血条框出现了才弹（Kris 2026-11-18：日照的标签在转场时就跑出来了） */
 function abfxReady(foe){ if(!window.__opening) return entWait()<=0;   /* 平时也等精灵球出场动画放完 */ const c=document.body.classList; if(c.contains('btwait')||document.querySelector('.btin')) return false;
   if(foe?(c.contains('opn-hf')||c.contains('opn-if')):(c.contains('opn-hm')||c.contains('opn-im'))) return false; return entWait()<=0; }
