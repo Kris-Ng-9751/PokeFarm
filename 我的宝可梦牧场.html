@@ -4746,7 +4746,7 @@ function bSwitch(i){
 }
 function bTurn(m){
   const b=B; if(b.over||b.pick||b.shift||b.busy) return; b.menu='main'; beatsOn();
-  if(m==='run'){ b.log.push(b.cfg.kind==='wild'?'顺利逃跑了。':'你认输了。'); b.over='end'; if(b.cfg.kind!=='wild'&&b.cfg.onLose) b.cfg.onLose(); return bRender(); }
+  if(m==='run'){ b.log.push(b.cfg.kind==='wild'?'顺利逃跑了。':'你认输了。'); b.over='end'; if(b.cfg.kind!=='wild') b.__resign=1; if(b.cfg.kind!=='wild'&&b.cfg.onLose) b.cfg.onLose(); return bRender(); }
   if(typeof m==='string'&&m.startsWith('pl:')){ const k=m.slice(3); if(b.me.id!==493||(k&&!plOwned(k))||(b.me.plate||'')===k) return bRender(); b.plPop=false; const _o=document.querySelector('#bme'), _old=_o&&_o.getAttribute('src'), _t0=arcT(b.me); b.me={...b.me,plate:k||undefined}; b.turns=(b.turns||0)+1; b.log.push(k?`阿尔宙斯换上了${ITEMS[k][0]}，${PLATES[k]==='legend'?'全身充满了传说石板的力量！':'变成了 '+PLATES[k]+' 属性！'+PLATES[k]+'属性招式威力 ×1.2'}`:'阿尔宙斯放下了石板，变回一般属性。'); if(_old&&fxOn()&&arcT(b.me)!==_t0){ const t=arcT(b.me)||'一般', c=TYC[t]||'#ccc'; b.kyFx={n:b.log.length,old:_old,id:493,col:['#1a1a1a',c,c,'#ffffff']}; } if(b.mh>0) foeAct(); }
   else if(typeof m==='string'&&m.startsWith('i:')){ const k=m.slice(2), it=BI.find(x=>x[0]===k); if(!it||!biOK(k)||!(S.items[k]>0)) return bRender(); const nm=SP[b.me.id][0], t=it[2], v=it[3];
     if(t==='heal'||t==='healp'){ if(b.mh<=0) return; const a=t==='heal'?(v>=9999?b.mx:v):Math.ceil(b.mx*v), cure=healCure(k,b.me); b.mh=Math.min(b.mx,b.mh+a); b.log.push(`使用了${ITEMS[k][0]}，${nm} 回复了 ${a>=b.mx?'全部':a} HP${cure?`，${cure}也治好了`:''}`); healBeat(b,'m'); }
@@ -5952,7 +5952,7 @@ function dZone(M,fn){ const z0=DZM, p0=window.__dmap; DZM=M; window.__dmap=M; tr
 { const _dt=dTurn; dTurn=function(){ if(D) D.__slot0={my:[...D.my],fo:[...D.fo],n:D.log.length}; return _dt.apply(this,arguments); }; }   /* 记下这回合开始时场上是谁，回放第一拍用 */
 /* 双打的倒下动作（Kris 2026-11-20，和单打一样）：一只一只叫一声，再往下沉、血条框收起 */
 function dFaint(kos,done){ kos.forEach(([s,sl])=>{ document.querySelectorAll(`#battle .gsp.d${s}${sl},#battle .ginfo.d${s}${sl}`).forEach(x=>x.classList.remove('dn')); }); let k=0; const one=()=>{ if(k>=kos.length) return done(); const [s,sl,id]=kos[k++], sp=document.querySelector(`#battle .gsp.d${s}${sl}`), fi=document.querySelector(`#battle .ginfo.d${s}${sl}`);
-    if(sp) sp.classList.remove('dn'); if(fi) fi.classList.remove('dn'); if(sp&&s==='f'&&D) (D.__frs=D.__frs||[])[sl]={L:sp.offsetLeft,R:sp.offsetLeft+sp.offsetWidth,T:sp.offsetTop,B:sp.offsetTop+sp.offsetHeight};   /* 记下倒下的位置：打赢后对方训练家站这里 */ let fin=false; const drop=()=>{ if(fin) return; fin=true; if(sp) sp.classList.add('fnt'); if(fi) fi.classList.add('fntinfo'); setTimeout(one,560); };
+    if(sp) sp.classList.remove('dn'); if(fi) fi.classList.remove('dn'); if(sp&&D) (s==='f'?(D.__frs=D.__frs||[]):(D.__mrs=D.__mrs||[]))[sl]={L:sp.offsetLeft,R:sp.offsetLeft+sp.offsetWidth,T:sp.offsetTop,B:sp.offsetTop+sp.offsetHeight};   /* 记下倒下的位置：战斗结束后训练家站这里（我方全倒输了也一样） */ let fin=false; const drop=()=>{ if(fin) return; fin=true; if(sp) sp.classList.add('fnt'); if(fi) fi.classList.add('fntinfo'); setTimeout(one,560); };
     (window.cryP?window.cryP(id):Promise.resolve()).then(()=>setTimeout(drop,120)); setTimeout(drop,3200); }; one(); }
 function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shift,menu:d.menu}; d.over=null; d.shift=null; d.menu='main';
   let prev=d.hp0||{pm:bs[0].pm,fh:bs[0].fh}; d.hp0=null;   /* 血条先保持出招前的样子，打中、闪完再扣（Kris 2026-11-04） */
@@ -16231,8 +16231,8 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
    对战 NPC、道馆（馆员和馆主）、四天王 / 冠军、传奇训练家：最后一只倒下、战斗结束时，双方的宝可梦都被收回（红光缩小），
    接着对方训练家从右边、我方训练家从左边走进来，站在原本宝可梦的位置。对方的人物图在开战时放进 B.cfg.av，我方用自己的训练家形象。 */
 (function(){
-  const dWon=()=>{ const d=typeof D!=='undefined'?D:null; return !!(d&&d.my&&d.over==='win'&&d.av&&!d.busy&&!document.querySelector('#modal').hidden); };   /* 双打打赢（Kris 2026-11-20）：一样收回宝可梦、训练家走出来 */
-  const won=()=>{ const b=typeof B!=='undefined'?B:null; if(!b||!b.over||!b.cfg||!b.cfg.av||b.cfg.kind==='wild'||b.caughtOK) return false; const fs=b.foes&&b.foes.length?b.foes:[b.foe]; return fs.every(f=>f&&(f.fh!=null?f.fh:1)<=0); };
+  const dWon=()=>{ const d=typeof D!=='undefined'?D:null; return !!(d&&d.my&&(d.over==='win'||d.over==='lose')&&d.av&&!d.busy&&!document.querySelector('#modal').hidden); };   /* 双打打赢（Kris 2026-11-20）：一样收回宝可梦、训练家走出来 */
+  const won=()=>{ const b=typeof B!=='undefined'?B:null; if(!b||!b.over||!b.cfg||!b.cfg.av||b.cfg.kind==='wild'||b.caughtOK) return false; if((b.whiteout||b.__resign)&&!b.busy) return true;   /* 我方输了（全倒或认输）双方训练家一样出来（Kris 2026-11-20） */ const fs=b.foes&&b.foes.length?b.foes:[b.foe]; return fs.every(f=>f&&(f.fh!=null?f.fh:1)<=0); };
   /* 一边：宝可梦收回（红光缩小）、血条框收起、训练家走进来站在宝可梦的位置。side：'foe' 对方 / 'me' 我方 */
   function side(host,k,html,first){ const sp=host.querySelector('.gsp.'+k); if(!sp||!html) return; const tw=document.createElement('div'); tw.className='trwin '+k+(first?' in':''); tw.innerHTML=html; tw.setAttribute('aria-hidden','true');
     if(/class="bk"/.test(html)){ const z=bkSz(heroNow(),host.clientHeight); tw.style.left=Math.round(sp.offsetLeft+(sp.offsetWidth-z.w)/2)+'px'; tw.style.width=z.w+'px'; tw.style.height=z.h+'px'; tw.style.bottom='0'; }
@@ -16241,7 +16241,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
     host.appendChild(tw); const fi=document.querySelector('#battle .ginfo.'+(k==='foe'?'f':'m')); if(fi) fi.classList.add(first?'trhide':'trgone'); }
   /* 双打那一边：两只宝可梦（还在场上的）收回，训练家站在两只中间 */
   function sideD(host,k,html,first){ const sps=[...host.querySelectorAll(k==='foe'?'.gsp.df0,.gsp.df1':'.gsp.dm0,.gsp.dm1')], rs=sps.map(x=>({L:x.offsetLeft,R:x.offsetLeft+x.offsetWidth,T:x.offsetTop,B:x.offsetTop+x.offsetHeight}));
-    if(k==='foe'&&D&&D.__frs) D.__frs.forEach(r=>{ if(r) rs.push(r); });   /* 对方都倒下了、场上没有精灵：用倒下时记下的位置 */
+    if(D) ((k==='foe'?D.__frs:D.__mrs)||[]).forEach(r=>{ if(r) rs.push(r); });   /* 那一边都倒下了、场上没有精灵：用倒下时记下的位置 */
     if(!rs.length||!html) return; const tw=document.createElement('div'); tw.className='trwin '+k+(first?' in':''); tw.innerHTML=html; tw.setAttribute('aria-hidden','true');
     const L=Math.min(...rs.map(x=>x.L)), R=Math.max(...rs.map(x=>x.R)), T=Math.min(...rs.map(x=>x.T)), Bm=Math.max(...rs.map(x=>x.B)), H=host.clientHeight;
     if(/class="bk"/.test(html)){ const z=bkSz(heroNow(),H); tw.style.left=Math.round((L+R)/2-z.w/2)+'px'; tw.style.width=z.w+'px'; tw.style.height=z.h+'px'; tw.style.bottom='0'; }
