@@ -2921,8 +2921,17 @@ function foeStatusPick(f,st){ const b=B, hr=b.fh/b.fx, me=b.me; let W=0; const c
 function foeChoose(){ const b=B, f=b.foe, cs=b.fmv.map(plain), dm=cs.filter(c=>c.pow>0), st=cs.filter(c=>!c.pow&&MVS[c.id]);
   const sp=st.length?foeStatusPick(f,st):null; if(sp) return sp;
   const pool=dm.length?dm:cs; let base=pool[Math.floor(Math.random()*pool.length)];
+  if(b.cfg&&/^世界 Boss/.test(b.cfg.tag||'')) return bossPick(b,f,pool,cs);
   if(Math.random()<.75){ let best=-1; pool.forEach(c=>{ let e=0; try{ e=dmg(f,b.me,c).d*Math.min(100,c.acc||100)/100; }catch(x){} if(e>best){ best=e; base=c; } }); }
   return base; }
+/* 世界 Boss 出招灵活一点（Kris 2026-11-20）：原来七成五都挑伤害最高的那招，整场几乎只用一招。
+   现在按伤害给权重（打得动的招都有机会），刚用过的招降低机会、不会连用三次，能一招打倒对方时多半会用；变化招式照原来的判断（有用才用） */
+function bossPick(b,f,pool,cs){ const H=b.__fH=b.__fH||[], me=b.me, ev=pool.map(c=>{ let e=0; try{ e=dmg(f,me,c).d*Math.min(100,c.acc||100)/100; }catch(x){} return e; }), best=Math.max(1,...ev);
+  const ko=pool.filter((c,i)=>ev[i]>=b.mh&&H[H.length-1]!==c.id); let pick=null;
+  if(ko.length&&Math.random()<.7) pick=ko[Math.floor(Math.random()*ko.length)];
+  if(!pick){ const w=pool.map((c,i)=>{ let x=Math.pow(Math.max(.05,ev[i]/best),1.6); if(ev[i]<=0&&c.pow>0) x=.02; if(H[H.length-1]===c.id) x*=.35; if(H.length>=2&&H[H.length-1]===c.id&&H[H.length-2]===c.id) x=0; return x; }); let W=w.reduce((a,x)=>a+x,0);
+    if(W<=0){ pick=pool[Math.floor(Math.random()*pool.length)]; } else { let r=Math.random()*W; pick=pool[pool.length-1]; for(let i=0;i<pool.length;i++){ r-=w[i]; if(r<=0){ pick=pool[i]; break; } } } }
+  H.push(pick.id); if(H.length>4) H.shift(); return pick; }
 
 /* ---------- 技能特效（Kris 2026-10-28）：先做一个招式对比看看效果 —— 大字爆。出招时在对手身上播放，按招式编号对应；没有特效的招式照旧只有抖一下 ---------- */
 const FXDUR={126:{hit:1660,total:2450},56:{hit:900,total:1750},437:{hit:980,total:1800},63:{hit:520,total:1500},223:{hit:340,total:1300},403:{hit:500,total:1300},188:{hit:460,total:1500},89:{hit:230,total:1500},157:{hit:340,total:1700},405:{hit:640,total:1500},247:{hit:480,total:1500},232:{hit:300,total:1100},85:{hit:380,total:1200},94:{hit:820,total:1400},58:{hit:420,total:1600},406:{hit:860,total:1700},242:{hit:320,total:1100},585:{hit:640,total:1500},200:{hit:250,total:1300},225:{hit:420,total:1200},239:{hit:450,total:1300},337:{hit:300,total:1100},407:{hit:460,total:1300},434:{hit:420,total:1700},459:{hit:720,total:1600},460:{hit:300,total:1250},525:{hit:360,total:1200},530:{hit:230,total:1000},687:{hit:340,total:1400},691:{hit:540,total:1500},692:{hit:480,total:1400},744:{hit:480,total:1500},751:{hit:290,total:1000},784:{hit:330,total:1100},795:{hit:430,total:1500},799:{hit:300,total:1200},820:{hit:540,total:1500},856:{hit:420,total:1300},862:{hit:330,total:1000},907:{hit:400,total:1300}};   /* hit：对手被打中、闪一下的时间；total：这一拍要放多久（毫秒） */
@@ -6885,7 +6894,7 @@ function bossCard(b,i,st,now){ const leg=b.kind==='p0', lock=leg&&st<1, p=Math.r
 function rBoss(){
   plLoad(); if(LIVE()){ bevLoad(); partyLoad(); bossSync(); }
   const st=tcStars().n, now=Date.now();
-  $('#main').innerHTML=`<section class="panel"><div class="card xhero ckh"><div class="xart bsart"></div><div class="xin"><h2 class="xt"><span class="xi">${iImg('ball',30)}</span>世界 Boss</h2><div class="muted">挑战强大的传说与幻兽，赢取稀有卡片与丰厚奖励！</div></div></div><div class="card bsinfo"><span class="bsi">i</span><div class="muted" style="flex:1;min-width:0">${LIVE()?'告警会出现一只<b>超稀有</b>的世界 Boss，P0 工单会出现<b>神兽</b> Boss（卡片要 1 星）；停留 1 小时（告警恢复了也不会走），同一个告警只出一只；':'每小时整点刷新一只<b>超稀有以上</b>的世界 Boss（超稀有、传说、幻兽都有可能；传说和幻兽的要训练家卡片至少 1 星）；停留到下一个整点，没打完就换新的；'}打败后有 <b>${BOSS_TRIES} 次</b>捕捉机会，会一直留到你捉到或机会用完。${LIVE()?'监控里一有严重告警或没恢复的 P0 工单，就会出现。':''}</div>
+  $('#main').innerHTML=`<section class="panel"><div class="card xhero ckh"><div class="xart bsart"></div><div class="xin"><h2 class="xt"><span class="xi">${iImg('ball',30)}</span>世界 Boss</h2><div class="muted">挑战强大的传说与幻兽，赢取稀有卡片与丰厚奖励！</div></div></div><div class="card bsinfo"><span class="bsi">i</span><div class="muted" style="flex:1 1 220px;min-width:0">${LIVE()?'告警会出现一只<b>超稀有</b>的世界 Boss，P0 工单会出现<b>神兽</b> Boss（卡片要 1 星）；停留 1 小时（告警恢复了也不会走），同一个告警只出一只；':'每小时整点刷新一只<b>超稀有以上</b>的世界 Boss（超稀有、传说、幻兽都有可能；传说和幻兽的要训练家卡片至少 1 星）；停留到下一个整点，没打完就换新的；'}打败后有 <b>${BOSS_TRIES} 次</b>捕捉机会，会一直留到你捉到或机会用完。${LIVE()?'监控里一有严重告警或没恢复的 P0 工单，就会出现。':''}</div>
   ${LIVE()?'':`<span class="bsnext">${CLK}下次刷新：<span data-bl="${(Math.floor(now/HOUR)+1)*HOUR}">还剩 ${fmtT((Math.floor(now/HOUR)+1)*HOUR-now)}</span></span>`}</div>${partyCard()}${bossShareCard()}
   <div class="list">${S.bosses.map((b,i)=>b.def?'':bossCard(b,i,st,now)).join('')||'<div class="card muted" style="grid-column:1/-1;min-height:140px;display:flex;align-items:center;justify-content:center;text-align:center">现在没有正在刷新的世界 Boss。'+(LIVE()?'监控有告警的时候会出现。':'下个整点会刷新新的。')+'</div>'}</div>
   ${S.bosses.some(b=>b.def)?`<div class="card"><h2>已击败 · 等你捕捉</h2><div class="muted" style="margin-bottom:8px">打败后的 Boss 会一直留着，直到你捉到它，或者捕捉机会用完。</div><div class="list">${S.bosses.map((b,i)=>b.def?bossCard(b,i,st,now):'').join('')}</div></div>`:''}</section>`;
@@ -6893,7 +6902,9 @@ function rBoss(){
   document.querySelectorAll('[data-bsh]').forEach(x=>x.onclick=()=>bossShareClaim(+x.dataset.bsh));
   document.querySelectorAll('[data-bfight]').forEach(x=>x.onclick=()=>{ const b=S.bosses[+x.dataset.bfight]; if(b) fightChoose(bossT(b)); });
   document.querySelectorAll('[data-bcatch]').forEach(x=>x.onclick=()=>{ const b=S.bosses[+x.dataset.bcatch]; if(!b||!b.def||b.tries<=0) return; if(monCnt()>=MON_CAP) return toast(capMsg()); b.tries--; lifeAdd('ball'); const p=bossBase(b)*(S.cb?1.5:1); S.cb=0;
-    if(Math.random()<p){ const m={uid:S.nuid++,id:b.id,lv:b.lv,exp:0,shiny:b.shiny,g:b.g,ball:'b_premier'}; S.mons.push(m); S.stats.caught++; prog('caught'); (S.bossGone=S.bossGone||{})[b.key]=1; S.bosses=S.bosses.filter(y=>y!==b); toast(`捕捉成功！${SP[b.id][0]} Lv${b.lv} 加入了牧场；`+tgain(b.lv)); }
+    if(Math.random()<p){ const m={uid:S.nuid++,id:b.id,lv:b.lv,exp:0,shiny:b.shiny,g:b.g,ball:'b_premier'}; S.mons.push(m); S.stats.caught++; prog('caught'); (S.bossGone=S.bossGone||{})[b.key]=1; S.bosses=S.bosses.filter(y=>y!==b); const tg=tgain(b.lv), rr=SP[b.id][3];
+      /* 世界 Boss 捕捉成功（Kris 2026-11-20）：弹窗显示抓到的宝可梦，放捕捉成功的音乐（声音在第十五阶段对「世界 Boss · 捕捉成功」的弹窗处理） */
+      showRes({title:'世界 Boss · 捕捉成功',sub:`${SP[b.id][0]} Lv${b.lv} 加入了牧场！${tg}`,body:`<div class="burst r${rr}"></div><div class="pulls fixed" style="display:flex;justify-content:center"><div class="pull dc rv tf r${rr}" style="--i:0;width:170px;${tyFrame(b.id)}"><img src="${spf(b.id,b.shiny)}" alt=""><div class="nm"><b>${SP[b.id][0]}</b>${gSym(b.g)}</div><div class="muted">Lv${b.lv}</div><div class="muted">${typeStr(b.id)}</div><div class="tg"><span class="tag r${rr}">${SP[b.id][10]>=2?(SP[b.id][10]===3?'幻兽':'神兽'):RARN[rr]}</span>${b.shiny?'<span class="tag r4">异色</span>':''}<span class="tag">${iImg('b_premier',16)} 纪念球</span></div></div></div>`,actions:[['去牧场看看',()=>{ $('#gpop').hidden=true; go('ranch'); },''],['好的',()=>{ $('#gpop').hidden=true; },'alt']]}); }
     else if(b.tries<=0){ (S.bossGone=S.bossGone||{})[b.key]=1; S.bosses=S.bosses.filter(y=>y!==b); toast(`机会用完了，${SP[b.id][0]} 逃走了……`); } else toast(`它挣脱了！还剩 ${b.tries} 次机会`);
     save(); rBoss(); renderShell(); });
 }
@@ -16167,7 +16178,8 @@ const BGMA={"fish":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
       const t=String(o&&o.title||''), el=document.getElementById('gpop'); if(/自选/.test(t)||!el) return r; const cards=[...el.querySelectorAll('.pulls .pull.dc.rv')]; if(!cards.length) return r;
       let ix=-1, k=null;
       if(/抽宝可梦|活动·神兽|活动·幻兽/.test(t)){ if(lastPull===lastPl) return r; lastPl=lastPull; ix=lastPull.findIndex(p=>SP[p.id]&&SP[p.id][10]>=2); k='caught'; }   /* 同一次抽的结果弹窗重画，不再放 */
-      else if(/道具/.test(t)){ ix=cards.findIndex(c=>c.classList.contains('r4')); k='item'; }   /* 道具卡 r4 = 「传说」那一档 */
+      else if(/道具/.test(t)){ ix=cards.findIndex(c=>c.classList.contains('r4')); k='item'; }
+      else if(/捕捉成功/.test(t)){ ix=0; k='caught'; }   /* 世界 Boss 捕捉成功（Kris 2026-11-20） */   /* 道具卡 r4 = 「传说」那一档 */
       if(ix<0) return r; const still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
       setTimeout(()=>{ if(!el.hidden) jingle(k,k==='caught'?5900:2400,{force:1}); },still?0:ix*110+350);
     }catch(e){} return r; }; }   /* 每次领都要响：前一首没放完就切过来 */
