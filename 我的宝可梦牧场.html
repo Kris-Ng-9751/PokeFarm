@@ -9088,7 +9088,7 @@ function entPlay(host,gsp,side,key,t0){ const hr=host.getBoundingClientRect(), r
 function entCheck(){ const host=document.querySelector('#battle .garena'); if(!host) return; const dbl=host.classList.contains('dbl'), st=dbl?(typeof D!=='undefined'&&D):B; if(!st) return;
   let keys=[];
   if(dbl) [0,1].forEach(i=>{ keys.push(['f'+i,st.fo[i],`.gsp.df${i}`,0]); keys.push(['m'+i,st.my[i],`.gsp.dm${i}`,0]); });
-  else { const wild=!st.cfg||st.cfg.kind==='wild'||/^世界 Boss/.test(st.cfg.tag||'')||host.classList.contains('bw'); keys.push(['f',st.fcur,'#bfoe',wild]);   /* 世界 Boss 跟野外一样直接出现，不用精灵球放出来（Kris 2026-11-20） */ keys.push(['m',st.mon&&st.mon.uid,'#bme',0]); }
+  else { const wild=!st.cfg||st.cfg.kind==='wild'||st.cfg.wildEnt||/^世界 Boss/.test(st.cfg.tag||'')||host.classList.contains('bw'); keys.push(['f',st.fcur,'#bfoe',wild]);   /* 世界 Boss 跟野外一样直接出现，不用精灵球放出来（Kris 2026-11-20） */ keys.push(['m',st.mon&&st.mon.uid,'#bme',0]); }
   const prev=ENT.seen.get(st), now={}, first=!prev, nowT=performance.now(); let n=0;
   keys.forEach(([k,v,sel,skip])=>{ now[k]=v; const id=(dbl?'d':'s')+k; const e=host.querySelector(sel), gsp=e&&(e.classList.contains('gsp')?e:e.closest('.gsp'));
     if(!gsp||v==null||v<0) return;
@@ -16348,7 +16348,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
     try{
       await sleep((window.__btIntroEnd||0)-420-performance.now()); if(!alive()) return;   /* 转场开始淡出时就开始进场（Kris 2026-11-18：不要只剩野生宝可梦站在暗掉的画面上） */
       const host=document.querySelector('#battle .garena'); if(!host) return;
-      const wild=!dbl&&(!st.cfg||st.cfg.kind==='wild'||/^世界 Boss/.test(st.cfg.tag||''));   /* 世界 Boss 出场跟野外一样：从左边滑进来、叫一声（Kris 2026-11-20） */
+      const wild=!dbl&&(!st.cfg||st.cfg.kind==='wild'||st.cfg.wildEnt||/^世界 Boss/.test(st.cfg.tag||''));   /* wildEnt：数码宝贝测试对战，对手也直接出现 */   /* 世界 Boss 出场跟野外一样：从左边滑进来、叫一声（Kris 2026-11-20） */
       /* ① 双方进场 */
       const mtw=trEnter(host,SLIDE); let ftw=null;
       if(wild){ const sp=host.querySelector('.gsp.foe'); document.body.classList.remove('opn-hf'); if(sp) sp.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:SLIDE,easing:'linear'}); }
@@ -16391,7 +16391,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
     setTimeout(()=>document.body.classList.remove('btwait'),2250);   /* 全黑了才换成对战画面 */
     setTimeout(()=>el.classList.add('open'),2350); setTimeout(()=>{ el.remove(); document.body.classList.remove('btwait'); },VSLEN+80);
     setTimeout(()=>{ if(window.__bgmSync) __bgmSync(); },0); }
-  const kindOf=cfg=>{ if(!cfg||cfg.kind==='wild') return 'wild'; const t=cfg.tag||''; if(/^(道馆挑战|道馆重赛|四天王|冠军战|四天王重赛|传奇训练家)$/.test(t)) return cfg.av?'vs':'boss'; return /^世界 Boss/.test(t)?'boss':'trainer'; };
+  const kindOf=cfg=>{ if(!cfg||cfg.kind==='wild'||(cfg.wildEnt&&!/^世界 Boss/.test(cfg.tag||''))) return 'wild'; const t=cfg.tag||''; if(/^(道馆挑战|道馆重赛|四天王|冠军战|四天王重赛|传奇训练家)$/.test(t)) return cfg.av?'vs':'boss'; return /^世界 Boss/.test(t)?'boss':'trainer'; };
   /* 转场要在真正开打时才播：有「出战队伍」窗的话，等玩家按「出战」才播（Kris 2026-11-18） */
   let pend=null;
   { const _tp=teamPop; teamPop=function(title,go,dbl){ const k=pend; pend=null; return _tp.call(this,title,function(){ if(k) try{ btIntro(k.k,k.av); openArm(k.k==='wild'); }catch(e){} return go.apply(this,arguments); },dbl); }; }
@@ -16499,7 +16499,7 @@ function pSync(st){ if(!st||!st.party) return; const sing=st===B;
     const sta=mh>0&&me&&me.sta?(st.over&&me.sta==='tox'?'psn':me.sta):'';   /* 剧毒：对战结束后变回普通中毒 */
     if(sta){ m.sta=sta; if(sta==='slp') m.slpT=Math.max(0,me.slpT||0); else delete m.slpT; } else { delete m.sta; delete m.slpT; }
     if(mvs&&pp){ const o={}; mvs.forEach((id,j)=>{ if(pp[j]!=null&&pp[j]<MV[id][4]) o[id]=Math.max(0,pp[j]); }); if(Object.keys(o).length) m.pp=o; else delete m.pp; } });
-  if(st.whiteout&&!st.__wo){ st.__wo=1; S.wo=1; } }
+  if(st.whiteout&&!st.__wo&&!(st.cfg&&st.cfg.test)){ st.__wo=1; S.wo=1; } }   /* 测试对战输了不扣钱 */
 { const _br=bRender; bRender=function(){ const r=_br.apply(this,arguments); try{ if(B&&!B.busy) pSync(B); }catch(e){} return r; }; }
 setInterval(()=>{ try{ if(B&&!B.busy) pSync(B); if(typeof D!=='undefined'&&D&&!D.busy) pSync(D); }catch(e){} },400);   /* 回放结束时用的是内部的画面函数，这里再补一次 */
 { const _dr=dRender; dRender=function(){ const r=_dr.apply(this,arguments); try{ if(typeof D!=='undefined'&&D&&!D.busy) pSync(D); }catch(e){} return r; }; }
@@ -16715,7 +16715,7 @@ setTimeout(()=>{ const _sb=startBattle; startBattle=function(cfg){ try{ if(cfg&&
   if(dark) apply(true);
 })();
 /* ===== 第二十阶段结束 ===== */
-/* ===== 第二十一阶段（Kris 2026-11-21）：开发者 → 数码宝贝 · 图鉴（先只有图鉴）=====
+/* ===== 第二十一阶段（Kris 2026-11-21）：开发者 → 数码宝贝：图鉴、对战（测试）、世界 Boss（测试）=====
    收录《数码宝贝大冒险》第一代 77 只、《02》第二代 31 只。按同一条进化线排，每条从幼年期开始往上（黑球兽 → 滚球兽 → 亚古兽 → 暴龙兽 → 机械暴龙兽 → 战斗暴龙兽）；先第一代伙伴、第二代伙伴，再其他数码宝贝（Kris 2026-11-21）。
    图：主要用 GBA 风格那套（GitHub zigeyuansheng/digital-world，原图很小，放大显示、像素不糊；只用一张、不做动画（Kris 2026-11-21：图不要动））；那套没有的用动画那套补（GitHub dannyphang/digimon-up-sprites）；两套都没有的显示问号。
    中文名、阶段、属性、种族、必杀技照官方图鉴 digimon.net（简体中文版）；介绍、进化路线来自 dannyphang 那套的资料（也是官方图鉴的文字，繁体转成简体），进化只连到这 108 只里面的。 */
@@ -16726,13 +16726,17 @@ const DG_TAG={warp:'跳跃进化',mistake:'失误进化',dark:'暗黑进化',arm
 const dgImg=(e,box=92)=>{ const im=DIGI_IMG[e.id]; if(!im) return `<div class="dgq" aria-hidden="true">？</div>`; const z=Math.min(e.sc===3?4:1.6,box/Math.max(e.w||1,e.h||1)), w=Math.round((e.w||32)*z), h=Math.round((e.h||32)*z);
   return `<img class="dgi" src="data:image/png;base64,${im}" alt="" width="${w}" height="${h}" style="width:${w}px;height:${h}px">`; };
 function dgList(){ const q=DGF.q.trim().toLowerCase(); return DIGI.filter(e=>(DGF.g==='0'||String(e.g)===DGF.g)&&(!DGF.st||e.st===DGF.st)&&(!DGF.at||e.at===DGF.at)&&(!q||e.zh.includes(q)||e.en.toLowerCase().includes(q)||String(e.n)===q.replace(/^0+/,''))); }
-function rDigi(){ const n1=DIGI.filter(e=>e.g===1).length, n2=DIGI.length-n1, ni=DIGI.filter(e=>DIGI_IMG[e.id]).length, ats=[...new Set(DIGI.map(e=>e.at).filter(Boolean))];
+/* 数码宝贝页分三页（Kris 2026-11-21）：图鉴、对战（测试）、世界 Boss（测试） */
+function rDigi(){ DGF.tab=DGF.tab||'dex'; if(DGF.tab==='bt') return dgBattlePage(); if(DGF.tab==='boss') return dgBossPage(); return dgDex(); }
+const dgTabs=()=>`<div class="row dgtabs" role="tablist" aria-label="数码宝贝">${[['dex','图鉴'],['bt','对战'],['boss','世界Boss']].map(([k,t])=>`<button class="btn fchip ${DGF.tab===k?'on':'alt'}" data-dgt="${k}" role="tab" aria-selected="${DGF.tab===k}">${t}${k!=='dex'?' <small>测试</small>':''}</button>`).join('')}</div>`;
+const dgTabBind=()=>document.querySelectorAll('[data-dgt]').forEach(b=>b.onclick=()=>{ DGF.tab=b.dataset.dgt; rDigi(); });
+function dgDex(){ const n1=DIGI.filter(e=>e.g===1).length, n2=DIGI.length-n1, ni=DIGI.filter(e=>DIGI_IMG[e.id]).length, ats=[...new Set(DIGI.map(e=>e.at).filter(Boolean))];
   const sel=(id,lab,opts,v)=>`<select id="${id}" aria-label="${lab}">${opts.map(([k,t])=>`<option value="${k}" ${v===k?'selected':''}>${t}</option>`).join('')}</select>`;
-  $('#main').innerHTML=`<section class="panel"><div class="card dgh"><h2 style="margin:0 0 4px">数码宝贝 · 图鉴 <span class="tag">开发中</span></h2>
+  $('#main').innerHTML=`<section class="panel">${dgTabs()}<div class="card dgh"><h2 style="margin:0 0 4px">数码宝贝 · 图鉴 <span class="tag">开发中</span></h2>
     <div class="muted">先收录《数码宝贝大冒险》第一代 ${n1} 只、《02》第二代 ${n2} 只，其中 ${ni} 只有图。点一只看资料和进化路线。</div>
     <div class="dgf">${sel('dgg','世代',[['0','全部世代'],['1','第一代'],['2','第二代']],DGF.g)}${sel('dgs','阶段',[['','全部阶段'],...DG_ST.filter(s=>DIGI.some(e=>e.st===s)).map(s=>[s,s])],DGF.st)}${sel('dga','属性',[['','全部属性'],...ats.map(a=>[a,a])],DGF.at)}<input id="dgq" placeholder="搜索名字 / 编号" value="${DGF.q.replace(/"/g,'&quot;')}" aria-label="搜索"><span class="muted" id="dgc"></span></div></div>
     <div class="card"><div class="pulls dgg" id="dggrid"></div></div></section>`;
-  dgGrid();
+  dgGrid(); dgTabBind();
   $('#dgg').onchange=e=>{ DGF.g=e.target.value; dgGrid(); }; $('#dgs').onchange=e=>{ DGF.st=e.target.value; dgGrid(); }; $('#dga').onchange=e=>{ DGF.at=e.target.value; dgGrid(); };
   $('#dgq').oninput=e=>{ DGF.q=e.target.value; dgGrid(); };
   $('#dggrid').onclick=e=>{ const c=e.target.closest('[data-dg]'); if(c) dgDetail(c.dataset.dg); };
@@ -16779,6 +16783,90 @@ function dgDetail(id){ const L=dgList(), e=DIGI.find(x=>x.id===id); if(!e) retur
   bt.querySelector('[data-dgx]').onclick=dgClose;
   $('#modal').hidden=false; bt.scrollTop=0; }
 function dgClose(){ $('#modal').hidden=true; $('#battle').innerHTML=''; }
+/* ---------- 数码宝贝对战 / 世界 Boss（测试，Kris 2026-11-21）----------
+   做法：开打前把要用到的数码宝贝临时登记成对战系统认得的「宝可梦」（编号 30000+图鉴号），必杀技登记成招式（编号 31000 起），
+   对战结束、对战框关掉后全部删掉，所以不会混进野外、道馆、抽卡、图鉴这些宝可梦的地方。
+   · 属性：用它必杀技的属性（最多两个）
+   · 种族值：按阶段给总数（幼年期Ⅰ 200 … 究极体 580），必杀技多数是光线 / 炮的偏特攻，拳 / 爪的偏攻击；疫苗种防御高一点、病毒种攻击高一点、数据种特防高一点
+   · 必杀技：威力按阶段（幼年期 40、成长期 60、成熟期 / 装甲体 80、完全体 95、究极体 110），命中 100；特效借同属性的宝可梦招式
+   · 我方用宝可梦队伍时，用的是队伍的复制品：HP、PP、经验、异常状态都不会影响真的宝可梦
+   · 不给经验、奖励，不算战绩，输了也不会「眼前一黑」扣钱 */
+const DG_ID0=30000, DG_MV0=31000;
+const DG_TOT={'幼年期Ⅰ':200,'幼年期Ⅱ':260,'成长期':330,'成熟期':420,'装甲体':440,'完全体':500,'究极体':580};
+const DG_POW={'幼年期Ⅰ':40,'幼年期Ⅱ':40,'成长期':60,'成熟期':80,'装甲体':80,'完全体':95,'究极体':110};
+const DG_FXP={火:[7,53],水:[127,57],草:[452,412],电:[9,85],冰:[8,58],格斗:[280,411],毒:[398,188],地面:[89,414],飞行:[332,403],超能力:[428,94],虫:[404,405],岩石:[444,408],幽灵:[421,247],龙:[337,406],恶:[242,399],钢:[442,430],妖精:[583,585],一般:[33,129]};
+const dgSpc=(n,d)=>/炮|弹|光|波|气|焰|火|激光|雷|电|冷|冰|风|泡|咒|魅惑|领域|射线|能量|吐|音|叫|咆哮|潮|海啸|诅咒|黑暗|心/.test(n+d)&&!/拳|爪|撞|咬|啃|刺|斩|剑|锤|踢|压|冲|鞭|击|啄|挠|疾驰|滑行|头槌/.test(n);
+const dgSid=e=>DG_ID0+e.n;
+let DGREG=null;   /* 登记了哪些：{ids:[], mvs:[]} */
+function dgMvIds(e){ return (e.mv||[]).map((m,k)=>DG_MV0+e.n*4+k); }
+/* 对战用的图：和宝可梦的图一样放进 96×96 的框里，脚贴近底部；大小按阶段（幼年期小、究极体大），像素放大用整数倍、不糊。flip：我方那边要面向右边 */
+const DG_SZ={'幼年期Ⅰ':30,'幼年期Ⅱ':36,'成长期':52,'成熟期':66,'装甲体':66,'完全体':78,'究极体':88};
+function dgFlip(src,st,flip){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ const c=document.createElement('canvas'); c.width=96; c.height=96; const x=c.getContext('2d'); x.imageSmoothingEnabled=false;
+    const t=DG_SZ[st]||60, m=Math.max(im.width,im.height), s=m*2<=t?Math.floor(t/m):t/m, w=Math.round(im.width*s), h=Math.round(im.height*s), dx=Math.round((96-w)/2), dy=Math.max(0,92-h);
+    if(flip){ x.translate(96,0); x.scale(-1,1); } x.drawImage(im,dx,dy,w,h); res(c.toDataURL('image/png')); }; im.onerror=()=>res(src); im.src=src; }); }
+async function dgRegister(list){ dgUnregister(); DGREG={ids:[],mvs:[]};
+  for(const e of list){ const id=dgSid(e), mvs=dgMvIds(e), pw=DG_POW[e.st]||60, tys=[];
+    (e.mv||[]).forEach((m,k)=>{ const t=m[2]||'一般', sp=dgSpc(m[0],m[1]), mid=mvs[k]; tys.includes(t)||tys.push(t);
+      MV[mid]=[m[0],t,pw+(k===e.mv.length-1&&k>0?10:0),100,15]; if(sp) SPECIAL.add(mid);
+      const pr=DG_FXP[t]||DG_FXP.一般, base=[pr[sp?1:0],pr[sp?0:1]].find(i=>FXF[i])||Object.keys(MV).map(Number).find(i=>i<1000&&FXF[i]&&MV[i][1]===t&&MV[i][2]>0);
+      if(base){ FXF[mid]=FXF[base]; if(FXDUR[base]) FXDUR[mid]=FXDUR[base]; }
+      DGREG.mvs.push(mid); });
+    const spN=(e.mv||[]).filter(m=>dgSpc(m[0],m[1])).length, phys=(e.mv||[]).length-spN>spN, tot=DG_TOT[e.st]||330;
+    const w=phys?[1,1.25,1,.8,.9,1.05]:[1,.8,.9,1.25,1,1.05]; if(e.at==='疫苗种') w[2]+=.12; if(e.at==='病毒种'){ w[1]+=.08; w[3]+=.08; } if(e.at==='数据种') w[4]+=.12;
+    const ws=w.reduce((a,x)=>a+x,0), b6=w.map(x=>Math.max(10,Math.round(tot*x/ws)));
+    const t1=tys[0]||(e.at==='病毒种'?'恶':'一般'), t2=tys[1]&&tys[1]!==t1?tys[1]:'';
+    SP[id]=[e.zh,e.en,t1,e.st==='究极体'?4:e.st==='完全体'?3:2,b6[0],b6[1],b6[2],b6[5],t2,0,0]; BASE6[id]=b6;
+    LS[id]=[...mvs.map(m=>[1,m]),...(mvs.length<2?[[1,33]]:[])];   /* 必杀技少于两招：补一招撞击 */
+    const src='data:image/png;base64,'+DIGI_IMG[e.id], fr=await dgFlip(src,e.st,false), bk=await dgFlip(src,e.st,true);
+    SPR[id]=fr; SPRS[id]=fr; SPB[id]=bk; SPBS[id]=bk; DGREG.ids.push(id); } }
+function dgUnregister(){ if(!DGREG) return; DGREG.ids.forEach(id=>{ [SP,BASE6,LS,SPR,SPRS,SPB,SPBS].forEach(T=>{ delete T[id]; }); if(S.seen) delete S.seen[id]; });
+  DGREG.mvs.forEach(m=>{ delete MV[m]; delete FXF[m]; delete FXDUR[m]; SPECIAL.delete(m); }); DGREG=null; }
+let DGRUN=null;   /* 进行中的测试对战：{team:原本的队伍} */
+async function dgStart(cfg,mine,foes,lv,flv){ if(DGRUN) return toast('上一场测试对战还没结束');
+  const pk=DGB.side==='p', team=pk?S.team.map(mon).filter(m=>m&&!isBusy(m)):[];
+  if(pk&&!team.length) return toast('队伍里没有能上场的宝可梦');
+  if(!pk&&!mine.length) return toast('先选我方的数码宝贝');
+  if(!foes.length) return toast('先选对手');
+  await dgRegister([...new Set([...(pk?[]:mine),...foes.map(f=>f.e)])]);
+  S.mons=S.mons.filter(m=>!m.test); S.nuid=Math.max(S.nuid||0,...S.mons.map(m=>m.uid+1));
+  const tms=pk?team.map(m=>{ const c=JSON.parse(JSON.stringify(m)); c.uid=S.nuid++; c.test=1; ['hpr','pp','sta','slpT','toxN','fav','ms','sig'].forEach(k=>delete c[k]); return c; })
+    :mine.map(e=>({uid:S.nuid++,id:dgSid(e),lv,exp:0,g:'N',mv:LS[dgSid(e)].map(x=>x[1]).slice(0,4),test:1,dg:1}));
+  S.mons.push(...tms); const old=S.team.slice(); S.team=tms.map(m=>m.uid); DGRUN={team:old};
+  startBattle({...cfg,kind:'npc',test:1,wildEnt:1,noPop:true,reward:null,foes:foes.map(f=>({id:dgSid(f.e),lv:f.lv,hpm:f.hpm||1,sm:f.sm||1})),foe:{id:dgSid(foes[0].e),lv:foes[0].lv}});
+  S.team=old; if(!B||!B.cfg||!B.cfg.test){ dgCleanup(); } }
+function dgCleanup(){ if(!DGRUN) return; if(B&&B.cfg&&B.cfg.test) B=null; S.team=DGRUN.team.filter(u=>S.mons.some(m=>m.uid===u&&!m.test)); DGRUN=null; S.mons=S.mons.filter(m=>!m.test); dgUnregister(); save(); if(tab==='digi') rDigi(); }
+setInterval(()=>{ if(DGRUN&&$('#modal').hidden) dgCleanup(); },500);   /* 对战框关掉就收拾 */
+/* 测试对战：赢了不给经验奖励、不算战绩；输了不扣钱 */
+{ const _w=bWin; bWin=function(){ const b=B; if(b&&b.cfg&&b.cfg.test){ saveActive(); b.log.push('胜利！'); b.log.push('测试对战：不给经验和奖励，也不算战绩。'); b.over='end'; return bRender(); } return _w.apply(this,arguments); }; }
+/* 选数码宝贝的下拉：有图的才列；Boss 页只列究极体 */
+let DGB={side:'d',me:['agumon','gabumon',''],mlv:50,foe:['devimon','',''],flv:50};
+let DGBS={id:'omnimon',lv:70,hp:5};
+const dgHas=e=>!!DIGI_IMG[e.id];
+const dgOpts=(v,filt,empty)=>`${empty?`<option value="">（空）</option>`:''}${DIGI.filter(e=>dgHas(e)&&(!filt||filt(e))).map(e=>`<option value="${e.id}" ${v===e.id?'selected':''}>No.${String(e.n).padStart(3,'0')} ${e.zh}（${e.st}）</option>`).join('')}`;
+const dgPick=(k,i,v,filt)=>{ const e=DIGI.find(x=>x.id===v); return `<div class="dgpick"><div class="dgpv">${e?dgImg(e,56):'<div class="dgq" style="width:40px;height:40px;font-size:18px;line-height:40px">＋</div>'}</div><select data-dgp="${k}:${i}" aria-label="${k==='me'?'我方':'对手'}第 ${i+1} 只">${dgOpts(v,filt,i>0)}</select></div>`; };
+const dgSide=()=>`<div class="dgsd"><b>我方</b><div class="row" style="gap:6px"><button class="btn fchip ${DGB.side==='d'?'on':'alt'}" data-dgs="d">数码宝贝</button><button class="btn fchip ${DGB.side==='p'?'on':'alt'}" data-dgs="p">我的宝可梦队伍</button></div>
+  ${DGB.side==='d'?`<div class="dgpicks">${[0,1,2].map(i=>dgPick('me',i,DGB.me[i])).join('')}</div><label class="dglv">等级 <input type="number" min="1" max="100" value="${DGB.mlv}" data-dgl="mlv"></label>`:`<div class="muted">用现在的队伍（${S.team.map(mon).filter(Boolean).map(m=>SP[m.id][0]).join('、')||'没有宝可梦'}）。对战用的是复制品，HP、PP、经验都不会变。</div>`}</div>`;
+const dgNote='<div class="muted dgnote">测试用：不给经验和奖励、不算战绩，输了也不扣钱。数码宝贝的种族值和招式威力是按阶段自动算的。</div>';
+function dgBindCommon(){ dgTabBind();
+  document.querySelectorAll('[data-dgs]').forEach(b=>b.onclick=()=>{ DGB.side=b.dataset.dgs; rDigi(); });
+  document.querySelectorAll('[data-dgp]').forEach(s=>s.onchange=()=>{ const [k,i]=s.dataset.dgp.split(':'); if(k==='boss') DGBS.id=s.value; else DGB[k][+i]=s.value; rDigi(); });
+  document.querySelectorAll('[data-dgl]').forEach(x=>x.onchange=()=>{ const v=Math.max(1,Math.min(100,parseInt(x.value)||1)); if(x.dataset.dgl==='blv') DGBS.lv=v; else DGB[x.dataset.dgl]=v; x.value=v; }); }
+const dgSel=a=>a.map(id=>DIGI.find(e=>e.id===id)).filter(e=>e&&dgHas(e));
+function dgBattlePage(){
+  $('#main').innerHTML=`<section class="panel">${dgTabs()}<div class="card dgh"><h2 style="margin:0 0 4px">数码宝贝 · 对战 <span class="tag">测试</span></h2>${dgNote}</div>
+   <div class="card dgbt">${dgSide()}
+    <div class="dgsd"><b>对手</b><div class="dgpicks">${[0,1,2].map(i=>dgPick('foe',i,DGB.foe[i])).join('')}</div><label class="dglv">等级 <input type="number" min="1" max="100" value="${DGB.flv}" data-dgl="flv"></label></div>
+    <div class="row"><button class="btn" id="dggo">开始对战</button></div></div></section>`;
+  dgBindCommon();
+  $('#dggo').onclick=()=>{ const fo=dgSel(DGB.foe); dgStart({title:`数码宝贝对战（测试）`,tag:'数码宝贝对战'},dgSel(DGB.me),fo.map(e=>({e,lv:DGB.flv})),DGB.mlv); }; }
+function dgBossPage(){ const isM=e=>e.st==='究极体'; if(!DIGI.some(e=>e.id===DGBS.id&&isM(e)&&dgHas(e))) DGBS.id=(DIGI.find(e=>isM(e)&&dgHas(e))||{}).id;
+  const e=DIGI.find(x=>x.id===DGBS.id);
+  $('#main').innerHTML=`<section class="panel">${dgTabs()}<div class="card dgh"><h2 style="margin:0 0 4px">数码宝贝 · 世界 Boss <span class="tag">测试</span></h2>${dgNote}</div>
+   <div class="card dgbt"><div class="dgsd"><b>Boss（究极体）</b><div class="dgboss"><div class="dgbv">${e?dgImg(e,120):''}</div><div><select data-dgp="boss:0" aria-label="Boss">${dgOpts(DGBS.id,isM,false)}</select>
+     <label class="dglv">等级 <input type="number" min="1" max="100" value="${DGBS.lv}" data-dgl="blv"></label><div class="muted" style="margin-top:6px">血量是一般的 ${BOSS_HP} 倍、能力 ×${BOSS_STAT}，和宝可梦世界 Boss 一样；像野外一样出场。</div></div></div></div>
+    ${dgSide()}<div class="row"><button class="btn" id="dggo">挑战 Boss</button></div></div></section>`;
+  dgBindCommon();
+  $('#dggo').onclick=()=>{ const b=DIGI.find(x=>x.id===DGBS.id); if(!b) return; dgStart({title:`世界 Boss（测试） · ${b.zh}`,tag:'世界 Boss（测试）'},dgSel(DGB.me),[{e:b,lv:DGBS.lv,hpm:BOSS_HP,sm:BOSS_STAT}],DGB.mlv); }; }
 { const st=document.createElement('style'); st.textContent=`
 .dgh .tag{vertical-align:middle;font-size:12px}
 .dgf{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}.dgf select,.dgf input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--card);color:var(--ink)}.dgf input{width:170px}
@@ -16796,7 +16884,15 @@ function dgClose(){ $('#modal').hidden=true; $('#battle').innerHTML=''; }
 .dgchain{height:auto;min-height:80px;padding:4px 0}.dgchain .pd-ek.many{grid-template-columns:repeat(2,auto)}.dgchain .pd-en{min-width:60px}.dgchain .pd-en b{white-space:nowrap}
 .dgev{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
 .dgev .dgq{width:36px;height:36px;font-size:18px;line-height:36px}.dgev small{display:block;color:var(--ink2);font-size:11px}
-.dgev:hover{border-color:var(--leaf)}`; document.head.appendChild(st); }
+.dgev:hover{border-color:var(--leaf)}
+.dgtabs{gap:6px;margin-bottom:10px}.dgtabs small{font-size:11px;opacity:.75}
+.dgbt{display:grid;gap:14px}.dgsd{display:grid;gap:8px}.dgsd>b{font-size:15px}
+.dgpicks{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}.dgpick{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--card);min-width:0}.dgpick select{flex:1;min-width:0;max-width:100%}.dgboss select{max-width:100%}
+.dgpv{width:60px;height:60px;display:flex;align-items:center;justify-content:center}
+.dgpick select,.dgboss select,.dglv input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--card);color:var(--ink)}
+.dglv{display:inline-flex;align-items:center;gap:6px}.dglv input{width:76px}
+.dgboss{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.dgbv{width:140px;height:140px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:radial-gradient(#fff8 0,#0000 70%),linear-gradient(160deg,#b07acc,#3b2a5c)}
+.dgnote{margin-top:4px}`; document.head.appendChild(st); }
 /* ===== 第二十一阶段结束 ===== */
 /* 保险（Kris 2026-11-18）：弹窗打开了、内容却没画出来（中途出错）时，不要留下一个空白框挡住画面——直接关掉 */
 (function(){ const md=document.getElementById('modal'), bt=document.getElementById('battle'); if(!md||!bt) return;
