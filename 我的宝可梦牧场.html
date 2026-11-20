@@ -16740,16 +16740,45 @@ function rDigi(){ const n1=DIGI.filter(e=>e.g===1).length, n2=DIGI.length-n1, ni
 function dgGrid(){ const L=dgList();
   $('#dggrid').innerHTML=L.map(e=>`<div class="pull dc dgcard" data-dg="${e.id}" role="button" tabindex="0" aria-label="${e.zh}"><div class="dgp">${dgImg(e)}</div><div class="nm"><b>${e.zh}</b></div><div class="muted">No.${String(e.n).padStart(3,'0')} · 第${e.g===1?'一':'二'}代</div><div class="tg">${e.st?`<span class="tag">${e.st}</span>`:''}${e.at?`<span class="tag dga-${e.at}">${e.at}</span>`:''}</div></div>`).join('')||'<div class="muted">没有符合条件的数码宝贝</div>';
   $('#dgc').textContent=`显示 ${L.length}/${DIGI.length} 只`; }
+/* 详情做成和宝可梦图鉴一样（Kris 2026-11-21）：上面 ◀ ▶ / 图鉴详情 / 关闭；左边大图（底色按属性），中间编号、名字、阶段 / 属性、种族、进化路线，右边图鉴介绍；下面两块：必杀技、进化 */
+const DG_AC={'疫苗种':['#5aa7e6','#2f6fb0'],'数据种':['#7cc46a','#3f8a3a'],'病毒种':['#b07acc','#6b3d8f'],'自由种':['#e6c15a','#b0862f'],'不明':['#9aa0a6','#5f666d']};
 function dgDetail(id){ const L=dgList(), e=DIGI.find(x=>x.id===id); if(!e) return; const i=L.findIndex(x=>x.id===id), by=k=>DIGI.find(x=>x.id===k);
-  const chips=a=>a.length?a.map(([k,tag])=>{ const x=by(k); return x?`<button type="button" class="dgev" data-dgo="${k}">${dgImg(x,38)}<span>${x.zh}${tag&&DG_TAG[tag]?`<small>${DG_TAG[tag]}</small>`:''}</span></button>`:''; }).join(''):'<span class="muted">—</span>';
-  const row=(k,v)=>`<div><span class="muted">${k}</span><b>${v||'—'}</b></div>`;
-  showRes({title:`No.${String(e.n).padStart(3,'0')} ${e.zh}`,sub:`${e.en} · 第${e.g===1?'一':'二'}代${e.src==='A'?' · 图来自动画那套':''}`,
-    body:`<div class="dgd"><div class="dgbig">${dgImg(e,170)}</div><div class="dginfo">${row('阶段',e.st)}${row('属性',e.at)}${row('种族',e.ty)}</div></div>
-      <div class="dgmvw"><b>必杀技</b>${e.mv&&e.mv.length?`<div class="dgmvs">${e.mv.map(([n,d])=>`<div class="dgmv"><b>${n}</b><span>${d}</span></div>`).join('')}</div>`:'<div class="muted" style="margin-top:4px">暂无资料</div>'}</div>
-      <p class="dgds">${e.ds||'<span class="muted">暂无介绍</span>'}</p>
-      <div class="dgevw"><b>由谁进化来</b><div class="dgevs">${chips(e.f)}</div></div><div class="dgevw"><b>可以进化成</b><div class="dgevs">${chips(e.t)}</div></div>`,
-    actions:[['◀ 上一只',()=>{ if(i>0) dgDetail(L[i-1].id); },'alt',!(i>0)],['下一只 ▶',()=>{ if(i>=0&&i<L.length-1) dgDetail(L[i+1].id); },'alt',!(i>=0&&i<L.length-1)],['关闭',()=>{ $('#gpop').hidden=true; },'']]});
-  const g=$('#gpop'); if(g) g.querySelectorAll('[data-dgo]').forEach(b=>b.onclick=()=>dgDetail(b.dataset.dgo)); }
+  const [c1,c2]=DG_AC[e.at]||['#c9c3a8','#8f8a72'], no=String(e.n).padStart(3,'0');
+  const node=(x,cur,tag)=>`<div class="pd-en ${cur?'cur':''}" data-dgo="${x.id}" role="button" tabindex="0" style="cursor:pointer" title="${x.zh}${tag&&DG_TAG[tag]?'（'+DG_TAG[tag]+'）':''}">${dgImg(x,36)}<b>${x.zh}</b></div>`;
+  const col=a=>a.map(([k,t])=>by(k)?node(by(k),false,t):'').join('');
+  const chain=(e.f.length||e.t.length)?`<div class="pd-chain dgchain"><div class="pd-ev">${e.f.length?`<div class="pd-ek ${e.f.length>3?'many':''}">${col(e.f)}</div><span class="pd-ar">›</span>`:''}${node(e,true)}${e.t.length?`<span class="pd-ar">›</span><div class="pd-ek ${e.t.length>3?'many':''}">${col(e.t)}</div>`:''}</div></div>`:'<div class="pd-chain"><span class="muted">没有进化</span></div>';
+  const tyChip=(t,c)=>t?`<span class="pd-ty big" style="--c:${c}"><i>${t}</i></span>`:'';
+  const mv=e.mv&&e.mv.length?`<div class="dx-ls">${e.mv.map(([n,d],k)=>`<div class="dx-lr dgmvr"><b>${k+1}</b><span class="ty" style="background:${c2}">必杀技</span><span>${n}</span><small class="muted">${d}</small></div>`).join('')}</div>`:'<div class="muted">官方图鉴没有收录必杀技</div>';
+  const evl=(t,a)=>`<div class="dgevl"><b>${t}</b>${a.length?a.map(([k,tg])=>{ const x=by(k); return x?`<button type="button" class="dgev" data-dgo="${k}">${dgImg(x,38)}<span>${x.zh}<small>${x.st}${tg&&DG_TAG[tg]?' · '+DG_TAG[tg]:''}</small></span></button>`:''; }).join(''):'<span class="muted">—</span>'}</div>`;
+  $('#battle').innerHTML=`<div class="md-head">
+    <div class="md-nav"><button class="btn alt" data-dgn="-1" aria-label="上一只" ${i>0?'':'disabled'}>◀</button><button class="btn alt" data-dgn="1" aria-label="下一只" ${i>=0&&i<L.length-1?'':'disabled'}>▶</button>${i>=0?`<span class="muted">${i+1}/${L.length}</span>`:''}</div>
+    <div class="muted" style="text-align:center">图鉴详情</div>
+    <div class="md-hact"><button class="btn alt" data-dgx="1">关闭</button></div>
+  </div>
+  <div class="md-body">
+   <div class="pd-top">
+    <div class="pd-lcol"><div class="pd-art dgart" style="--c1:${c1};--c2:${c2}">${dgImg(e,150)}<span class="pd-cnt">${e.st||'阶段不明'}</span></div></div>
+    <div class="pd-mid">
+      <div class="pd-id">No.${no} · ${e.en} <span class="muted">第${e.g===1?'一':'二'}代</span></div>
+      <h2 class="pd-name">${e.zh}</h2>
+      <div class="row" style="gap:6px;flex-wrap:wrap">${tyChip(e.st,'#c8963e')}${tyChip(e.at,c1)}</div>
+      <div class="muted" style="margin-top:6px">种族：${e.ty||'—'}</div>
+      <div class="muted" style="margin-top:10px">进化路线</div>${chain}
+    </div>
+    <div class="pd-right">
+      <div class="pd-colh">图鉴介绍</div><div class="dgds">${e.ds||'<span class="muted">暂无介绍</span>'}</div>
+    </div>
+   </div>
+   <div class="pd-panels">
+    <section class="pd-p" style="--c1:${c1};--c2:${c2}"><header>必杀技</header><div class="pd-pb">${mv}</div></section>
+    <section class="pd-p" style="--c1:${c1};--c2:${c2}"><header>进化</header><div class="pd-pb">${evl('由谁进化来',e.f)}${evl('可以进化成',e.t)}</div></section>
+   </div>
+  </div>`;
+  const bt=$('#battle'); bt.querySelectorAll('[data-dgo]').forEach(b=>{ b.onclick=()=>dgDetail(b.dataset.dgo); b.onkeydown=ev=>{ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); dgDetail(b.dataset.dgo); } }; });
+  bt.querySelectorAll('[data-dgn]').forEach(b=>b.onclick=()=>{ const x=L[i+ +b.dataset.dgn]; if(x) dgDetail(x.id); });
+  bt.querySelector('[data-dgx]').onclick=dgClose;
+  $('#modal').hidden=false; bt.scrollTop=0; }
+function dgClose(){ $('#modal').hidden=true; $('#battle').innerHTML=''; }
 { const st=document.createElement('style'); st.textContent=`
 .dgh .tag{vertical-align:middle;font-size:12px}
 .dgf{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}.dgf select,.dgf input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--card);color:var(--ink)}.dgf input{width:170px}
@@ -16759,13 +16788,12 @@ function dgDetail(id){ const L=dgList(), e=DIGI.find(x=>x.id===id); if(!e) retur
 .pull.dgcard img.dgi,.dgi{image-rendering:pixelated;max-width:none;object-fit:contain;flex:none}
 .dgq{width:64px;height:64px;border-radius:50%;background:#e7e2cc;color:#9a9277;font:700 30px/64px var(--sans);text-align:center}
 .dga-疫苗种{background:#dff1ff;color:#1d5f95}.dga-数据种{background:#e9f7df;color:#3d7026}.dga-病毒种{background:#f6e2f3;color:#7b2a6e}.dga-自由种{background:#f3efd9;color:#6a5a25}
-.dgd{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.dgbig{min-width:180px;min-height:180px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:radial-gradient(#fffef6,#ece6cf);flex:1 1 180px}
-.dgbig .dgq{width:120px;height:120px;font-size:56px;line-height:120px}
-.dginfo{display:grid;gap:6px;flex:1 1 160px}.dginfo>div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:4px 0}
-.dgmvw{margin-top:12px}.dgmvs{display:grid;gap:6px;margin-top:6px}.dgmv{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:7px 10px;border-radius:10px;background:#f3efdc;border-left:4px solid #e0a43a}.dgmv b{color:#8a3a12}.dgmv span{color:var(--ink2);font-size:13px}
-.dgds{margin:12px 0;line-height:1.7}
-.dgevw{margin-top:8px}.dgevs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.dgds{line-height:1.75;font-size:13.5px}
+.dgart .dgq{width:120px;height:120px;font-size:56px;line-height:120px;background:#fff8}
+.pd-art.dgart img.dgi{object-fit:contain}
+.dgmvr{grid-template-columns:28px 56px auto minmax(0,1fr)}.dgmvr small{white-space:normal}
+.dgevl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}.dgevl>b{flex-basis:100%;font-size:13px}
+.dgchain{height:auto;min-height:80px;padding:4px 0}.dgchain .pd-ek.many{grid-template-columns:repeat(2,auto)}.dgchain .pd-en{min-width:60px}.dgchain .pd-en b{white-space:nowrap}
 .dgev{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
 .dgev .dgq{width:36px;height:36px;font-size:18px;line-height:36px}.dgev small{display:block;color:var(--ink2);font-size:11px}
 .dgev:hover{border-color:var(--leaf)}`; document.head.appendChild(st); }
