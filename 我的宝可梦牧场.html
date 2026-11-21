@@ -16892,7 +16892,8 @@ function dgBossPage(){ const isM=e=>e.st==='究极体'; if(!DIGI.some(e=>e.id===
 .dgds{line-height:1.75;font-size:13.5px}
 .dgart .dgq{width:120px;height:120px;font-size:56px;line-height:120px;background:#fff8}
 .pd-art.dgart img.dgi{object-fit:contain}
-.dgmvr{grid-template-columns:28px 56px auto minmax(0,1fr)}.dgmvr small{white-space:normal}
+.dgmvr{grid-template-columns:28px 56px auto minmax(0,1fr)}.dgmvr small{white-space:normal}.dgmvr>span:nth-of-type(2){white-space:nowrap}   /* 招式名不折行（Kris 2026-11-21：劲力三叉爪被挤成三行） */
+@media (max-width:600px){.dgmvr{grid-template-columns:28px 56px minmax(0,1fr)}.dgmvr>b,.dgmvr>.ty{grid-row:span 2}.dgmvr small{grid-column:3}}   /* 手机：说明放到招式名下面一行，不会被长招式名挤成一字一行 */
 .dgevl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}.dgevl>b{flex-basis:100%;font-size:13px}
 .dgchain{height:auto;min-height:80px;padding:4px 0}.dgchain .pd-ek.many{grid-template-columns:repeat(2,auto)}.dgchain .pd-en{min-width:60px}.dgchain .pd-en b{white-space:nowrap}
 .dgev{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
