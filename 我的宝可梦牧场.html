@@ -16797,13 +16797,16 @@ function dgClose(){ $('#modal').hidden=true; $('#battle').innerHTML=''; }
    对战结束、对战框关掉后全部删掉，所以不会混进野外、道馆、抽卡、图鉴这些宝可梦的地方。
    · 属性：用它必杀技的属性（最多两个）
    · 种族值：按阶段给总数（幼年期Ⅰ 200 … 究极体 580），必杀技多数是光线 / 炮的偏特攻，拳 / 爪的偏攻击；疫苗种防御高一点、病毒种攻击高一点、数据种特防高一点
-   · 必杀技：威力按阶段（幼年期 40、成长期 60、成熟期 / 装甲体 80、完全体 95、究极体 110；奥米加兽、帝皇龙甲兽、贝利亚吸血魔兽、奇美拉兽固定 150），命中 100；特效借同属性的宝可梦招式
+   · 必杀技：威力按阶段（幼年期 40、成长期 60、成熟期 / 装甲体 80、完全体 95、究极体 110；究极体里种族是圣xx型 / 古代xx型 / 魔王型 / 魔神型的固定 200；奇美拉兽固定 150），命中 100；特效借同属性的宝可梦招式
    · 我方用宝可梦队伍时，用的是队伍的复制品：HP、PP、经验、异常状态都不会影响真的宝可梦
    · 不给经验、奖励，不算战绩，输了也不会「眼前一黑」扣钱 */
 const DG_ID0=30000, DG_MV0=31000;
 const DG_TOT={'幼年期Ⅰ':200,'幼年期Ⅱ':260,'成长期':330,'成熟期':420,'装甲体':440,'混合体':500,'完全体':500,'究极体':580,'不明':330};   /* 混合体（十斗士）按完全体算 */
 const DG_POW={'幼年期Ⅰ':40,'幼年期Ⅱ':40,'成长期':60,'成熟期':80,'装甲体':80,'混合体':95,'完全体':95,'究极体':110,'不明':60};
 const DG_PWX={omnimon:150,imperialdramon:150,malomyotismon:150,kimeramon:150};   /* 指定数码宝贝的必杀技固定威力 */
+/* 究极体里种族是「圣xx型」「古代xx型」「魔王型」「魔神型」的，必杀技威力固定 200（Kris 2026-11-21；比上面的 150 优先） */
+const DG_PW200=/^(圣.*型|古代.*型|魔王型|魔神型)$/;
+const dgPwFix=e=>(e.st==='究极体'&&DG_PW200.test(e.ty||''))?200:DG_PWX[e.id];
 const DG_FXP={火:[7,53],水:[127,57],草:[452,412],电:[9,85],冰:[8,58],格斗:[280,411],毒:[398,188],地面:[89,414],飞行:[332,403],超能力:[428,94],虫:[404,405],岩石:[444,408],幽灵:[421,247],龙:[337,406],恶:[242,399],钢:[442,430],妖精:[583,585],一般:[33,129]};
 const dgSpc=(n,d)=>/炮|弹|光|波|气|焰|火|激光|雷|电|冷|冰|风|泡|咒|魅惑|领域|射线|能量|吐|音|叫|咆哮|潮|海啸|诅咒|黑暗|心/.test(n+d)&&!/拳|爪|撞|咬|啃|刺|斩|剑|锤|踢|压|冲|鞭|击|啄|挠|疾驰|滑行|头槌/.test(n);
 const dgSid=e=>DG_ID0+e.n;
@@ -16815,9 +16818,9 @@ function dgFlip(src,st,flip){ return new Promise(res=>{ const im=new Image(); im
     const t=(DG_SZ[st]||60)*DG_K, m=Math.max(im.width,im.height), s=t/m, w=Math.round(im.width*s), h=Math.round(im.height*s), dx=Math.round((B-w)/2), dy=Math.max(0,92*DG_K-h); x.imageSmoothingEnabled=s<1;
     if(flip){ x.translate(B,0); x.scale(-1,1); } x.drawImage(im,dx,dy,w,h); res(c.toDataURL('image/png')); }; im.onerror=()=>res(src); im.src=src; }); }
 async function dgRegister(list){ dgUnregister(); DGREG={ids:[],mvs:[]};
-  for(const e of list){ const id=dgSid(e), mvs=dgMvIds(e), pw=DG_PWX[e.id]||DG_POW[e.st]||60, tys=[];
+  for(const e of list){ const id=dgSid(e), mvs=dgMvIds(e), pw=dgPwFix(e)||DG_POW[e.st]||60, tys=[];
     (e.mv||[]).forEach((m,k)=>{ const t=m[2]||'一般', sp=dgSpc(m[0],m[1]), mid=mvs[k]; tys.includes(t)||tys.push(t);
-      MV[mid]=[m[0],t,(DG_PWX[e.id]?pw:pw+(k===e.mv.length-1&&k>0?10:0)),100,15]; if(sp) SPECIAL.add(mid);
+      MV[mid]=[m[0],t,(dgPwFix(e)?pw:pw+(k===e.mv.length-1&&k>0?10:0)),100,15]; if(sp) SPECIAL.add(mid);
       const pr=DG_FXP[t]||DG_FXP.一般, base=[pr[sp?1:0],pr[sp?0:1]].find(i=>FXF[i])||Object.keys(MV).map(Number).find(i=>i<1000&&FXF[i]&&MV[i][1]===t&&MV[i][2]>0);
       if(base){ FXF[mid]=FXF[base]; if(FXDUR[base]) FXDUR[mid]=FXDUR[base]; }
       DGREG.mvs.push(mid); });
