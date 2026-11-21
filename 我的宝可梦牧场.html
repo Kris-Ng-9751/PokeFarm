@@ -1255,7 +1255,9 @@ const gTag = m => gSym(gOf(m));
 const gName = g => g==='M'?'雄性':g==='F'?'雌性':'无性别';
 const gRatio = id => { const r=GR[id]; return r<0?'无性别':r===0?'只有雄性':r===8?'只有雌性':`♂ ${(8-r)*12.5}% / ♀ ${r*12.5}%`; };
 const typeStr = id => tyN(SP[id][2])+(SP[id][8]?'/'+tyN(SP[id][8]):'');
-const typeMult = (atk,id) => { let m=1; for (const d of [SP[id][2],SP[id][8]]) if(d){ const f=(CHART[atk]||{})[d]; if(f!==undefined) m*=f; } return m; };
+/* 数码宝贝没有属性弱点（Kris 2026-11-21）：打数码宝贝一律 ×1，没有效果拔群 / 不好 / 无效 */
+const isDgId=id=>+id>=30000&&+id<31000;
+const typeMult = (atk,id) => { if(isDgId(id)) return 1; let m=1; for (const d of [SP[id][2],SP[id][8]]) if(d){ const f=(CHART[atk]||{})[d]; if(f!==undefined) m*=f; } return m; };
 const imgs = {}; const getImg = (id,sh) => { const k=id+(sh?'s':''); return imgs[k] || (imgs[k]=Object.assign(new Image(),{src:spf(id,sh)})); };
 const RARN = ['','普通','稀有','超稀有','传说/幻兽'];
 window.__boot&&__boot(65,'正在读取你的存档…');
@@ -2534,7 +2536,7 @@ function rArena(){
 let B=null;
 const RAR=['','普通','稀有','超稀有','传说'];
 const stab=(a,type)=>a.tera===type?2:(a.noTy===type)?1:(plTy(a)&&plTy(a)!=='legend'&&!a.tera)?(plTy(a)===type?1.5:1):(a.tyO?a.tyO.includes(type):(SP[a.id][2]===type||SP[a.id][8]===type))?1.5:1;
-const typeMultM=(atk,d)=>{ if(d.tera){ const f=(CHART[atk]||{})[d.tera]; return f===undefined?1:f; } if(d.tyO||d.tyAdd){ let f=1; monTypes(d).forEach(t=>{ const x=(CHART[atk]||{})[t]; if(x!==undefined) f*=x; }); return f; } { const pt=plTy(d); if(pt&&pt!=='legend'){ const f=(CHART[atk]||{})[pt]; return f===undefined?1:f; } } return typeMult(atk,d.id); };
+const typeMultM=(atk,d)=>{ if(d&&isDgId(d.id)) return 1; if(d.tera){ const f=(CHART[atk]||{})[d.tera]; return f===undefined?1:f; } if(d.tyO||d.tyAdd){ let f=1; monTypes(d).forEach(t=>{ const x=(CHART[atk]||{})[t]; if(x!==undefined) f*=x; }); return f; } { const pt=plTy(d); if(pt&&pt!=='legend'){ const f=(CHART[atk]||{})[pt]; return f===undefined?1:f; } } return typeMult(atk,d.id); };
 const maxPow=(type,p)=>{ const f=type==='格斗'||type==='毒'; return p<=40?(f?70:90):p<=50?(f?75:100):p<=60?(f?80:110):p<=70?(f?85:120):p<=100?(f?90:130):p<=140?(f?95:140):(f?100:150); };
 const zPow=p=>p<=55?100:p<=65?120:p<=75?140:p<=85?160:p<=95?175:p<=100?180:p<=110?185:p<=125?190:195;
 const plain=id=>({id,name:MV[id][0],type:MV[id][1],pow:MV[id][2],acc:MV[id][3]});
@@ -16851,7 +16853,7 @@ const dgOpts=(v,filt,empty)=>`${empty?`<option value="">（空）</option>`:''}$
 const dgPick=(k,i,v,filt)=>{ const e=DIGI.find(x=>x.id===v); return `<div class="dgpick"><div class="dgpv">${e?dgImg(e,56):'<div class="dgq" style="width:40px;height:40px;font-size:18px;line-height:40px">＋</div>'}</div><select data-dgp="${k}:${i}" aria-label="${k==='me'?'我方':'对手'}第 ${i+1} 只">${dgOpts(v,filt,i>0)}</select></div>`; };
 const dgSide=()=>`<div class="dgsd"><b>我方</b><div class="row" style="gap:6px"><button class="btn fchip ${DGB.side==='d'?'on':'alt'}" data-dgs="d">数码宝贝</button><button class="btn fchip ${DGB.side==='p'?'on':'alt'}" data-dgs="p">我的宝可梦队伍</button></div>
   ${DGB.side==='d'?`<div class="dgpicks">${[0,1,2].map(i=>dgPick('me',i,DGB.me[i])).join('')}</div><label class="dglv">等级 <input type="number" min="1" max="100" value="${DGB.mlv}" data-dgl="mlv"></label>`:`<div class="muted">用现在的队伍（${S.team.map(mon).filter(Boolean).map(m=>SP[m.id][0]).join('、')||'没有宝可梦'}）。对战用的是复制品，HP、PP、经验都不会变。</div>`}</div>`;
-const dgNote='<div class="muted dgnote">测试用：不给经验和奖励、不算战绩，输了也不扣钱。数码宝贝的种族值和招式威力是按阶段自动算的。</div>';
+const dgNote='<div class="muted dgnote">测试用：不给经验和奖励、不算战绩，输了也不扣钱。数码宝贝的种族值和招式威力是按阶段自动算的。数码宝贝没有属性弱点：不管被什么属性的招式打，都是普通效果。</div>';
 function dgBindCommon(){ dgTabBind();
   document.querySelectorAll('[data-dgs]').forEach(b=>b.onclick=()=>{ DGB.side=b.dataset.dgs; rDigi(); });
   document.querySelectorAll('[data-dgp]').forEach(s=>s.onchange=()=>{ const [k,i]=s.dataset.dgp.split(':'); if(k==='boss') DGBS.id=s.value; else DGB[k][+i]=s.value; rDigi(); });
