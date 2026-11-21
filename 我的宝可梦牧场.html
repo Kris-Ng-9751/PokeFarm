@@ -16761,7 +16761,7 @@ function dgDetail(id){ const L=dgList(), e=DIGI.find(x=>x.id===id); if(!e) retur
   const col=a=>a.map(([k,t])=>by(k)?node(by(k),false,t):'').join('');
   const chain=(e.f.length||e.t.length)?`<div class="pd-chain dgchain"><div class="pd-ev">${e.f.length?`<div class="pd-ek ${e.f.length>3?'many':''}">${col(e.f)}</div><span class="pd-ar">›</span>`:''}${node(e,true)}${e.t.length?`<span class="pd-ar">›</span><div class="pd-ek ${e.t.length>3?'many':''}">${col(e.t)}</div>`:''}</div></div>`:'<div class="pd-chain"><span class="muted">没有进化</span></div>';
   const tyChip=(t,c)=>t?`<span class="pd-ty big" style="--c:${c}"><i>${t}</i></span>`:'';
-  const mv=e.mv&&e.mv.length?`<div class="dx-ls">${e.mv.map(([n,d,t],k)=>`<div class="dx-lr dgmvr"><b>${k+1}</b><span class="ty" style="background:${TYC[t]||'#aaa'}">${t||'—'}</span><span>${n}</span><small class="muted">${d}</small></div>`).join('')}</div>`:'<div class="muted">官方图鉴没有收录必杀技</div>';
+  const mv=e.mv&&e.mv.length?`<div class="dx-ls">${e.mv.map(([n,d,t],k)=>`<div class="dx-lr dgmvr" style="grid-template-columns:28px 56px max-content minmax(0,1fr)"><b>${k+1}</b><span class="ty" style="background:${TYC[t]||'#aaa'}">${t||'—'}</span><span style="white-space:nowrap">${n}</span><small class="muted" style="white-space:normal;text-align:right">${d}</small></div>`).join('')}</div>`:'<div class="muted">官方图鉴没有收录必杀技</div>';
   const evl=(t,a)=>`<div class="dgevl"><b>${t}</b>${a.length?a.map(([k,tg])=>{ const x=by(k); return x?`<button type="button" class="dgev" data-dgo="${k}">${dgImg(x,38)}<span>${x.zh}<small>${x.st}${tg&&DG_TAG[tg]?' · '+DG_TAG[tg]:''}</small></span></button>`:''; }).join(''):'<span class="muted">—</span>'}</div>`;
   $('#battle').innerHTML=`<div class="md-head">
     <div class="md-nav"><button class="btn alt" data-dgn="-1" aria-label="上一只" ${i>0?'':'disabled'}>◀</button><button class="btn alt" data-dgn="1" aria-label="下一只" ${i>=0&&i<L.length-1?'':'disabled'}>▶</button>${i>=0?`<span class="muted">${i+1}/${L.length}</span>`:''}</div>
@@ -16892,8 +16892,8 @@ function dgBossPage(){ const isM=e=>e.st==='究极体'; if(!DIGI.some(e=>e.id===
 .dgds{line-height:1.75;font-size:13.5px}
 .dgart .dgq{width:120px;height:120px;font-size:56px;line-height:120px;background:#fff8}
 .pd-art.dgart img.dgi{object-fit:contain}
-.dgmvr{grid-template-columns:28px 56px auto minmax(0,1fr)}.dgmvr small{white-space:normal}.dgmvr>span:nth-of-type(2){white-space:nowrap}   /* 招式名不折行（Kris 2026-11-21：劲力三叉爪被挤成三行） */
-@media (max-width:600px){.dgmvr{grid-template-columns:28px 56px minmax(0,1fr)}.dgmvr>b,.dgmvr>.ty{grid-row:span 2}.dgmvr small{grid-column:3}}   /* 手机：说明放到招式名下面一行，不会被长招式名挤成一字一行 */
+/* 必杀技列表：栏宽直接写在每一行的 style 上（Kris 2026-11-21：有的浏览器里共用的 .dx-lr 栏宽盖过了这里，招式名被挤成几行、和说明叠在一起），手机再用 !important 改成说明放下一行 */
+@media (max-width:600px){.dx-lr.dgmvr{grid-template-columns:28px 56px minmax(0,1fr)!important}.dx-lr.dgmvr>b,.dx-lr.dgmvr>.ty{grid-row:span 2}.dx-lr.dgmvr>small{grid-column:3;text-align:left!important}.dx-lr.dgmvr>span:nth-of-type(2){white-space:normal!important}}
 .dgevl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}.dgevl>b{flex-basis:100%;font-size:13px}
 .dgchain{height:auto;min-height:80px;padding:4px 0}.dgchain .pd-ek.many{grid-template-columns:repeat(2,auto)}.dgchain .pd-en{min-width:60px}.dgchain .pd-en b{white-space:nowrap}
 .dgev{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
