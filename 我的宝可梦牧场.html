@@ -5515,10 +5515,15 @@ const LGC_BOSS=[150,250,384,493,646,718,800,890,1024];   /* 关都 超梦、城�
 const LGC_LV={n:70,b:80}, LGC_RW={n:{first:{coins:3000,stars:60},daily:{coins:500}},b:{first:{coins:8000,stars:150,items:{candy:5}},daily:{coins:1200}}};
 let lgcTab=0;
 /* 每只神兽 / 幻兽都有对应的变身（Kris 2026-11-26）：开场就变（和世界 Boss 一样）。
-   有 Mega（含原始回归）的就 Mega（超梦随机 X / Y）；无极汰那 无极巨化；伽勒尔能极巨化的就极巨化；其余太晶化成自己的属性 */
+   有 Mega（含原始回归）的就 Mega（超梦随机 X / Y）；无极汰那 无极巨化；伽勒尔能极巨化的就极巨化；其余太晶化（属性挑能抵消自己弱点的） */
 function lgcForm(id){ if(id===890) return {k:'etm'}; const fs=MEGA[id]; if(fs&&fs.length) return {k:'mega',f:fs[Math.floor(Math.random()*fs.length)]};
-  if(SP[id][9]===8&&!NODYN.has(id)) return {k:'dyn'}; return {k:'tera',t:SP[id][2]}; }
-const lgcFormTxt=id=>{ if(id===890) return '无极巨化'; const fs=MEGA[id]; if(fs&&fs.length) return fs.length>1?`Mega 进化（${fs.map(f=>SP[f][0]).join(' / ')} 随机）`:(fs[0]===10077||fs[0]===10078?'原始回归':'Mega 进化'); if(SP[id][9]===8&&!NODYN.has(id)) return '极巨化'; return `太晶化（${SP[id][2]}）`; };
+  if(SP[id][9]===8&&!NODYN.has(id)) return {k:'dyn'}; return {k:'tera',t:lgcTera(id)}; }
+/* 太晶属性挑能抵消弱点的（Kris 2026-11-26）：看原本属性怕哪些属性，选一个能把这些弱点挡掉最多的太晶属性；
+   先选原本的弱点一个都不剩（或剩最少）的，再比原本弱点打到新属性的倍数加总、新属性自己的弱点数量，同分取原本的属性 / 排前面的 */
+const tm1=(a,d)=>{ const r=(CHART[a]||{})[d]; return r==null?1:r; };
+function lgcTera(id){ const t0=[SP[id][2],SP[id][8]].filter(Boolean), weak=TYPES.filter(a=>t0.reduce((m,d)=>m*tm1(a,d),1)>1); if(!weak.length) return SP[id][2];
+  let best=null; TYPES.forEach(T=>{ const left=weak.filter(a=>tm1(a,T)>1).length, sc=weak.reduce((x,a)=>x+tm1(a,T),0), nw=TYPES.filter(a=>tm1(a,T)>1).length, k=[left,sc,nw,t0.includes(T)?0:1]; if(!best||k.some((v,i)=>v!==best.k[i]&&k.slice(0,i).every((w,j)=>w===best.k[j])&&v<best.k[i])) best={T,k}; }); return best.T; }   /* 先比还剩几个弱点，再比倍数加总、新弱点数量 */
+const lgcFormTxt=id=>{ if(id===890) return '无极巨化'; const fs=MEGA[id]; if(fs&&fs.length) return fs.length>1?`Mega 进化（${fs.map(f=>SP[f][0]).join(' / ')} 随机）`:(fs[0]===10077||fs[0]===10078?'原始回归':'Mega 进化'); if(SP[id][9]===8&&!NODYN.has(id)) return '极巨化'; return `太晶化（${lgcTera(id)}）`; };
 const lgcList=ri=>{ const boss=LGC_BOSS[ri]; return Object.keys(SP).map(Number).filter(id=>id<=1025&&SP[id][10]>=2&&SP[id][9]===ri+1&&id!==boss).sort((a,b)=>a-b); };
 const lgcOpen=ri=>!!S.champ[ri];
 const lgcLeft=ri=>lgcList(ri).filter(id=>!((S.lgc||{})[id]||{}).c).length;   /* 大 Boss 要先打赢这个地区其他全部神兽 / 幻兽（Kris 2026-11-26） */
