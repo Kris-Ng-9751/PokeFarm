@@ -2939,7 +2939,7 @@ function foeStatusPick(f,st){ const b=B, hr=b.fh/b.fx, me=b.me; let W=0; const c
 function foeChoose(){ const b=B, f=b.foe, cs=b.fmv.map(plain), dm=cs.filter(c=>c.pow>0), st=cs.filter(c=>!c.pow&&MVS[c.id]);
   const sp=st.length?foeStatusPick(f,st):null; if(sp) return sp;
   const pool=dm.length?dm:cs; let base=pool[Math.floor(Math.random()*pool.length)];
-  if(b.cfg&&/^(世界 Boss|道馆重赛|四天王重赛)/.test(b.cfg.tag||'')) return bossPick(b,f,pool,cs);   /* 重赛的馆员 / 馆主 / 四天王 / 冠军也用灵活出招（Kris 2026-11-25） */
+  if(b.cfg&&/^(世界 Boss|道馆重赛|四天王重赛|传奇训练家重赛)/.test(b.cfg.tag||'')) return bossPick(b,f,pool,cs);   /* 重赛的馆员 / 馆主 / 四天王 / 冠军也用灵活出招（Kris 2026-11-25） */
   if(Math.random()<.75){ let best=-1; pool.forEach(c=>{ let e=0; try{ e=dmg(f,b.me,c).d*Math.min(100,c.acc||100)/100; }catch(x){} if(e>best){ best=e; base=c; } }); }
   return base; }
 /* 世界 Boss 出招灵活一点（Kris 2026-11-20）：原来七成五都挑伤害最高的那招，整场几乎只用一招。
@@ -5411,6 +5411,8 @@ document.addEventListener('click',e=>{ const x=e.target.closest('[data-gr]'); if
   if(a==='close'){ $('#modal').hidden=true; return render(); } if(a==='go') return chnStep(); if(a==='quit'){ CHN=null; $('#modal').hidden=true; toast('放弃了这次重赛'); return render(); }
   if(a.startsWith('pv:')){ const [,ri,gi,dk]=a.split(':'); return grPreview(+ri,+gi,dk); }
   if(a.startsWith('e4pv:')){ const [,ri,dk]=a.split(':'); return e4Preview(+ri,dk); }
+  if(a.startsWith('lgpv:')){ const [,i,dk]=a.split(':'); return lgPreview(+i,dk); }
+  if(a.startsWith('lgstart:')){ const [,i,dk]=a.split(':'); $('#modal').hidden=true; return lgStart(+i,dk); }
   if(a.startsWith('start:')){ const [,ri,gi,dk]=a.split(':'); $('#modal').hidden=true; return grStart(+ri,+gi,dk); }   /* 先关掉预览，选队伍的弹窗才不会被挡住 */
   if(a.startsWith('e4start:')){ const [,ri,dk]=a.split(':'); $('#modal').hidden=true; return e4Start(+ri,dk); } });
 const grBtns=(ok,r,dk,attr,lv)=>`<button class="btn ${r.c?'':'alt'} grb grb-${dk}" data-gr="${attr}" ${ok?'':'disabled'}>${GRD[dk].nm}<small>${r.c?grStarsTxt(r):ok?lv:'🔒'}</small></button>`;
@@ -5474,12 +5476,35 @@ function rWk(){
 /* legendary trainers */
 const LEG_REG={'Red':'关都','Blue':'关都','Lance':'城都','Steven Stone':'丰缘','Cynthia':'神奥','Iris':'合众','Diantha':'卡洛斯','Alain':'卡洛斯','Leon':'伽勒尔','Geeta':'帕底亚','Nemona':'帕底亚','Ash':'动画'};
 function legGroups(){ const order=[...REGIONS,'动画'], g={}; TR.legend.forEach((o,i)=>{ const r=LEG_REG[o.en]||'其他'; (g[r]=g[r]||[]).push([o,i]); }); return Object.keys(g).sort((a,b)=>{ const x=order.indexOf(a), y=order.indexOf(b); return (x<0?99:x)-(y<0?99:y); }).map(r=>[r,g[r]]); }
+/* ---------- 传奇训练家重赛（Kris 2026-11-26）：打赢过这一位才开放；三个难度全员 Lv100，能力值不一样：
+   普通 努力值每项 25%（63）+ 粘糕每项 +10，困难 50%（126）+ 粘糕 +20，地狱 100%（252）+ 粘糕 +30；每只都带自己最强招式属性的宝石。
+   通关前一个难度才开放下一个；奖励、星级评价照道馆 / 四天王重赛（金额按四天王重赛）。对手出招和其他重赛一样灵活 ---------- */
+let lgRM=false;
+const LGD={n:{ev:25,bp:10},h:{ev:50,bp:20},x:{ev:100,bp:30}};
+const lgGet=o=>(S.lgR||{})[o.en]||{};
+const lgOK=(o,dk)=>{ const i=GRK.indexOf(dk); return !!S.legendBeat[o.en]&&(i===0||!!(lgGet(o)[GRK[i-1]]||{}).c); };
+const lgCurDk=o=>GRK.find(dk=>lgOK(o,dk)&&!(lgGet(o)[dk]||{}).c)||(lgOK(o,GRK[0])?GRK[GRK.length-1]:GRK[0]);
+const GEM_OF=Object.fromEntries(Object.entries(GEMS).map(([k,t])=>[t,k]));
+function lgGem(id){ let best=null; try{ (initMoves(id,100)||[]).forEach(m=>{ const v=MV[m]; if(!v||!(v[2]>0)) return; if(!best||v[2]>best[2]) best=v; }); }catch(e){} const t=(best&&best[1])||SP[id][2]; return GEM_OF[t]||GEM_OF[SP[id][2]]||'gm_0'; }   /* 威力最高的攻击招式是什么属性，就带那种宝石 */
+function lgTeam(o,dk){ const D0=LGD[dk], e=Math.round(252*D0.ev/100), ev={}, bp={}; [4,5,6,7,8,9].forEach(k=>{ ev[k]=e; bp[k]=D0.bp; });
+  return o.team.map(([id])=>({id,lv:100,ev:{...ev},bp:{...bp},gem:lgGem(id)})); }
+function lgPreview(i,dk){ const o=TR.legend[i], L=lgTeam(o,dk), D0=LGD[dk], E=E4D[dk], rec=lgGet(o)[dk]||{}, ace=L[L.length-1], at=[SP[ace.id][2],SP[ace.id][8]].filter(Boolean); B=null; D=null;
+  $('#battle').innerHTML=`<div class="grpv"><div class="row" style="justify-content:space-between"><h2 style="margin:0">传奇训练家重赛 · ${o.zh} · <span class="grd grd-${dk}">${GRD[dk].nm}</span></h2><button class="btn alt" data-gr="close">关闭</button></div>
+    <div class="muted" style="margin:6px 0">全员 Lv100 · 努力值每项 ${D0.ev}%（${Math.round(252*D0.ev/100)}） · 粘糕每项 +${D0.bp} · 每只带宝石${GM_LEGEND[o.en]?` · 王牌会${GKN(GM_LEGEND[o.en],SP[ace.id][2])}`:''}</div>
+    <div class="grchain"><div class="grst ldr">${trAv(o,ace.id)}<div><b>${o.zh}</b><div class="muted">${L.length} 只</div><div class="row" style="gap:6px;flex-wrap:wrap">${L.map(f=>`<span style="display:inline-flex;flex-direction:column;align-items:center"><img src="${SPR[f.id]}" alt="${SP[f.id][0]}" style="width:44px;height:44px;image-rendering:pixelated"><small class="muted">${SP[f.id][0]}</small><small class="muted">${iImg(f.gem,14)}${ITEMS[f.gem][0]}</small></span>`).join('')}</div></div></div></div>
+    <div class="grinfo"><div><b>奖励</b><div class="muted">首次通关：${rtext(E.first)}<br>之后每天第一次通关：${rtext(E.daily)}<br>星级评价每多 1 颗星：星尘 +${E.star}</div></div>
+    <div><b>星级评价</b> <span class="grstars">${grStarsTxt(rec)}</span><div class="muted">① 打完还剩 3 只以上没倒下<br>② 最后一击用效果拔群的招式<br>③ 队伍里有 3 只以上克制王牌（${at.join(' / ')}系）的宝可梦</div></div></div>
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" data-gr="lgstart:${i}:${dk}">开始挑战</button></div></div>`;
+  $('#modal').hidden=false; }
+function lgStart(i,dk){ const o=TR.legend[i]; if(!lgOK(o,dk)) return toast('还没开放'); const L=lgTeam(o,dk), E=E4D[dk], ace=L[L.length-1];
+  chnStart({tag:'传奇训练家重赛',label:`传奇训练家重赛 · ${GRD[dk].nm}`,fights:[{name:o.zh,team:L.map(f=>f.id),foes:L,lv:100,gk:GM_LEGEND[o.en]||null,tt:SP[ace.id][2],av:trAv(o,ace.id)}],
+    finish:b=>{ S.lgR=S.lgR||{}; const st=S.lgR[o.en]=S.lgR[o.en]||{}, rec=st[dk]=st[dk]||{}; return `打败了传奇训练家 ${o.zh}（${GRD[dk].nm}）！`+grSettle(rec,b,[SP[ace.id][2],SP[ace.id][8]].filter(Boolean),E.first,E.daily,E.star); }}); }
 function rLegend(){
-  const cc=champCount();
-  $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt">传奇训练家</h2><div class="muted">游戏里最强的几位训练家，队伍固定、等级很高。每位有<b>特定条件</b> + 训练家等级要求，第一次打赢奖励丰厚。</div></div>
+  const cc=champCount(), reOK=TR.legend.some(o=>S.legendBeat[o.en]), RM=lgRM&&reOK;
+  $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">传奇训练家${reOK?`<button class="btn ${RM?'':'alt'}" id="lgrm" aria-pressed="${RM}" style="font-size:14px;padding:4px 14px">${RM?'重赛中 · 返回':'重赛'}</button>`:''}</h2><div class="muted">${RM?`传奇训练家重赛：三个难度全员 Lv100，难度越高对手练得越足——普通：努力值每项 ${LGD.n.ev}%、粘糕每项 +${LGD.n.bp}；困难：努力值 ${LGD.h.ev}%、粘糕 +${LGD.h.bp}；地狱：努力值 ${LGD.x.ev}%、粘糕 +${LGD.x.bp}；每只都带自己最强招式属性的宝石。打赢过这一位才能重赛，通关前一个难度才开放下一个。点难度看对手阵容。`:`游戏里最强的几位训练家，队伍固定、等级很高。每位有<b>特定条件</b> + 训练家等级要求，第一次打赢奖励丰厚${reOK?'。打赢过的可以点「重赛」挑战更高难度':'；打赢以后可以重赛'}。`}</div></div>
   ${legGroups().map(([reg,arr])=>`<div class="reghead"><b>${reg}</b><span class="muted">已击败 ${arr.filter(([o])=>S.legendBeat[o.en]).length}/${arr.length}</span></div><div class="list">${arr.map(([o,i])=>{ const lc=legC(o), cok=lc.ok(), lvok=S.tl>=reqLv(o.team), open=cok&&lvok, done=S.legendBeat[o.en]; const ace=o.team[o.team.length-1][0];
-    return `<div class="item trc" style="${open?'':'opacity:.6'}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span>${done?' <span class="tag r4">已击败</span>':''}<div class="muted">${o.game||''} · 平均 Lv${avgLv(o.team)}</div><div class="muted" title="${lc.t}"><b style="color:${cok?'var(--leaf)':'var(--red)'}">条件：${lc.t}</b>（${lc.pg()}） · <b style="color:${lvok?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b></div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div></div></div><button class="btn red" data-lg="${i}" ${open?'':'disabled'}>${done?'再次挑战':'挑战'}</button></div>`; }).join('')}</div>`).join('')}</section>`;
-  document.querySelectorAll('[data-lg]').forEach(b=>b.onclick=()=>fightLegend(+b.dataset.lg));
+    return `<div class="item trc" style="${(RM?done:open)?'':'opacity:.6'}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span>${done?' <span class="tag r4">已击败</span>':''}${RM?(()=>{ const dk=lgCurDk(o), L=lgTeam(o,dk); return `<div class="muted">${done?`现在的难度：<b>${GRD[dk].nm}</b> · Lv100 · 努力值 ${LGD[dk].ev}% · 粘糕 +${LGD[dk].bp} · 带宝石`:'<b style="color:var(--red)">先打赢这一位才能重赛</b>'}</div><div class="row" style="gap:2px;margin-top:4px">${L.map(f=>`<span class="tmon"><img src="${SPR[f.id]}" alt="" title="${SP[f.id][0]} Lv100 · 带${ITEMS[f.gem][0]}"><small>${SP[f.id][0]} ${iImg(f.gem,12)}</small></span>`).join('')}</div>`; })():`<div class="muted">${o.game||''} · 平均 Lv${avgLv(o.team)}</div><div class="muted" title="${lc.t}"><b style="color:${cok?'var(--leaf)':'var(--red)'}">条件：${lc.t}</b>（${lc.pg()}） · <b style="color:${lvok?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b></div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div>`}</div></div>${RM?(()=>{ const st=lgGet(o); return `<div class="row grbtns">${GRK.map(dk=>grBtns(lgOK(o,dk),st[dk]||{},dk,`lgpv:${i}:${dk}`,'Lv100')).join('')}</div>`; })():`<button class="btn red" data-lg="${i}" ${open?'':'disabled'}>${done?'再次挑战':'挑战'}</button>`}</div>`; }).join('')}</div>`).join('')}</section>`;
+  document.querySelectorAll('[data-lg]').forEach(b=>b.onclick=()=>fightLegend(+b.dataset.lg)); { const t=$('#lgrm'); if(t) t.onclick=()=>{ lgRM=!lgRM; rLegend(); }; }
 }
 function fightLegend(i){ const o=TR.legend[i], first=!S.legendBeat[o.en]; if(S.tl<reqLv(o.team)) return toast(`训练家等级不够，需要 Lv${reqLv(o.team)}`); if(!legC(o).ok()) return toast('还没达成特定条件：'+legC(o).t); window.__trAvNext=trAv(o,o.team[o.team.length-1][0]);
   startTrainer('传奇训练家',`传奇训练家 · ${o.zh}`,o.team,first?{coins:3000,stars:50,items:{candy:10}}:{coins:300},()=>{ if(first){ S.legendBeat[o.en]=1; return `击败了传奇训练家 ${o.zh}！`+tgain(150); } return ''; },null,GM_LEGEND[o.en]); }
@@ -7427,7 +7452,7 @@ gBox(gH('性格培育','培育中心第二页'),`<p>把<b>一只宝可梦</b>和
   ].join(''),
  rank:()=>[
   gBox(gH('对战和段位'),`<p>「对战 → 对战」打 NPC、打其他玩家的阵容、2v2 双打（训练家 Lv${DUO_LV}）。每种每天最多 ${ARN_DAY} 次，0 点重置；手动刷新对手第一次免费，之后每次 ${REF_COST} 金币。要先在「我的对战阵容」锁定队伍，别人才能挑战你。</p>`+gTable(['结果','段位分'],[['赢 NPC','+3 到 +8（对手越强越多）'],['赢玩家','+20'],['输给玩家','-12'],['别人来挑战，你的阵容守住了','+12'],['别人来挑战，阵容被打败','-8']])+gTable(['段位','需要的段位分'],RANKS.map(([n,v])=>[n,v]))+`<p class="muted">「排行榜」可以按段位、图鉴、异色、对战塔、本周紧急任务排名，点一位训练家能看他的卡片。</p>`),
-  gBox(gH('道馆、四天王、传奇训练家'),`<ul class="gul"><li><b>道馆</b>：每个地区有自己的一组馆主，第一次打赢得徽章、TM、金币和星尘，之后只给少量金币。集齐一个地区的徽章去挑战<b>四天王</b>，打赢冠军就成为那个地区的冠军。</li><li><b>道馆重赛</b>：集齐一个地区的徽章后，在「道馆」标题旁边点「重赛」，每位馆主都有普通（Lv60）、困难（Lv80）、地狱（Lv100）三个难度，先连战馆员再打馆主；通关前一个难度才开放下一个。</li><li><b>四天王重赛</b>：成为该地区冠军后，在「四天王」标题旁边点「重赛」，普通 / 困难 / 地狱，连续打四天王和冠军。</li><li>重赛中间 HP 不回复；对手每位都带 6 只，王牌会 Mega / 太晶 / 极巨化，还会用回复道具；每场开场有天气。</li><li><b>星级评价</b>（每场最多 3 星）：① 打完还剩 3 只以上没倒下 ② 最后一击用效果拔群的招式 ③ 队伍里有 3 只以上克制对手属性的宝可梦。同一位馆主三个难度合计 9 星送 1 个粘糕。</li><li><b>传奇训练家</b>：游戏里最强的几位，队伍固定、等级很高，每位有特定条件。</li></ul>`),
+  gBox(gH('道馆、四天王、传奇训练家'),`<ul class="gul"><li><b>道馆</b>：每个地区有自己的一组馆主，第一次打赢得徽章、TM、金币和星尘，之后只给少量金币。集齐一个地区的徽章去挑战<b>四天王</b>，打赢冠军就成为那个地区的冠军。</li><li><b>道馆重赛</b>：集齐一个地区的徽章后，在「道馆」标题旁边点「重赛」，每位馆主都有普通（Lv60）、困难（Lv80）、地狱（Lv100）三个难度，先连战馆员再打馆主；通关前一个难度才开放下一个。</li><li><b>传奇训练家重赛</b>：打赢过的传奇训练家，在「传奇训练家」标题旁边点「重赛」。三个难度全员 Lv100：普通 努力值每项 25% + 粘糕 +10，困难 50% + 粘糕 +20，地狱 100% + 粘糕 +30，每只都带宝石；通关前一个难度才开放下一个。</li><li><b>四天王重赛</b>：成为该地区冠军后，在「四天王」标题旁边点「重赛」，普通 / 困难 / 地狱，连续打四天王和冠军。</li><li>重赛中间 HP 不回复；对手每位都带 6 只，王牌会 Mega / 太晶 / 极巨化，还会用回复道具；每场开场有天气。</li><li><b>星级评价</b>（每场最多 3 星）：① 打完还剩 3 只以上没倒下 ② 最后一击用效果拔群的招式 ③ 队伍里有 3 只以上克制对手属性的宝可梦。同一位馆主三个难度合计 9 星送 1 个粘糕。</li><li><b>传奇训练家</b>：游戏里最强的几位，队伍固定、等级很高，每位有特定条件。</li></ul>`),
   gBox(gH('周挑战'),`<p>「对战 → 周挑战」每周一个属性主题，分几档难度，对手越多、等级越高奖励越好；通关得赛季积分，<b>赛季每月重置</b>。训练家 Lv${FEAT.wk} 开放。</p>`),
     gBox(gH('世界 Boss'),`<ul class="gul">${LIVE()?`<li>监控有<b>告警</b>：出一只超稀有的非神兽 Boss；有 <b>P0 工单</b>：出一只神兽 Boss（要卡片 1 星），<b>P0 Boss 全服每天只会刷新一只</b>（0 点重置）：当天第一条 P0 工单变成 Boss，所有训练家看到的是同一只，当天后面再有 P0 工单也不会再出。每只 Boss 存在 1 小时，告警提前恢复了也不会走；同一个告警只出一只，要等它恢复后再次告警才会再出。</li>`:'<li>每小时整点刷新一只<b>超稀有以上</b>的 Boss（超稀有、传说、幻兽都有可能）；传说和幻兽的 Boss 要卡片 1 星。停留到下一个整点，没打完就换新的。</li>'}<li>Boss 的 HP 很高（告警 Boss ×5、神兽 Boss ×8），攻击、防御、特攻、特防、速度也强化（告警 ×${BOSS_STAT}、神兽 ×${P0_STAT}，组队每多 1 位队友再 +10%），还可能带 Mega、极巨化或太晶化的形态上场。可以个人挑战，也可以带最多 2 位队友组队。</li><li>打败后有 <b>10 次</b>捕捉机会，每次都用掉 1 次；打败的 Boss 会留在「已击败 · 等你捕捉」里，直到捉到或机会用完，没参与的人领全员奖励后也一样。</li></ul><div class="row" style="gap:4px">${[150,384,10169,10170,10171].map(id=>gSp(id,48)).join('')}</div>`),
   ].join('')};
@@ -16248,8 +16273,8 @@ const BGMA={"fish":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   const MFILE={battle:{s:20,e:51.779,bgm:1},victory:{s:4,e:17.7718,bgm:1},tbattle:{s:30,e:112.668,bgm:1},tvictory:{s:5,e:33.348,bgm:1},gbattle:{s:30,e:84.421,bgm:1},gvictory:{s:5.05,e:46.952,bgm:1},lbattle:{s:16,e:47.778,bgm:1},cbattle:{s:40.147,e:94.485,bgm:1},cvictory:{s:22.848,e:50.278,bgm:1},evolved:{},caught:{},levelup:{},mega:{},item:{},medal:{},heal:{},pcenter:{s:3.2,e:40.125,bgm:1},mart:{s:6,e:45.071,bgm:1},home:{s:2,e:55.3333,bgm:1},fish:{s:8.2,e:78.4458,bgm:1},mine:{s:8.5,e:47.2708,bgm:1},berry:{}};
   /* fish：钓鱼池的背景音乐（GBA 冲浪，8.2～78.446 秒循环）；mine：矿洞的背景音乐（GBA 卡那兹森林 / 石之洞窟，8.5～47.271 秒循环）；berry：农场亲手收获时「得到树果」的小曲；
      home：牧场「主页」的背景音乐（GBA 未白镇，前奏后 2～55.333 秒循环；没有自己曲子的页面都放这首（Kris 2026-11-19：原来合成的牧场曲拿掉了））；mart：商场的背景音乐（「商场」一组：商场、拍卖、交易；前奏 6 秒，之后 6～45.071 秒循环）；pcenter：宝可梦中心的背景音乐（前奏 3.2 秒，之后 3.2～40.125 秒循环）；heal：在宝可梦中心治疗的小曲；medal：拿到道馆徽章的小曲；item：领奖励时「得到了道具」的小曲（Kris 2026-11-19）；evolved：进化后的恭喜小曲；levelup：宝可梦升级的小曲（Kris 2026-11-19，播的时候背景音乐先压下去）；mega：Mega 进化 / 原始回归的音效（3DS 版，Kris 2026-11-19）；battle / victory：野生宝可梦；lbattle：世界 Boss（打赢用野生胜利曲）；gbattle / gvictory：道馆馆主、四天王；cbattle / cvictory：冠军、传奇训练家（Kris 2026-11-19）；tbattle / tvictory：其他训练家（NPC、双打、道馆馆员、对战塔、对战玩家…） */
-  const BOSSTAG=new Set(['道馆挑战','道馆重赛','四天王','冠军战','四天王重赛','传奇训练家']);
-  const CHAMP=c=>c.tag==='冠军战'||c.tag==='传奇训练家'||(c.tag==='四天王重赛'&&/· 冠军 /.test(c.title||''));   /* 冠军（含四天王重赛最后一场）、传奇训练家用冠军战的曲子 */
+  const BOSSTAG=new Set(['道馆挑战','道馆重赛','四天王','冠军战','四天王重赛','传奇训练家','传奇训练家重赛']);
+  const CHAMP=c=>c.tag==='冠军战'||c.tag==='传奇训练家'||c.tag==='传奇训练家重赛'||(c.tag==='四天王重赛'&&/· 冠军 /.test(c.title||''));   /* 冠军（含四天王重赛最后一场）、传奇训练家用冠军战的曲子 */
   const MBUF={}; let MUSG=null, FS=null, WANT=null;
   const musBus=()=>{ if(!MUSG){ MUSG=AC.createGain(); MUSG.connect(AC.destination); } MUSG.gain.value=SND.vol; return MUSG; };
   function musLoad(name){ if(MBUF[name]) return MBUF[name]; if(typeof BGMA==='undefined'||!BGMA[name]) return Promise.resolve(null);
@@ -16552,7 +16577,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
     setTimeout(()=>document.body.classList.remove('btwait'),2250);   /* 全黑了才换成对战画面 */
     setTimeout(()=>el.classList.add('open'),2350); setTimeout(()=>{ el.remove(); document.body.classList.remove('btwait'); },VSLEN+80);
     setTimeout(()=>{ if(window.__bgmSync) __bgmSync(); },0); }
-  const kindOf=cfg=>{ if(!cfg||cfg.kind==='wild'||(cfg.wildEnt&&!/^世界 Boss/.test(cfg.tag||''))) return 'wild'; const t=cfg.tag||''; if(/^(道馆挑战|道馆重赛|四天王|冠军战|四天王重赛|传奇训练家)$/.test(t)) return cfg.av?'vs':'boss'; return /^世界 Boss/.test(t)?'boss':'trainer'; };
+  const kindOf=cfg=>{ if(!cfg||cfg.kind==='wild'||(cfg.wildEnt&&!/^世界 Boss/.test(cfg.tag||''))) return 'wild'; const t=cfg.tag||''; if(/^(道馆挑战|道馆重赛|四天王|冠军战|四天王重赛|传奇训练家|传奇训练家重赛)$/.test(t)) return cfg.av?'vs':'boss'; return /^世界 Boss/.test(t)?'boss':'trainer'; };
   /* 转场要在真正开打时才播：有「出战队伍」窗的话，等玩家按「出战」才播（Kris 2026-11-18） */
   let pend=null;
   { const _tp=teamPop; teamPop=function(title,go,dbl){ const k=pend; pend=null; return _tp.call(this,title,function(){ if(k) try{ btIntro(k.k,k.av); openArm(k.k==='wild'); }catch(e){} return go.apply(this,arguments); },dbl); }; }
