@@ -10041,19 +10041,37 @@ function zyFillTick(){ const now=performance.now();
     const p=!f.at?0:Math.min(1,(now-f.at)/1200), e=1-Math.pow(1-p,2), pc=Math.round(100*(f.h/f.x0+(1-f.h/f.x0)*e)), v=Math.round(f.h+(f.x1-f.h)*e);
     if(bar){ bar.style.transition='none'; bar.style.width=pc+'%'; bar.className=pc>50?'g':pc>20?'y':'r'; }
     if(mt) mt.textContent=p>0?`${v} / ${f.x1}`:`${f.h} / ${f.x0}`;
-    if(p>=1){ ZYF.splice(i,1); if(bar) setTimeout(()=>{ bar.style.transition=''; },50); } }
+    if(p>=1){ ZYF.splice(i,1); if(bar) setTimeout(()=>{ bar.style.transition=''; },50); if(!ZYF.some(g=>g.bt===f.bt)) setTimeout(()=>zyFree(f.bt),150); } }
   if(ZYF.length&&!window.__zyfR) window.__zyfR=requestAnimationFrame(()=>{ window.__zyfR=0; zyFillTick(); }); }
 { const _ss=sizeSprites; sizeSprites=function(){ const r=_ss.apply(this,arguments); try{ zyFillTick(); }catch(e){ console.error(e); } return r; }; }
-/* 战斗里：HP 降到一半以下 → 群聚变形，变成完全体（只在这场战斗里；HP 上限变大，变身完 HP 补满） */
-function zyPC(b){ if(!b||b!==B||b.over||!b.me||!zyIs(b.me.id)||b.mh<=0||b.mh*2>b.mx) return;
-  const o=document.querySelector('#bme'), old=o&&o.getAttribute('src'), mx0=b.mx, h0=b.mh, id0=b.me.id; b.me.id=10182; b.me.pcOn=1; b.mx=maxhp(b.me); b.mh=b.mx;
-  b.log.push(`${SP[718][0]} 的群聚变形发动了！细胞们赶来支援，变成了完全体形态！`); zyFillAdd(b,'.ginfo.m',h0,mx0,b.mx,id0); if(old&&fxOn()) b.bbFx={n:b.log.length,old}; saveActive(); if(!b.beats) bRender(); }
-{ const _bt=bTurn; bTurn=function(){ const b=B; zyFillStop(b); const r=_bt.apply(this,arguments); try{ if(b&&B===b) zyPC(b); }catch(e){ console.error(e); } return r; }; }
-{ const _dt=dTurn; dTurn=function(){ const d=D; zyFillStop(d); const r=_dt.apply(this,arguments);
-    try{ if(d&&D===d&&!d.over) d.party.forEach((p,pi)=>{ const att=p.me; if(!att||!zyIs(att.id)||p.mh<=0||p.mh*2>p.mx) return; const sl=d.my.indexOf(pi); if(sl<0) return;
-      const sel=`.gsp.dm${sl} img`, o=document.querySelector('#battle '+sel), old=o&&o.getAttribute('src'), mx0=p.mx, h0=p.mh, id0=att.id; att.id=10182; att.pcOn=1; p.mx=maxhp(att); p.mh=p.mx;
-      d.log.push(`${SP[718][0]} 的群聚变形发动了！细胞们赶来支援，变成了完全体形态！`); zyFillAdd(d,`.ginfo.dm${sl}`,h0,mx0,p.mx,id0); if(old&&fxOn()) (d.bbFx=d.bbFx||[]).push({n:d.log.length,sel,old}); }); }catch(e){ console.error(e); }
-    return r; }; }
+/* 战斗里：HP 降到一半以下 → 群聚变形，变成完全体（只在这场战斗里；HP 上限变大，变身完 HP 补满）
+   Kris 2026-11-25：要等「回合结束」才变身——这一回合的招式、天气 / 中毒等回合末伤害、回放和倒下动作全部放完，画面停下来以后才变；
+   变身特效和补血进度条放完之前不能出招（b.busy），所以变身中不会再挨打。出场 / 换人进来的那一回合也一样等回合结束 */
+const ZY_MSG=()=>`${SP[718][0]} 的群聚变形发动了！细胞们赶来支援，变成了完全体形态！`;
+const zyIdle=x=>x&&!x.over&&!x.busy&&!x.stg&&!(x.beats&&x.beats.length)&&!x.pick&&!x.shift&&!x.__pendSend&&(typeof entWait!=='function'||entWait()<=0);
+const zyNeed=b=>!!(b&&b.me&&zyIs(b.me.id)&&b.mh>0&&b.mh*2<=b.mx);
+function zyBusy(x){ x.busy=true; clearTimeout(x.__zyT); x.__zyT=setTimeout(()=>zyFree(x),7000); }   /* 保险：最多锁 7 秒 */
+function zyFree(x){ clearTimeout(x.__zyT); if(!x.busy||!x.__zyLock) return; x.__zyLock=0; x.busy=false; if(x===B) bRender(); else if(x===D) dRender(); }
+function zyEndTurn(){ try{
+  const b=typeof B!=='undefined'?B:null;
+  if(b&&b.__zyChk&&zyIdle(b)&&document.querySelector('#bme')){ b.__zyChk=0;
+    if(b.me&&zyIs(b.me.id)&&b.mh>0&&b.mh*2<=b.mx){
+      const o=document.querySelector('#bme'), old=o&&o.getAttribute('src'), mx0=b.mx, h0=b.mh, id0=b.me.id; b.me.id=10182; b.me.pcOn=1; b.mx=maxhp(b.me); b.mh=b.mx; b.log.push(ZY_MSG());
+      b.__zyLock=1; zyBusy(b); zyFillAdd(b,'.ginfo.m',h0,mx0,b.mx,id0); if(old&&fxOn()) GFXQ.push({k:'bond',id:10117,sel:'#bme',old}); saveActive(); bRender(); } }
+  const d=typeof D!=='undefined'?D:null;
+  if(d&&d.__zyChk&&zyIdle(d)&&document.querySelector('#battle .garena.dbl')){ d.__zyChk=0; let hit=0;
+    (d.my||[]).forEach((pi,sl)=>{ const p=d.party[pi], att=p&&p.me; if(!att||!zyIs(att.id)||p.mh<=0||p.mh*2>p.mx) return;
+      const sel=`.gsp.dm${sl} img`, o=document.querySelector('#battle '+sel), old=o&&o.getAttribute('src'), mx0=p.mx, h0=p.mh, id0=att.id; att.id=10182; att.pcOn=1; p.mx=maxhp(att); p.mh=p.mx; d.log.push(ZY_MSG());
+      zyFillAdd(d,`.ginfo.dm${sl}`,h0,mx0,p.mx,id0); if(old&&fxOn()) GFXQ.push({k:'bond',id:10117,sel,old}); hit=1; });
+    if(hit){ d.__zyLock=1; zyBusy(d); dRender(); } }
+}catch(e){ console.error(e); } }
+setInterval(zyEndTurn,60);
+{ const _ss=sizeSprites; sizeSprites=function(){ const r=_ss.apply(this,arguments); if((typeof B!=='undefined'&&B&&B.__zyChk)||(typeof D!=='undefined'&&D&&D.__zyChk)) setTimeout(zyEndTurn,0); return r; }; }   /* 回放一放完马上检查 */
+/* 每次真的过了一回合（出招、用道具、换人）都记一下，等画面停下来再检查 */
+{ const _bt=bTurn; bTurn=function(){ const b=B; if(b&&b.__zyChk&&zyNeed(b)){ zyEndTurn(); return; }   /* 上一回合结束要变身：先变身，这次点的不算 */
+  zyFillStop(b); const r=_bt.apply(this,arguments); if(b&&B===b&&b.log.length) b.__zyChk=1; return r; }; }
+if(typeof bSwitch==='function'){ const _bs=bSwitch; bSwitch=function(){ const b=B; if(b&&b.__zyChk&&zyNeed(b)&&!b.pick&&!b.shift){ zyEndTurn(); return; } const r=_bs.apply(this,arguments); if(b&&B===b) b.__zyChk=1; return r; }; }
+{ const _dt=dTurn; dTurn=function(){ const d=D; const r=_dt.apply(this,arguments); if(d&&D===d) d.__zyChk=1; return r; }; }
 /* 详情里的「基格尔德形态」：用细胞在 50% 和 10% 之间切换 */
 function zyPanel(m,T1,T2){ const to=m.id===718?10181:718, n=S.items.zcell||0, busy=isBusy(m), can=n>=ZY_COST&&!busy;
   return `<section class="pd-p" style="--c1:${T1};--c2:${T2}"><header>基格尔德形态</header><div class="pd-pb"><div class="muted">现在是 <b>${m.id===718?'50% 形态':'10% 形态'}</b>。用基格尔德细胞可以在 50% 形态和 10% 形态之间切换，每次消耗 ${ZY_COST} 个。战斗中 HP 降到一半以下时，会通过「群聚变形」变成完全体（只在这场战斗里）。</div>
