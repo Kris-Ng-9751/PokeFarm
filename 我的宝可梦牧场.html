@@ -2939,7 +2939,7 @@ function foeStatusPick(f,st){ const b=B, hr=b.fh/b.fx, me=b.me; let W=0; const c
 function foeChoose(){ const b=B, f=b.foe, cs=b.fmv.map(plain), dm=cs.filter(c=>c.pow>0), st=cs.filter(c=>!c.pow&&MVS[c.id]);
   const sp=st.length?foeStatusPick(f,st):null; if(sp) return sp;
   const pool=dm.length?dm:cs; let base=pool[Math.floor(Math.random()*pool.length)];
-  if(b.cfg&&/^世界 Boss/.test(b.cfg.tag||'')) return bossPick(b,f,pool,cs);
+  if(b.cfg&&/^(世界 Boss|道馆重赛|四天王重赛)/.test(b.cfg.tag||'')) return bossPick(b,f,pool,cs);   /* 重赛的馆员 / 馆主 / 四天王 / 冠军也用灵活出招（Kris 2026-11-25） */
   if(Math.random()<.75){ let best=-1; pool.forEach(c=>{ let e=0; try{ e=dmg(f,b.me,c).d*Math.min(100,c.acc||100)/100; }catch(x){} if(e>best){ best=e; base=c; } }); }
   return base; }
 /* 世界 Boss 出招灵活一点（Kris 2026-11-20）：原来七成五都挑伤害最高的那招，整场几乎只用一招。
@@ -5418,22 +5418,29 @@ function mochiPickCard(){ Object.values(S.gymR||{}).forEach(st=>{ if(!st.mochi&&
   const n=S.mochiPick||0; if(!n) return '';
   return `<div class="card mochipick"><h2>领取粘糕 <span class="muted" style="font-weight:400">还可以领 ${n} 个</span></h2><div class="muted" style="margin-bottom:8px">馆主三个难度合计 9 星的奖励，选一个：</div><div class="row" style="gap:6px;flex-wrap:wrap">${Object.keys(MOCHI).map(k=>`<button class="btn alt" data-mpick="${k}" title="${ITEMS[k][1]}">${iImg(k,24)} ${ITEMS[k][0]}</button>`).join('')}</div></div>`; }
 document.addEventListener('click',e=>{ const x=e.target.closest('[data-mpick]'); if(!x||!(S.mochiPick>0)) return; const k=x.dataset.mpick; S.mochiPick--; S.items[k]=(S.items[k]||0)+1; save(); toast(`领取了 ${ITEMS[k][0]}！在宝可梦详情里使用`); render(); });
-function e4Card(ri){ const R=TR.regions[ri], st=e4Get(ri), ok=!!S.champ[ri];
-  return `<div class="card"><h2>四天王重赛</h2><div class="muted" style="margin-bottom:8px">成为${R.region_zh}冠军后开放。连续挑战${(R.elite4||[]).length?'四天王和':''}冠军，中间 HP 不回复。每位带 6 只，会特殊能力和回复道具，开场有各自属性的天气。</div>
-  <div class="item grrow"><div class="l"><div class="row" style="gap:0">${[...(R.elite4||[]),R.champion].map(o=>trAv(o,o.team[o.team.length-1][0])).join('')}</div><div class="muted">${ok?'四天王 普通 Lv75 / 困难 Lv85 / 地狱 Lv100 · 冠军 Lv80 / Lv90 / Lv100':'先成为冠军才能重赛'}</div></div>
-  <div class="row grbtns">${GRK.map(dk=>grBtns(e4OK(ri,dk),st[dk]||{},dk,`e4pv:${ri}:${dk}`,'Lv'+E4D[dk].lv+'/'+E4D[dk].ch)).join('')}</div></div></div>`; }
+function rE4RM(ri,R,seq,got,need){ const dk=e4CurDk(ri), L=e4Plan(ri,dk), D0=GRD[dk], E=E4D[dk], st=e4Get(ri);
+  $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">四天王<button class="btn" id="e4rm" aria-pressed="true" style="font-size:14px;padding:4px 14px">重赛中 · 返回</button></h2><div class="muted">四天王重赛：从第一位连战到冠军，<b>中间 HP 不回复</b>。四天王 普通 Lv${E4D.n.lv} / 困难 Lv${E4D.h.lv} / 地狱 Lv${E4D.x.lv}，冠军 Lv${E4D.n.ch} / Lv${E4D.h.ch} / Lv${E4D.x.ch}；通关前一个难度才开放下一个。每位带 6 只，王牌会特殊能力，带回复道具，开场有各自属性的天气。点难度看对手阵容。</div>${trTabs('e4')}
+  <div class="muted">${R.region_zh}（${R.games}）· 徽章 ${got}/${need} · 已是冠军</div><div class="row" style="margin-top:6px">${R.gyms.map((g,i)=>badgeIcon(g,S.badges[ri+'-'+i],ri,i)).join('')}</div></div>
+  <div class="list">${L.map((f,i)=>{ const o=f.o, isC=!!f.champ;
+    return `<div class="item trc"><div class="l">${trAv(o,f.team[5])}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span> ${f.t?`<span class="tag" style="background:${TYC[f.t]||'#ccc'}33;border-color:${TYC[f.t]||'#ccc'}">${f.t}系</span>`:''} <span class="tag ${isC?'r4':''}">${isC?'冠军':'四天王 '+(i+1)}</span><div class="muted">重赛天气：<b>${WXN[f.wx][0]}</b>（${WXN[f.wx][1]}） · 现在的难度：<b>${D0.nm}</b> Lv${f.lv}</div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(f.team.map(id=>[id,f.lv]))}</div></div></div>${i===0?`<div class="row grbtns">${GRK.map(k=>grBtns(e4OK(ri,k),st[k]||{},k,`e4pv:${ri}:${k}`,'Lv'+E4D[k].lv+'/'+E4D[k].ch)).join('')}</div>`:`<div class="row grbtns"><span class="muted">连战第 ${i+1} / ${L.length} 位</span></div>`}</div>`; }).join('')}</div></section>`;
+  bindTrTabs(rE4); { const t=$('#e4rm'); if(t) t.onclick=()=>{ e4RM=false; rE4(); }; } }
 { const _rGym=rGym; rGym=function(){ _rGym(); const sec=$('#main section.panel'), h=sec&&sec.querySelector('.xhero'); if(h) h.insertAdjacentHTML('afterend',mochiPickCard()); }; }   /* 粘糕领取卡还是放在道馆页（以前跟着重赛卡） */
 
 
 /* elite four */
+/* 四天王重赛（Kris 2026-11-25，和道馆一样）：成为这个地区的冠军后，「四天王」标题旁边出现「重赛」按钮；点了以后每一位显示重赛天气和现在难度的阵容，
+   第一位那一行是 普通 / 困难 / 地狱 三个难度（重赛是从第一位连战到冠军）；以前单独的「四天王重赛」卡片拿掉了 */
+let e4RM=false;
+const e4CurDk=ri=>GRK.find(dk=>e4OK(ri,dk)&&!(e4Get(ri)[dk]||{}).c)||GRK[GRK.length-1];
 function rE4(){
-  const ri=trTab.e4, R=TR.regions[ri], need=R.gyms.length, got=R.gyms.filter((g,i)=>S.badges[ri+'-'+i]).length, seq=[...R.elite4,R.champion], prog=S.e4[ri]||0, ok=got>=need;
-  $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt">四天王</h2><div class="muted"><b>集齐该地区全部徽章 + 训练家等级够</b>才能挑战；要连续打败${R.elite4.length?'四天王':''}和冠军，中途输了从头再来。</div>${trTabs('e4')}
+  const ri=trTab.e4, R=TR.regions[ri], need=R.gyms.length, got=R.gyms.filter((g,i)=>S.badges[ri+'-'+i]).length, seq=[...R.elite4,R.champion], prog=S.e4[ri]||0, ok=got>=need, reOK=!!S.champ[ri], RM=e4RM&&reOK;
+  if(RM) return rE4RM(ri,R,seq,got,need);
+  $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">四天王${reOK?'<button class="btn alt" id="e4rm" aria-pressed="false" style="font-size:14px;padding:4px 14px">重赛</button>':''}</h2><div class="muted"><b>集齐该地区全部徽章 + 训练家等级够</b>才能挑战；要连续打败${R.elite4.length?'四天王':''}和冠军，中途输了从头再来${reOK?'。已是冠军，可以点「重赛」挑战更高难度':'；成为冠军后可以重赛'}。</div>${trTabs('e4')}
   <div class="muted">${R.region_zh}（${R.games}）· 徽章 ${got}/${need}${ok?'，可以挑战':'，还没集齐'}${S.champ[ri]?' · 已是冠军':''}</div><div class="row" style="margin-top:6px">${R.gyms.map((g,i)=>badgeIcon(g,S.badges[ri+'-'+i],ri,i)).join('')}</div></div>
   <div class="list">${seq.map((o,i)=>{ const isC=i===seq.length-1, st=i<prog?'done':i===prog?'next':'lock', ace=o.team[o.team.length-1][0];
     return `<div class="item trc" style="${st==='lock'?'opacity:.6':''}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span> ${o.type_zh?`<span class="tag" style="background:${TYC[o.type_zh]||'#ccc'}33;border-color:${TYC[o.type_zh]||'#ccc'}">${o.type_zh}系</span>`:''} <span class="tag ${isC?'r4':''}">${isC?'冠军':'四天王 '+(i+1)}</span>${st==='done'?' <span class="tag r4">本轮已击败</span>':''}<div class="muted">平均 Lv${avgLv(o.team)} · <b style="color:${S.tl>=reqLv(o.team)?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b> · ${gateTxt(o.team,ri)}</div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div></div></div><button class="btn red" data-e4="${i}" ${(ok&&st==='next'&&!gate(o.team,ri))?'':'disabled'} title="${st==='next'?gate(o.team,ri):''}">${st==='done'?'已击败':st==='next'?(!ok?'没集齐徽章':gate(o.team,ri)?'等级不够':i===0?'开始挑战':'下一位'):'未到'}</button></div>`; }).join('')}</div>
   ${prog>0?`<div class="row"><button class="btn alt" id="e4reset">放弃本轮，重新开始</button></div>`:''}</section>`;
-  bindTrTabs(rE4);
+  bindTrTabs(rE4); { const t=$('#e4rm'); if(t) t.onclick=()=>{ e4RM=true; rE4(); }; }
   const rs=$('#e4reset'); if(rs) rs.onclick=()=>{ S.e4[ri]=0; rE4(); };
   document.querySelectorAll('[data-e4]').forEach(b=>b.onclick=()=>fightE4(ri,+b.dataset.e4));
 }
@@ -5443,7 +5450,6 @@ function fightE4(ri,i){ const R=TR.regions[ri], seq=[...R.elite4,R.champion], o=
    ()=>{ S.e4[ri]=0; },ri===2?(isC?'mega':null):GMR[ri],o.type_zh); }
 
 
-{ const _rE4=rE4; rE4=function(){ _rE4(); const sec=$('#main section.panel'); if(sec) sec.insertAdjacentHTML('beforeend',e4Card(trTab.e4)); }; }
 /* ---------- 周挑战 + 赛季（Kris 2026-10-27，难度第三期）：每周一个属性主题，三档挑战；队伍只能带这个属性的宝可梦、等级压到本周上限；每档每周第一次通关有奖励 + 赛季积分，积分攒到一定数有赛季奖励（每月重置） ---------- */
 const WK_TIERS=[{n:'入门',cnt:3,d:-5,pts:1,rw:{coins:1500,stars:20}},{n:'进阶',cnt:4,d:0,pts:2,rw:{coins:3000,stars:50,items:{m_xp2:2}}},{n:'精英',cnt:6,d:5,pts:3,rw:{coins:6000,stars:100,rare:1}}];
 const WK_SEASON=[[3,'金币 +5000，星尘 +50',{coins:5000,stars:50}],[6,'经验糖果 M ×3，稀有道具 ×1',{items:{m_xp3:3},rare:1}],[9,'金币 +15000，星尘 +150',{coins:15000,stars:150}],[12,'稀有道具 ×3，经验糖果 L ×2',{items:{m_xp4:2},rare:3}]];
@@ -7421,7 +7427,7 @@ gBox(gH('性格培育','培育中心第二页'),`<p>把<b>一只宝可梦</b>和
   ].join(''),
  rank:()=>[
   gBox(gH('对战和段位'),`<p>「对战 → 对战」打 NPC、打其他玩家的阵容、2v2 双打（训练家 Lv${DUO_LV}）。每种每天最多 ${ARN_DAY} 次，0 点重置；手动刷新对手第一次免费，之后每次 ${REF_COST} 金币。要先在「我的对战阵容」锁定队伍，别人才能挑战你。</p>`+gTable(['结果','段位分'],[['赢 NPC','+3 到 +8（对手越强越多）'],['赢玩家','+20'],['输给玩家','-12'],['别人来挑战，你的阵容守住了','+12'],['别人来挑战，阵容被打败','-8']])+gTable(['段位','需要的段位分'],RANKS.map(([n,v])=>[n,v]))+`<p class="muted">「排行榜」可以按段位、图鉴、异色、对战塔、本周紧急任务排名，点一位训练家能看他的卡片。</p>`),
-  gBox(gH('道馆、四天王、传奇训练家'),`<ul class="gul"><li><b>道馆</b>：每个地区有自己的一组馆主，第一次打赢得徽章、TM、金币和星尘，之后只给少量金币。集齐一个地区的徽章去挑战<b>四天王</b>，打赢冠军就成为那个地区的冠军。</li><li><b>道馆重赛</b>：集齐一个地区的徽章后，在「道馆」标题旁边点「重赛」，每位馆主都有普通（Lv60）、困难（Lv80）、地狱（Lv100）三个难度，先连战馆员再打馆主；通关前一个难度才开放下一个。</li><li><b>四天王重赛</b>：成为该地区冠军后开放，普通 / 困难 / 地狱，连续打四天王和冠军。</li><li>重赛中间 HP 不回复；对手每位都带 6 只，王牌会 Mega / 太晶 / 极巨化，还会用回复道具；每场开场有天气。</li><li><b>星级评价</b>（每场最多 3 星）：① 打完还剩 3 只以上没倒下 ② 最后一击用效果拔群的招式 ③ 队伍里有 3 只以上克制对手属性的宝可梦。同一位馆主三个难度合计 9 星送 1 个粘糕。</li><li><b>传奇训练家</b>：游戏里最强的几位，队伍固定、等级很高，每位有特定条件。</li></ul>`),
+  gBox(gH('道馆、四天王、传奇训练家'),`<ul class="gul"><li><b>道馆</b>：每个地区有自己的一组馆主，第一次打赢得徽章、TM、金币和星尘，之后只给少量金币。集齐一个地区的徽章去挑战<b>四天王</b>，打赢冠军就成为那个地区的冠军。</li><li><b>道馆重赛</b>：集齐一个地区的徽章后，在「道馆」标题旁边点「重赛」，每位馆主都有普通（Lv60）、困难（Lv80）、地狱（Lv100）三个难度，先连战馆员再打馆主；通关前一个难度才开放下一个。</li><li><b>四天王重赛</b>：成为该地区冠军后，在「四天王」标题旁边点「重赛」，普通 / 困难 / 地狱，连续打四天王和冠军。</li><li>重赛中间 HP 不回复；对手每位都带 6 只，王牌会 Mega / 太晶 / 极巨化，还会用回复道具；每场开场有天气。</li><li><b>星级评价</b>（每场最多 3 星）：① 打完还剩 3 只以上没倒下 ② 最后一击用效果拔群的招式 ③ 队伍里有 3 只以上克制对手属性的宝可梦。同一位馆主三个难度合计 9 星送 1 个粘糕。</li><li><b>传奇训练家</b>：游戏里最强的几位，队伍固定、等级很高，每位有特定条件。</li></ul>`),
   gBox(gH('周挑战'),`<p>「对战 → 周挑战」每周一个属性主题，分几档难度，对手越多、等级越高奖励越好；通关得赛季积分，<b>赛季每月重置</b>。训练家 Lv${FEAT.wk} 开放。</p>`),
     gBox(gH('世界 Boss'),`<ul class="gul">${LIVE()?`<li>监控有<b>告警</b>：出一只超稀有的非神兽 Boss；有 <b>P0 工单</b>：出一只神兽 Boss（要卡片 1 星），<b>P0 Boss 全服每天只会刷新一只</b>（0 点重置）：当天第一条 P0 工单变成 Boss，所有训练家看到的是同一只，当天后面再有 P0 工单也不会再出。每只 Boss 存在 1 小时，告警提前恢复了也不会走；同一个告警只出一只，要等它恢复后再次告警才会再出。</li>`:'<li>每小时整点刷新一只<b>超稀有以上</b>的 Boss（超稀有、传说、幻兽都有可能）；传说和幻兽的 Boss 要卡片 1 星。停留到下一个整点，没打完就换新的。</li>'}<li>Boss 的 HP 很高（告警 Boss ×5、神兽 Boss ×8），攻击、防御、特攻、特防、速度也强化（告警 ×${BOSS_STAT}、神兽 ×${P0_STAT}，组队每多 1 位队友再 +10%），还可能带 Mega、极巨化或太晶化的形态上场。可以个人挑战，也可以带最多 2 位队友组队。</li><li>打败后有 <b>10 次</b>捕捉机会，每次都用掉 1 次；打败的 Boss 会留在「已击败 · 等你捕捉」里，直到捉到或机会用完，没参与的人领全员奖励后也一样。</li></ul><div class="row" style="gap:4px">${[150,384,10169,10170,10171].map(id=>gSp(id,48)).join('')}</div>`),
   ].join('')};
