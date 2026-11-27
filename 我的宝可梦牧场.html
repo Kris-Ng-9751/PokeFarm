@@ -5662,7 +5662,7 @@ function evRange(o){ const L=evLv(o.ri), v=o.f.flatMap(([n,t,r])=>EV_SET[n]?EV_S
 function evFin(o){ const k=o.k; S.evil=S.evil||{}; const r=S.evil[k]=S.evil[k]||{}, RW=evRW(o); let t; if(!r.c){ r.c=1; r.d=today(); give(RW.first); t=`成功讨伐了${o.nm}！奖励：${rtext(RW.first)}`; } else if(r.d!==today()){ r.d=today(); give(RW.daily); t=`今天第一次讨伐${o.nm}成功：${rtext(RW.daily)}`; } else t=`又一次讨伐了${o.nm}（今天的奖励已经领过了）`; save(); return t; }
 function evFight(k){ const o=EVORG.find(x=>x.k===k); if(!o) return; if(!evOpen(o)) return toast(`要先拿到${TR.regions[o.ri].region_zh} ${EV_NEED} 个徽章`); const L=evLv(o.ri);
   /* 火箭队三人组（Kris 2026-11-28）：双打，武藏和小次郎一起上，喵喵最后出来 */
-  if(o.dbl){ const [nm,team]=o.f[0]; return startDouble(`讨伐战 · ${o.nm}`,team.map(id=>({id,lv:L+3})),null,undefined,()=>evFin(o),undefined,undefined,{init:d=>{ d.log[0]=`${o.nm}登场了！「既然你诚心诚意地发问了，我们就大发慈悲地告诉你！」`; }}); }
+  if(o.dbl){ const [nm,team]=o.f[0]; return startDouble(`讨伐战 · ${o.nm}`,team.map(id=>({id,lv:L+3})),null,undefined,()=>evFin(o),undefined,undefined,{av:evAv(o.f[0][3],team[team.length-1],122),init:d=>{ d.log[0]=`${o.nm}登场了！「既然你诚心诚意地发问了，我们就大发慈悲地告诉你！」`; }}); }
   const fights=o.f.map(([name,team,r,av,gk,tt,shy])=>{ const lv=L+(r==='g'?-5:r==='a'?-2:3); const set=EV_SET[name]; if(set) return {name,team,lv:Math.max(...set.map(x=>x[1])),gk:gk||null,tt:tt||null,av:evAv(av,team[team.length-1],122),foes:set.map(([id,l,ab,mv,x])=>({id,lv:l,...(ab?{abO:ab}:{}),...(mv?{mv}:{}),...(x||{})}))};
     return {name,team,lv,gk:gk||null,tt:tt||null,av:evAv(av,team[team.length-1],122),...(shy?{foes:team.map(id=>({id,lv,...(shy.includes(id)?{shiny:true}:{})}))}:{})}; });   /* 弗拉达利的暴鲤龙是异色的（Kris 2026-11-28） */
   chnStart({tag:'讨伐战',label:`讨伐战 · ${o.nm}`,fights,finish:()=>evFin(o)}); }
