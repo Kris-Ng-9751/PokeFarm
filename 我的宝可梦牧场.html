@@ -5698,7 +5698,7 @@ function dexDetail(id){
   const forms=FL.length>1?`<div class="row pd-forms" role="tablist" aria-label="形态">${FL.map(x=>`<button class="btn fchip ${x===v?'on':'alt'}" data-dform="${x}">${x===id?'普通':SP[x][0].replace(SP[id][0],'').replace(/[（）]/g,'')}${S.dex[x]?' ✓':''}</button>`).join('')}</div>`:'';   /* 形态按钮放在大图下面，不再显示样子的说明文字（Kris 2026-10-28） */
   if(dexTfFor!==v){ dexTf=0; dexTfFor=v; } const TFL=dexTfList(v), tf=dexTf>0?TFL[dexTf-1]:null, tfSrc=tf?(tf.img?tf.img[dexShiny?1:0]:tf.g?SPRG[tf.g][dexShiny?2:0]:spf(tf.id,dexShiny)):null;
   const shOwn=(S.dexS||{})[v]||(S.dexS||{})[id], shBtn=`<div class="row pd-forms" aria-label="异色和变身"><button class="btn fchip pd-shbtn ${dexShiny?'on':'alt'}" data-dshiny="1" aria-pressed="${dexShiny}">✦ 异色${shOwn?' ✓':''}</button>${TFL.length?`<button class="btn fchip ${tf?'on':'alt'}" data-dtf="1" aria-pressed="${!!tf}" title="${TFL.map(x=>x.nm).join(' / ')}">⚡ 变身${tf?`：${tf.k}${TFL.length>1?` ${dexTf}/${TFL.length}`:''}`:''}</button>`:''}</div>`;   /* 异色开关：打开后大图换成异色，角上的小图换成普通的 */
-  const tys=[SP[v][2],SP[v][8]].filter(Boolean).map(t=>`<span class="pd-ty big" style="--c:${TYC[t]||'#888'}"><i>${t}</i></span>`).join('');
+  const tv=tf&&tf.id&&SP[tf.id]?tf.id:v, tys=[SP[tv][2],SP[tv][8]].filter(Boolean).map(t=>`<span class="pd-ty big" style="--c:${TYC[t]||'#888'}"><i>${t}</i></span>`).join('');
   const lsn=lsOf(v).slice().sort((x,y)=>x[0]-y[0]);
   const learn=lsn.length?`<div class="dx-ls">${lsn.map(([lv,mid])=>`<div class="dx-lr"><b>Lv${lv}</b><span class="ty" style="background:${TYC[MV[mid][1]]||'#aaa'}">${MV[mid][1]}</span><span>${MV[mid][0]}</span><small class="muted">${catName(mid)} · ${MV[mid][2]?'威力'+MV[mid][2]+' · ':''}${MV[mid][3]>100?'必中':'命中'+MV[mid][3]}</small></div>`).join('')}</div>`:'<div class="muted">没有记录升级学会的招式</div>';
   $('#battle').innerHTML=`<div class="md-head">
@@ -5713,7 +5713,7 @@ function dexDetail(id){
       <div class="pd-id">#${String(v).padStart(3,'0')} · ${SP[v][1]} <span class="tag r${SP[v][3]}">${SP[v][10]===3?'幻兽':SP[v][10]===2?'神兽':SP[v][10]===1?'宝宝':RARN[SP[v][3]]}</span> <span class="muted">第${SP[v][9]}代</span></div>
       <h2 class="pd-name">${SP[v][0]}</h2>
       <div class="row" style="gap:6px;flex-wrap:wrap">${tys}</div>
-      <div class="muted" style="margin-top:6px">性别比例：${gRatio(id)}</div>${abDex(v)}
+      <div class="muted" style="margin-top:6px">性别比例：${gRatio(id)}</div>${tf&&tf.id&&PAB[tf.id]&&PAB[tf.id][0]&&JSON.stringify(PAB[tf.id])!==JSON.stringify(PAB[v])?abDexTf(tf.id):abDex(v)}
       <div class="muted" style="margin-top:10px">进化路线</div>${pdChain(v)}
     </div>
     <div class="pd-right">
@@ -10627,6 +10627,32 @@ function devFcGo(k,b,go){ const id=DEV_FIX[k], me=b.me;
   if(id===778||id===875){ beatsOn(); b.mh=Math.max(0,b.mh-hitBy(b.foe,b.me,plain(33),false)); saveActive(); return bRender(); }
   if(id===648||id===845||id===681) return bTurn(0);
   if(id===964){ const j=b.party.findIndex((p,i)=>i!==b.cur&&p.mh>0); if(j<0) return toast('队伍里要有别的宝可梦才能换下场'); bSwitch(j); const t0=performance.now(), it=setInterval(()=>{ if(B!==b||b.over||performance.now()-t0>20000) return clearInterval(it); if(b.cur!==j||b.busy||b.stg||(b.beats&&b.beats.length)||entWait()>0||GFXQ.length||FCQ.length||performance.now()<GFXEND) return; clearInterval(it); bSwitch(0); },150); } }   /* 换下来的那只被打倒也照样换回来（这时是选下一只） */
+/* ---------- 无防守、电气制造者（Kris 2026-11-28）：超级雷丘 X = 电气制造者，超级雷丘 Y = 无防守 ----------
+   无防守：自己或对手有这个特性时，双方的招式都必定命中。
+   电气制造者：出场（或 Mega 进化）时展开电气场地 5 回合：地面上的宝可梦电属性招式威力 ×1.3、不会睡着。
+   （地面上 = 不是飞行属性、不是飘浮特性） */
+const abNoGuard=(a,d)=>abOf(a)===99||(d&&abOf(d)===99);
+const terGround=o=>o&&!hasTy(o,'飞行')&&abOf(o)!==26&&o.tera!=='飞行';
+const terOn=()=>{ const b=fcSt(); return b&&b.ter==='elec'&&b.terT>0; };
+function terSet(o,mine,late){ const b=fcSt(); if(!b||!o||abOf(o)!==226) return; b.ter='elec'; b.terT=5; const msg=`${mine?'':'对方的 '}${SP[o.id][0]} 的特性：电气制造者！脚下电流飞窜！`;
+  if(!late) return b.log.push(msg);
+  /* Mega 进化时：「Mega 进化成了……」那一行是之后才写的，特性的字要排在它后面 */
+  const L=b.log; L.push=function(...x){ delete L.push; const r=L.push(...x); L.push(msg); return r; }; setTimeout(()=>{ if(Object.prototype.hasOwnProperty.call(L,'push')){ delete L.push; L.push(msg); } },0); }
+{ const _we=wxEnter; wxEnter=function(id,mine,o){ const r=_we.apply(this,arguments);
+    try{ let x=o; if(!x){ const b=fcSt(); if(b===B&&B) x=mine?B.me:B.foe; else if(b) x=[...b.party.map(p=>p.me),...b.foes].find(z=>z&&z.id===id&&fcMine(z)===!!mine); } if(x&&x.id===id) terSet(x,mine,!o); }catch(e){ console.warn(e); } return r; }; }
+function terTick(){ const b=fcSt(); if(!b||!(b.terT>0)) return; b.terT--; if(!b.terT){ b.ter=null; b.log.push('脚下的电流消失了'); } }
+{ const _e1=statEnd1; statEnd1=function(){ const r=_e1.apply(this,arguments); try{ if(B&&!B.over) terTick(); }catch(e){} return r; }; }
+{ const _e2=statEnd2; statEnd2=function(){ const r=_e2.apply(this,arguments); try{ if(D&&!D.over) terTick(); }catch(e){} return r; }; }
+const terSh=(att,def,sh)=>{ if(!sh) return sh; if(abNoGuard(att,def)&&sh.acc<=100) sh={...sh,acc:101}; const ty=sh.type||(MV[sh.id]&&MV[sh.id][1]); if(terOn()&&ty==='电'&&sh.pow>0&&terGround(att)) sh={...sh,pow:Math.round(sh.pow*1.3)}; return sh; };
+{ const _h=hitBy; hitBy=function(att,def,sh,mine){ return _h.call(this,att,def,terSh(att,def,sh),mine); }; }
+{ const _h=dHit; dHit=function(att,def,sh,mine,nm){ return _h.call(this,att,def,terSh(att,def,sh),mine,nm); }; }
+{ const _u=useStatus; useStatus=function(C,A,T,sh,mine){ const a=[...arguments]; if(sh&&abNoGuard(A,T)&&sh.acc<=100) a[3]={...sh,acc:101}; return _u.apply(this,a); }; }
+{ const _ai=ailApply; ailApply=function(C,o,k){ if(k==='slp'&&terOn()&&terGround(o)) return `${(C.mine(o)?'':'对方的 ')+SP[o.id][0]} 被电气场地保护着，不会睡着！`; return _ai.apply(this,arguments); }; }
+/* 宝可梦详情：会 Mega 进化的，写出 Mega 进化后的特性 */
+{ const _ab=abBlock; abBlock=function(m){ const h=_ab.apply(this,arguments); const L=(MEGA[m.id]||[]).filter(f=>SP[f]&&PAB[f]&&PAB[f][0]); if(!L.length) return h;
+    const x=`<div class="muted" style="margin-top:6px">Mega 进化后：${L.map(f=>`${SP[f][0]} <b>${abName(PAB[f][0])}</b>（${abDesc(PAB[f][0])}）`).join('；')}</div>`; return h.replace(/<\/div><\/div>$/,x+'</div></div>'); }; }
+/* 图鉴：看变身的样子时，属性和特性也换成变身后的 */
+function abDexTf(f){ const a=(PAB[f]||[])[0]; return a?`<div class="abdex"><div><b>特性（变身后）：${abName(a)}</b><div class="muted">${abDesc(a)}</div></div></div>`:''; }
 
 /* ---------- 黑暗石 / 光明石 / 基因之楔（Kris 2026-11-05）
    黑暗石：捷克罗姆、酋雷姆的专属道具；光明石：莱希拉姆、酋雷姆的专属道具；基因之楔：酋雷姆的专属道具。带上以后自己属性的攻击招式威力 ×1.2（捷克罗姆、莱希拉姆不变身）。
