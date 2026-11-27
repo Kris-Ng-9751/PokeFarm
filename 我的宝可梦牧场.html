@@ -5525,10 +5525,12 @@ function lgcForm(id){ if(id===890) return {k:'etm'}; const fs=MEGA[id]; if(fs&&f
 const tm1=(a,d)=>{ const r=(CHART[a]||{})[d]; return r==null?1:r; };
 function lgcTera(id){ const t0=[SP[id][2],SP[id][8]].filter(Boolean), weak=TYPES.filter(a=>t0.reduce((m,d)=>m*tm1(a,d),1)>1); if(!weak.length) return SP[id][2];
   let best=null; TYPES.forEach(T=>{ const left=weak.filter(a=>tm1(a,T)>1).length, sc=weak.reduce((x,a)=>x+tm1(a,T),0), nw=TYPES.filter(a=>tm1(a,T)>1).length, k=[left,sc,nw,t0.includes(T)?0:1]; if(!best||k.some((v,i)=>v!==best.k[i]&&k.slice(0,i).every((w,j)=>w===best.k[j])&&v<best.k[i])) best={T,k}; }); return best.T; }   /* 先比还剩几个弱点，再比倍数加总、新弱点数量 */
-const lgcList=ri=>{ const boss=LGC_BOSS[ri]; return Object.keys(SP).map(Number).filter(id=>id<=1025&&SP[id][10]>=2&&SP[id][9]===ri+1&&id!==boss).sort((a,b)=>a-b); };
+const LGC_EXTRA={7:[10169,10170,10171]};   /* 伽勒尔的样子的传说的鸟放在伽勒尔（Kris 2026-11-27） */
+const lgcRegion=id=>{ if(LGC_BOSS.includes(id)) return LGC_BOSS.indexOf(id); for(const k in LGC_EXTRA) if(LGC_EXTRA[k].includes(id)) return +k; return SP[id][9]-1; };
+const lgcList=ri=>{ const boss=LGC_BOSS[ri]; return [...Object.keys(SP).map(Number).filter(id=>id<=1025&&SP[id][10]>=2&&SP[id][9]===ri+1&&id!==boss).sort((a,b)=>a-b),...(LGC_EXTRA[ri]||[])]; };
 const lgcOpen=ri=>!!S.champ[ri];
 const lgcLeft=ri=>lgcList(ri).filter(id=>!((S.lgc||{})[id]||{}).c).length;   /* 大 Boss 要先打赢这个地区其他全部神兽 / 幻兽（Kris 2026-11-26） */
-function lgcFight(id){ const ri=LGC_BOSS.includes(id)?LGC_BOSS.indexOf(id):(SP[id][9]-1); if(!lgcOpen(ri)) return toast(`先成为${TR.regions[ri].region_zh}冠军`); const isB=LGC_BOSS[ri]===id; if(isB&&lgcLeft(ri)) return toast(`先打赢这个地区其他 ${lgcLeft(ri)} 只传说宝可梦`); const R=LGC_RW[isB?'b':'n'], lv=LGC_LV[isB?'b':'n'];
+function lgcFight(id){ const ri=lgcRegion(id); if(!lgcOpen(ri)) return toast(`先成为${TR.regions[ri].region_zh}冠军`); const isB=LGC_BOSS[ri]===id; if(isB&&lgcLeft(ri)) return toast(`先打赢这个地区其他 ${lgcLeft(ri)} 只传说宝可梦`); const R=LGC_RW[isB?'b':'n'], lv=LGC_LV[isB?'b':'n'];
   S.lgc=S.lgc||{}; const rec=S.lgc[id]||{}, first=!rec.c, dly=!first&&rec.d!==today();
   const arm=isB&&id===150, fo=arm?armorFoe(lv):lgcFoe(id,lv);   /* 关都大 Boss 是盔甲超梦 */
   startBattle({kind:'npc',tag:'传说宝可梦挑战',title:`${isB?'传说大 Boss':'传说宝可梦'} · ${SP[fo.id][0]}`,foe:{...fo},foes:[fo],reward:null,bossFm:arm?null:lgcForm(id),
@@ -5543,7 +5545,7 @@ const LGC_GRP=[
   [['圣剑士',[638,639,640,647]],['三灵兽（化身云）',[641,642,645]],['传说的龙',[643,644,646]]],
   [['卡洛斯的传说',[716,717,718]]],
   [['守护神（卡璞）',[785,786,787,788]],['太阳、月亮与光',[791,792,800]]],
-  [['英雄宝可梦',[888,889]],['新的巨人',[894,895]],['丰饶之王与爱马',[896,897,898]]],
+  [['英雄宝可梦',[888,889]],['新的巨人',[894,895]],['丰饶之王与爱马',[896,897,898]],['传说的鸟宝可梦（伽勒尔的样子）',[10169,10170,10171]]],
   [['灾厄宝可梦',[1001,1002,1003,1004]],['宝伴',[1014,1015,1016]],['悖论的传说',[1007,1008]]]];
 const lgcGrpKey=(ri,gi)=>ri+'-'+gi, lgcGrpLv=id=>LGC_BOSS.includes(id)?LGC_LV.b:LGC_LV.n;
 const lgcGrpRW=n=>({first:{coins:2500*n,stars:50*n,items:{candy:n}},daily:{coins:400*n}});
@@ -5565,7 +5567,7 @@ function lgxFoe(id,dk){ const D0=LGX[dk], e=Math.round(252*D0.ev/100), ev={}, bp
   const f={id:arm?ARMOR_ID:id,lv:D0.lv,ev,bp,gem:lgGem(id),...(abHid(id)&&!arm?{ab:2}:{})}; if(arm){ f.ev[5]=f.ev[7]=252; } return f; }
 let lgxArmor=false;
 function lgxSettle(k,dk,R,label){ S.lgcd=S.lgcd||{}; const st=S.lgcd[k]=S.lgcd[k]||{}, r=st[dk]=st[dk]||{}; let t; if(!r.c){ r.c=1; r.d=today(); give(R.first); t=`第一次通关 ${label}（${LGX[dk].nm}）！奖励：${rtext(R.first)}`; } else if(r.d!==today()){ r.d=today(); give(R.daily); t=`今天第一次通关 ${label}（${LGX[dk].nm}）：${rtext(R.daily)}`; } else t=`打赢了 ${label}（${LGX[dk].nm}，今天的奖励已经领过了）`; save(); return t; }
-function lgxFight(id,dk){ const ri=LGC_BOSS.includes(id)?LGC_BOSS.indexOf(id):(SP[id][9]-1), k='m'+id; if(!lgxOK(ri,k,dk,LGX_S)) return toast('这个难度还没开放'); const D0=LGX[dk], isB=LGC_BOSS[ri]===id, arm=isB&&id===150;
+function lgxFight(id,dk){ const ri=lgcRegion(id), k='m'+id; if(!lgxOK(ri,k,dk,LGX_S)) return toast('这个难度还没开放'); const D0=LGX[dk], isB=LGC_BOSS[ri]===id, arm=isB&&id===150;
   lgxArmor=arm; const f=lgxFoe(id,dk); lgxArmor=false; const fm=lgcForm(id); if(!arm&&!D0.now) f.gm=fm.k==='etm'?{k:'dyn'}:{k:fm.k,t:fm.t||null};
   const R=lgxRW(LGC_RW[isB?'b':'n'],D0.rw);
   startBattle({kind:'npc',tag:'传说宝可梦挑战',title:`${isB?'传说大 Boss':'传说宝可梦'}（${D0.nm}） · ${SP[f.id][0]}`,foe:{...f},foes:[f],reward:null,bossFm:arm||!D0.now?null:fm,onWin:()=>lgxSettle(k,dk,R,SP[f.id][0])}); }
