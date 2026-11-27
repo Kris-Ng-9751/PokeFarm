@@ -5638,7 +5638,8 @@ function dexDetail(id){
   const ch=chainOf(v).map(([i,d])=>{ const par=Object.keys(EVO).find(k=>EVO[k].some(e=>e.to===i)); const e=par&&EVO[par].find(x=>x.to===i); return `<div style="margin-left:${d*14}px;display:flex;gap:8px;align-items:center;${i===v?'font-weight:700':''}"><img src="${SPR[i]}" alt="" style="width:36px;height:36px;image-rendering:pixelated"> #${i} ${SP[i][0]}${e?` <span class="muted">← ${SP[par][0]}：${evoText(e).replace(/ ×\d+$/,'')}</span>`:''}</div>`}).join('');
   const T1=TYC[SP[v][2]]||'#7ac74c', T2=TYC[SP[v][8]||SP[v][2]]||T1, own=S.dex[v]||S.dex[id]; document.documentElement.style.setProperty('--pdc1',T1); document.documentElement.style.setProperty('--pdc2',T2);
   const forms=FL.length>1?`<div class="row pd-forms" role="tablist" aria-label="形态">${FL.map(x=>`<button class="btn fchip ${x===v?'on':'alt'}" data-dform="${x}">${x===id?'普通':SP[x][0].replace(SP[id][0],'').replace(/[（）]/g,'')}${S.dex[x]?' ✓':''}</button>`).join('')}</div>`:'';   /* 形态按钮放在大图下面，不再显示样子的说明文字（Kris 2026-10-28） */
-  const shOwn=(S.dexS||{})[v]||(S.dexS||{})[id], shBtn=`<div class="row pd-forms" aria-label="异色"><button class="btn fchip pd-shbtn ${dexShiny?'on':'alt'}" data-dshiny="1" aria-pressed="${dexShiny}">✦ 异色${shOwn?' ✓':''}</button></div>`;   /* 异色开关：打开后大图换成异色，角上的小图换成普通的 */
+  if(dexTfFor!==v){ dexTf=0; dexTfFor=v; } const TFL=dexTfList(v), tf=dexTf>0?TFL[dexTf-1]:null, tfSrc=tf?(tf.g?SPRG[tf.g][dexShiny?2:0]:spf(tf.id,dexShiny)):null;
+  const shOwn=(S.dexS||{})[v]||(S.dexS||{})[id], shBtn=`<div class="row pd-forms" aria-label="异色和变身"><button class="btn fchip pd-shbtn ${dexShiny?'on':'alt'}" data-dshiny="1" aria-pressed="${dexShiny}">✦ 异色${shOwn?' ✓':''}</button>${TFL.length?`<button class="btn fchip ${tf?'on':'alt'}" data-dtf="1" aria-pressed="${!!tf}" title="${TFL.map(x=>x.nm).join(' / ')}">⚡ 变身${tf?`：${tf.k}${TFL.length>1?` ${dexTf}/${TFL.length}`:''}`:''}</button>`:''}</div>`;   /* 异色开关：打开后大图换成异色，角上的小图换成普通的 */
   const tys=[SP[v][2],SP[v][8]].filter(Boolean).map(t=>`<span class="pd-ty big" style="--c:${TYC[t]||'#888'}"><i>${t}</i></span>`).join('');
   const lsn=lsOf(v).slice().sort((x,y)=>x[0]-y[0]);
   const learn=lsn.length?`<div class="dx-ls">${lsn.map(([lv,mid])=>`<div class="dx-lr"><b>Lv${lv}</b><span class="ty" style="background:${TYC[MV[mid][1]]||'#aaa'}">${MV[mid][1]}</span><span>${MV[mid][0]}</span><small class="muted">${catName(mid)} · ${MV[mid][2]?'威力'+MV[mid][2]+' · ':''}${MV[mid][3]>100?'必中':'命中'+MV[mid][3]}</small></div>`).join('')}</div>`:'<div class="muted">没有记录升级学会的招式</div>';
@@ -5649,7 +5650,7 @@ function dexDetail(id){
   </div>
   <div class="md-body">
    <div class="pd-top">
-    <div class="pd-lcol"><div class="pd-art${dexShiny?' shiny':''}" style="--c1:${T1};--c2:${T2}"><img src="${dexShiny?spf(v,true):SPR[v]}" alt="${dexShiny?'异色':''}"><span class="pd-cnt">${dexShiny?(shOwn?'已收集异色':'还没有异色'):(own?'已收集':'还没拥有')}</span><img class="dx-sh" src="${dexShiny?SPR[v]:spf(v,true)}" alt="${dexShiny?'普通':'异色'}" title="${dexShiny?'普通':'异色'}" data-dshiny="1" style="cursor:pointer"></div>${forms}${shBtn}</div>
+    <div class="pd-lcol"><div class="pd-art${dexShiny?' shiny':''}" style="--c1:${T1};--c2:${T2}"><img src="${tfSrc||(dexShiny?spf(v,true):SPR[v])}" alt="${tf?tf.nm:dexShiny?'异色':''}"><span class="pd-cnt">${tf?tf.nm:dexShiny?(shOwn?'已收集异色':'还没有异色'):(own?'已收集':'还没拥有')}</span><img class="dx-sh" src="${dexShiny?SPR[v]:spf(v,true)}" alt="${dexShiny?'普通':'异色'}" title="${dexShiny?'普通':'异色'}" data-dshiny="1" style="cursor:pointer"></div>${forms}${shBtn}</div>
     <div class="pd-mid">
       <div class="pd-id">#${String(v).padStart(3,'0')} · ${SP[v][1]} <span class="tag r${SP[v][3]}">${SP[v][10]===3?'幻兽':SP[v][10]===2?'神兽':SP[v][10]===1?'宝宝':RARN[SP[v][3]]}</span> <span class="muted">第${SP[v][9]}代</span></div>
       <h2 class="pd-name">${SP[v][0]}</h2>
@@ -6239,7 +6240,7 @@ function dShiftPop(d){ const st=d.shift.step, inc=d.foes.slice(d.nf,d.nf+(d.need
   return `<div class="shiftpop" role="dialog" aria-modal="true"><div class="shiftcard wide">${body}</div></div>`; }
 function dWin(){ const d=D; d.over='win'; d.log.push('胜利！'); const idx=[...d.part], each=Math.max(1,Math.floor(d.xp/idx.length)); idx.forEach(i=>{ const m=d.party[i].real, up=addExp(m,each); bond(m,3); d.log.push(`${SP[m.id][0]} 获得 ${each} 经验`+(up?`，升到 Lv${m.lv}！`:'')); });
   S.stats.won++; S.wins++; prog('won'); const al=d.foes.reduce((a,f)=>a+f.lv,0)/d.foes.length; d.log.push(tgain(Math.max(2,Math.round(al*.5+3))*2)); give(d.reward); d.log.push('奖励：'+rtext(d.reward)); if(d.rate!==undefined) d.log.push(npcRate(d.rate)); if(d.onWin){ const x=d.onWin(); if(x) d.log.push(x); } if(learnMsgs.length){ d.log.push(learnMsgs.join('，')); learnMsgs=[]; } save(); }
-$('#battle').addEventListener('click',e=>{ const df=e.target.closest('[data-dform]'); if(df&&dexOpen){ dexForm=+df.dataset.dform; dexDetail(dexCur); return; } const ds=e.target.closest('[data-dshiny]'); if(ds&&dexOpen){ dexShiny=!dexShiny; dexDetail(dexCur); return; } });
+$('#battle').addEventListener('click',e=>{ const df=e.target.closest('[data-dform]'); if(df&&dexOpen){ dexForm=+df.dataset.dform; dexDetail(dexCur); return; } const ds=e.target.closest('[data-dshiny]'); if(ds&&dexOpen){ dexShiny=!dexShiny; dexDetail(dexCur); return; } const dt=e.target.closest('[data-dtf]'); if(dt&&dexOpen){ const n=dexTfList(dexForm||dexCur).length; dexTf=n?(dexTf+1)%(n+1):0; dexDetail(dexCur); return; } });
 $('#battle').addEventListener('click',e=>{ if(!D) return; if(D.busy) return; const x=e.target.closest('[data-d]'); if(!x) return; const m=x.dataset.d;
   if(m==='close'){ D=null; $('#modal').hidden=true; return render(); }
   if(m==='run'){ D.log.push('你认输了。'); D.over='lose'; if(D.onLose) D.onLose(); return dRender(); }
@@ -7398,7 +7399,14 @@ const FORMS={};
 const FORM_WILD={}; for(const b in FORMS){ const l=FORMS[b].filter(f=>f<10077||f>10078); if(l.length) FORM_WILD[b]=l; }
 function formRoll(id,cap){ const fs=FORM_WILD[id]; if(!fs) return id; const f=fs[Math.floor(Math.random()*fs.length)]; const chance=SP[id][10]>=2?.5:.3; return Math.random()<chance&&okSp(f,cap)?f:id; }
 const formInfo=f=>{ const b=SP[f]; if(f===10077||f===10078) return `<div class="muted" style="margin:6px 0">原始回归：战斗中让${SP[f===10077?382:383][0]}携带「${f===10077?'蓝色宝珠':'红色宝珠'}」（到商场「超级石」分页买），用超级手环开启，变身后天气变成${f===10077?'强烈的大雨':'强烈的大日照'}，一般的天气盖不掉它。</div>`; if(f>=10169) return `<div class="muted" style="margin:6px 0">伽勒尔的样子：是神兽，野外、抽宝可梦、神兽 Boss 里出现时，有一半的机会是伽勒尔的样子。</div>`; return `<div class="muted" style="margin:6px 0">阿罗拉的样子：野外、抽宝可梦、NPC 的队伍里出现这只宝可梦时，有 30% 的机会是阿罗拉的样子（等级够了才会出现），属性和普通的不一样。${EVO[f]?'进化：'+EVO[f].map(e=>SP[e.to][0]+'（'+evoText(e).replace(/ ×\d+$/,'')+'）').join('、')+'。':''}</div>`; };
-let dexForm=0, dexShiny=false;   /* 图鉴详情：现在看的是不是异色 */
+let dexForm=0, dexShiny=false, dexTf=0, dexTfFor=0;
+/* 图鉴详情的「变身」按钮（Kris 2026-11-27）：点一下看变身的样子（Mega / 原始回归 / 超极巨化 / 群聚变形 / 羁绊变身 / 究极爆发 / 无极巨化 / 星晶），再点换下一个，最后回到原本的样子 */
+const DEX_TF_SP={718:[[10182,'群聚变形']],10181:[[10182,'群聚变形']],658:[[10117,'羁绊变身']],800:[[10157,'究极爆发']],10155:[[10157,'究极爆发']],10156:[[10157,'究极爆发']],890:[[10190,'无极巨化']],1024:[[10276,'太晶形态'],[10277,'星晶形态']],10276:[[10277,'星晶形态']]};
+function dexTfList(v){ const L=[], add=(id,k)=>{ if(SP[id]&&SPR[id]&&!L.some(x=>x.id===id)) L.push({id,nm:SP[id][0]===SP[v][0]?`${SP[id][0]}（${k}）`:SP[id][0],k}); };
+  (DEX_TF_SP[v]||[]).forEach(([f,k])=>{ add(f,k); (MEGA[f]||[]).forEach(g=>add(g,'Mega 进化')); });   /* 先列特殊变身（基格尔德先群聚变形再 Mega） */
+  (MEGA[v]||[]).forEach(f=>add(f,f===10077||f===10078?'原始回归':'Mega 进化'));
+  if(typeof SPRG!=='undefined'&&SPRG[v]) L.push({g:v,nm:'超极巨'+SP[v][0],k:'超极巨化'});
+  return L; }   /* 图鉴详情：现在看的是不是异色 */
 
 /* ---- 重新画页面时保持滚动位置（Kris 2026-10-25）：关闭图鉴详情、买东西、刷新列表都不会跳回最顶 ---- */
 (function(){ const el=$('#main'), d=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML'); let rtab=null;
