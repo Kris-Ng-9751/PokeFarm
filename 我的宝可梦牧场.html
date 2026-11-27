@@ -6324,7 +6324,7 @@ function dShiftPop(d){ const st=d.shift.step, inc=d.foes.slice(d.nf,d.nf+(d.need
   else body=`<div class="shifttxt">选择要换上的宝可梦</div><div class="gparty">${d.party.map((p,i)=>d.my.includes(i)?'':`<button class="gpm ${p.mh<=0?'down':''}" data-d="shift:b:${i}" ${p.mh<=0?'disabled':''}><img src="${spfM(p.me,p.real.shiny)}" alt=""><span><span class="gpn"><b>${SP[p.me.id][0]}</b><em>Lv${p.me.lv}</em></span><small>${Math.max(0,p.mh)}/${p.mx}</small></span></button>`).join('')}</div><div class="row" style="justify-content:center"><button class="btn alt" data-d="shift:yes">返回</button></div>`;
   return `<div class="shiftpop" role="dialog" aria-modal="true"><div class="shiftcard wide">${body}</div></div>`; }
 function dWin(){ const d=D; d.over='win'; d.log.push('胜利！'); const idx=[...d.part], each=Math.max(1,Math.floor(d.xp/idx.length)); idx.forEach(i=>{ const m=d.party[i].real, up=addExp(m,each); bond(m,3); d.log.push(`${SP[m.id][0]} 获得 ${each} 经验`+(up?`，升到 Lv${m.lv}！`:'')); });
-  S.stats.won++; S.wins++; prog('won'); const al=d.foes.reduce((a,f)=>a+f.lv,0)/d.foes.length; d.log.push(tgain(Math.max(2,Math.round(al*.5+3))*2)); give(d.reward); d.log.push('奖励：'+rtext(d.reward)); if(d.rate!==undefined) d.log.push(npcRate(d.rate)); if(d.onWin){ const x=d.onWin(); if(x) d.log.push(x); } if(learnMsgs.length){ d.log.push(learnMsgs.join('，')); learnMsgs=[]; } save(); }
+  S.stats.won++; S.wins++; prog('won'); const al=d.foes.reduce((a,f)=>a+f.lv,0)/d.foes.length; d.log.push(tgain(Math.max(2,Math.round(al*.5+3))*2)); give(d.reward||{}); { const rt=rtext(d.reward||{}); if(rt) d.log.push('奖励：'+rt); }   /* 讨伐战三人组的奖励在 onWin 里给，这里是空的（Kris 2026-11-28） */ if(d.rate!==undefined) d.log.push(npcRate(d.rate)); if(d.onWin){ const x=d.onWin(); if(x) d.log.push(x); } if(learnMsgs.length){ d.log.push(learnMsgs.join('，')); learnMsgs=[]; } save(); }
 $('#battle').addEventListener('click',e=>{ const df=e.target.closest('[data-dform]'); if(df&&dexOpen){ dexForm=+df.dataset.dform; dexDetail(dexCur); return; } const ds=e.target.closest('[data-dshiny]'); if(ds&&dexOpen){ dexShiny=!dexShiny; dexDetail(dexCur); return; } const dt=e.target.closest('[data-dtf]'); if(dt&&dexOpen){ const n=dexTfList(dexForm||dexCur).length; dexTf=n?(dexTf+1)%(n+1):0; dexDetail(dexCur); return; } });
 $('#battle').addEventListener('click',e=>{ if(!D) return; if(D.busy) return; const x=e.target.closest('[data-d]'); if(!x) return; const m=x.dataset.d;
   if(m==='close'){ D=null; $('#modal').hidden=true; return render(); }
@@ -16830,7 +16830,7 @@ const BGMA={"fish":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   function bgmPlay(name){ if(name&&MFILE[name]) return filePlay(name); bgmStop(); }
   function bgmStop(){ if(FS&&MFILE[FS.name].bgm){ WANT=null; fileStop(); } else WANT=null; }
   /* 战况：打赢了（对手全倒 / 野生的可以捕捉了）、输了或逃走、捕捉成功、还在打 */
-  function battleState(){ if(typeof D!=='undefined'&&D&&D.my) return D.over==='win'?'won':D.over?'end':'on';
+  function battleState(){ if(typeof D!=='undefined'&&D&&D.my) return D.over==='win'?(D.busy?'on':'won'):D.over?'end':'on';   /* 双打：战斗记录还在播最后的招式时先别放胜利曲，等「胜利！」出来（Kris 2026-11-28） */
     if(typeof B!=='undefined'&&B){ if(!B.over) return 'on'; if(B.caughtOK) return 'caught'; const fs=B.foes&&B.foes.length?B.foes:[B.foe]; if(B.over==='catch'||fs.every(f=>f&&(f.fh!=null?f.fh:1)<=0)) return 'won'; return 'end'; } return 'on'; }
   const inBattle=()=>{ const m=document.getElementById('modal'); return !!(m&&!m.hidden&&((typeof B!=='undefined'&&B)||(typeof D!=='undefined'&&D))); };
   let HOLD=false;   /* 捕捉成功的小曲在播：这场战斗不再放音乐 */
