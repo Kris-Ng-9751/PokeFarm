@@ -217,6 +217,7 @@ code{font-family:ui-monospace,monospace;background:#eee9cf;padding:0 4px;border-
 .pull.dc>div{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.35}
 .pull.dc .tg{display:flex;gap:4px;flex-wrap:nowrap;justify-content:center;margin-top:auto;min-height:22px}
 .pull.dc .tg .tag{white-space:nowrap}
+.dgcard .tg{gap:3px}.dgcard .tg .tag{padding-left:5px;padding-right:5px;letter-spacing:-.2px}
 .battle{width:min(940px,100%)!important}
 .bgrid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px;align-items:start}
 @media(max-width:800px){.bgrid{grid-template-columns:minmax(0,1fr)}}
@@ -17529,7 +17530,7 @@ function dgDex(){ const gens=Object.keys(DG_GEN).map(Number).filter(g=>DIGI.some
   $('#dggrid').onclick=e=>{ const c=e.target.closest('[data-dg]'); if(c) dgDetail(c.dataset.dg); };
   $('#dggrid').onkeydown=e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.dataset.dg){ e.preventDefault(); dgDetail(e.target.dataset.dg); } }; }
 function dgGrid(){ const L=dgList();
-  $('#dggrid').innerHTML=L.map(e=>`<div class="pull dc dgcard" data-dg="${e.id}" role="button" tabindex="0" aria-label="${e.zh}"><div class="dgp">${dgImg(e)}</div><div class="nm"><b>${e.zh}</b></div><div class="muted">No.${String(e.n).padStart(3,'0')} · ${dgGen(e)}</div><div class="tg">${e.st?`<span class="tag">${e.st}</span>`:''}${e.at?`<span class="tag dga-${e.at}">${e.at}</span>`:''}</div></div>`).join('')||'<div class="muted">没有符合条件的数码宝贝</div>';
+  $('#dggrid').innerHTML=L.map(e=>`<div class="pull dc dgcard" data-dg="${e.id}" role="button" tabindex="0" aria-label="${e.zh}"><div class="dgp">${dgImg(e)}</div><div class="nm"><b>${e.zh}</b></div><div class="muted">No.${String(e.n).padStart(3,'0')} · ${dgGen(e)}</div><div class="tg">${dgTierTag(e)?`<span class="tag" style="color:#9a6b00">${dgTierTag(e)}</span>`:e.st?`<span class="tag">${e.st}</span>`:''}${e.at?`<span class="tag dga-${e.at}">${e.at}</span>`:''}</div></div>`).join('')||'<div class="muted">没有符合条件的数码宝贝</div>';
   $('#dgc').textContent=`显示 ${L.length}/${DIGI.length} 只`; }
 /* 详情做成和宝可梦图鉴一样（Kris 2026-11-21）：上面 ◀ ▶ / 图鉴详情 / 关闭；左边大图（底色按属性），中间编号、名字、阶段 / 属性、种族、进化路线，右边图鉴介绍；下面两块：必杀技（标上对应的属性，颜色和宝可梦招式一样）、进化 */
 const DG_AC={'疫苗种':['#5aa7e6','#2f6fb0'],'数据种':['#7cc46a','#3f8a3a'],'病毒种':['#b07acc','#6b3d8f'],'自由种':['#e6c15a','#b0862f'],'可变':['#f08a5d','#b8512a'],'不明':['#9aa0a6','#5f666d']};
@@ -17552,7 +17553,7 @@ function dgDetail(id){ const L=dgList(), e=DIGI.find(x=>x.id===id); if(!e) retur
     <div class="pd-mid">
       <div class="pd-id">No.${no} · ${e.en} <span class="muted">${dgGen(e)}</span></div>
       <h2 class="pd-name">${e.zh}</h2>
-      <div class="row" style="gap:6px;flex-wrap:wrap">${tyChip(e.st,'#c8963e')}${tyChip(e.at,c1)}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">${tyChip(e.st,'#c8963e')}${dgTierTag(e)?tyChip(dgTierTag(e),'#9a6b00'):''}${tyChip(e.at,c1)}</div>
       <div class="muted" style="margin-top:6px">种族：${e.ty||'—'}</div>
       <div class="muted" style="margin-top:10px">进化路线</div>${chain}
     </div>
@@ -18259,10 +18260,17 @@ async function dgFxTest(id,k){ const e=DIGI.find(x=>x.id===id); if(!e) return; i
 const DG_ID0=30000, DG_MV0=31000;
 const DG_TOT={'幼年期Ⅰ':200,'幼年期Ⅱ':260,'成长期':330,'成熟期':420,'装甲体':440,'混合体':500,'完全体':500,'究极体':580,'不明':330};   /* 混合体（十斗士）按完全体算 */
 const DG_POW={'幼年期Ⅰ':40,'幼年期Ⅱ':40,'成长期':60,'成熟期':80,'装甲体':80,'混合体':95,'完全体':95,'究极体':110,'不明':60};
-const DG_PWX={omnimon:150,imperialdramon:150,malomyotismon:150,kimeramon:150};   /* 指定数码宝贝的必杀技固定威力 */
+const DG_PWX={kimeramon:150};   /* 指定数码宝贝的必杀技固定威力 */
 /* 究极体里种族是「圣xx型」「古代xx型」「魔王型」「魔神型」「神兽型」「神人型」的，必杀技威力固定 200（Kris 2026-11-21；比上面的 150 优先） */
-const DG_PW200=/^(圣.*型|古代.*型|魔王型|魔神型|神兽型|神人型)$/;
-const dgPwFix=e=>(e.st==='究极体'&&DG_PW200.test(e.ty||''))?200:DG_PWX[e.id];
+/* 究极体分级（Kris 2026-11-29）：超究极体 > 顶级组织（皇家骑士、七大魔王、四圣兽、十斗士古代体、三大天使…）> 强力究极体 > 普通究极体。没列出来的究极体算顶级组织 */
+const DG_TIERS=[{k:'S',n:'超究极体',tot:720,pw:200,ids:'omnimon omegamon-x omegamon_zwart omegamonzwart_d omegamon_merciful omegamon-alter-s omegamon_alter-b imperialdramonpaladinmode daemon diaboromon apocalymon susanoomon lucemonsatanmode huanglongmon alphamon_ouryuken'},
+  {k:'A',n:'顶级究极体',tot:660,pw:160,ids:''},
+  {k:'B',n:'强力究极体',tot:620,pw:130,ids:'wargreymon wargreymon_x victorygreymon metalgarurumon metalgarurumon_x zdgarurumon phoenixmon magnadramon machinedramon blackwargreymon blackwargreymon_x megidramon saintgalgomon justimon'},
+  {k:'C',n:'普通究极体',tot:580,pw:110,ids:'metaletemon rosemon vikemon puppetmon piedmon pukumon grandlocomon marinangemon herculeskabuterimon metalseadramon venommyotismon'}];
+DG_TIERS.forEach(T=>T.set=new Set(T.ids.split(' ').filter(Boolean)));
+const dgTier=e=>e&&e.st==='究极体'?(DG_TIERS.find(T=>T.set.has(e.id))||DG_TIERS[1]):null;
+const dgTierTag=e=>{ const T=dgTier(e); return T?T.n:''; };
+const dgPwFix=e=>{ const T=dgTier(e); return T?T.pw:DG_PWX[e.id]; };
 const DG_FXP={火:[7,53],水:[127,57],草:[452,412],电:[9,85],冰:[8,58],格斗:[280,411],毒:[398,188],地面:[89,414],飞行:[332,403],超能力:[428,94],虫:[404,405],岩石:[444,408],幽灵:[421,247],龙:[337,406],恶:[242,399],钢:[442,430],妖精:[583,585],一般:[33,129]};
 const dgSpc=(n,d)=>/炮|弹|光|波|气|焰|火|激光|雷|电|冷|冰|风|泡|咒|魅惑|领域|射线|能量|吐|音|叫|咆哮|潮|海啸|诅咒|黑暗|心/.test(n+d)&&!/拳|爪|撞|咬|啃|刺|斩|剑|锤|踢|压|冲|鞭|击|啄|挠|疾驰|滑行|头槌/.test(n);
 const dgSid=e=>DG_ID0+e.n;
@@ -18283,7 +18291,7 @@ async function dgRegister(list){ dgUnregister(); DGREG={ids:[],mvs:[],ct:[]};
       else { const pr=DG_FXP[t]||DG_FXP.一般, base=[pr[sp?1:0],pr[sp?0:1]].find(i=>FXF[i])||Object.keys(MV).map(Number).find(i=>i<1000&&FXF[i]&&MV[i][1]===t&&MV[i][2]>0);
       if(base){ FXF[mid]=FXF[base]; if(FXDUR[base]) FXDUR[mid]=FXDUR[base]; } }
       DGREG.mvs.push(mid); });
-    const spN=(e.mv||[]).filter(m=>dgSpc(m[0],m[1])).length, phys=(e.mv||[]).length-spN>spN, tot=DG_TOT[e.st]||330;
+    const spN=(e.mv||[]).filter(m=>dgSpc(m[0],m[1])).length, phys=(e.mv||[]).length-spN>spN, tot=(dgTier(e)||{}).tot||DG_TOT[e.st]||330;
     const w=phys?[1,1.25,1,.8,.9,1.05]:[1,.8,.9,1.25,1,1.05]; if(e.at==='疫苗种') w[2]+=.12; if(e.at==='病毒种'){ w[1]+=.08; w[3]+=.08; } if(e.at==='数据种') w[4]+=.12;
     const ws=w.reduce((a,x)=>a+x,0), b6=w.map(x=>Math.max(10,Math.round(tot*x/ws)));
     const t1=tys[0]||(e.at==='病毒种'?'恶':'一般'), t2=tys[1]&&tys[1]!==t1?tys[1]:'';
