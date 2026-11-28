@@ -1309,6 +1309,8 @@ const mon=u=>S.mons.find(m=>m.uid===u);
 const rndEvoItem=()=>Math.random()<.12?'link':EVOITEMS[Math.floor(Math.random()*EVOITEMS.length)];
 const heartSvg=on=>`<svg class="hsv" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.7 4.8 6.2 4.8c2.1 0 3.8 1.2 5.8 3.4 2-2.2 3.7-3.4 5.8-3.4 3.5 0 5.3 3.6 3.8 7C19.5 16.4 12 21 12 21z" fill="${on?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
 const TEST=true;
+/* 开发者模式（Kris 2026-11-28）：只要是开发者模式，全部关卡、全部难度都能直接测试，不用先打赢前面的；同步版（正式数据）不算 */
+const DEVALL=()=>TEST&&!window.__POKEFARM_SYNC;
 const SHINY_RATE=0.05;  /* 异色概率固定 5%，不管测试模式（Kris 2026-11-05） */
 const rollShiny=()=>Math.random()<SHINY_RATE;  /* test mode: every item and TM is unlimited, coins and stars stay topped up */
 function topUp(){ if(!TEST) return; for(const k in MINTS) S.items[k]=Math.max(S.items[k]||0,99);   /* 测试：全部薄荷都开放（Kris 2026-11-03） */
@@ -1412,11 +1414,12 @@ const reqLv=team=>Math.max(1,Math.round(avgLv(team)*0.55));
 /* 难度第二期（Kris 2026-10-27）：道馆 / 四天王 / 冠军除了训练家等级，还要「队伍平均等级 ≥ 对手平均等级 × 0.75」；下一个地区要先成为上一个地区的冠军 */
 const teamAvgLv=()=>{ const ms=S.team.map(mon).filter(Boolean); return ms.length?Math.round(ms.reduce((a,m)=>a+m.lv,0)/ms.length):0; };
 const needTeam=team=>Math.max(1,Math.ceil(avgLv(team)*.75));
-const regOpen=ri=>ri===0||!!(S.champ&&S.champ[ri-1]);
-const gate=(team,ri)=>!regOpen(ri)?`要先成为${TR.regions[ri-1].region_zh}冠军`:S.tl<reqLv(team)?`训练家等级不够，需要 Lv${reqLv(team)}`:teamAvgLv()<needTeam(team)?`队伍平均等级不够：需要 Lv${needTeam(team)}（现在 Lv${teamAvgLv()}）`:'';
+const regOpen=ri=>DEVALL()||ri===0||!!(S.champ&&S.champ[ri-1]);
+const gate=(team,ri)=>DEVALL()?'':!regOpen(ri)?`要先成为${TR.regions[ri-1].region_zh}冠军`:S.tl<reqLv(team)?`训练家等级不够，需要 Lv${reqLv(team)}`:teamAvgLv()<needTeam(team)?`队伍平均等级不够：需要 Lv${needTeam(team)}（现在 Lv${teamAvgLv()}）`:'';
 const gateTxt=(team,ri)=>`<b style="color:${teamAvgLv()>=needTeam(team)?'var(--leaf)':'var(--red)'}">队伍平均需要 Lv${needTeam(team)}（现在 ${teamAvgLv()}）</b>`;
 const FEAT={nursery:15,wk:10,arena:3,gym:5,e4:15,legend:30,farm:8,explore:12,mine:10,fish:10,fossil:20,urg:5,sq:10,auction:15,trade:10};
-if(TEST) FEAT.legend=0;   /* 开发者模式：传奇训练家全部开放，不看训练家等级（Kris 2026-11-28） */
+function featDev(){ Object.keys(FEAT).forEach(k=>{ const d=Object.getOwnPropertyDescriptor(FEAT,k); if(!d||d.get) return; const v=d.value; Object.defineProperty(FEAT,k,{get:()=>DEVALL()?0:v,enumerable:true,configurable:true}); }); }
+featDev(); setTimeout(()=>{ featDev(); if(DEVALL()) try{ render(); }catch(e){} },0);   /* 开发者模式：所有功能都不看训练家等级（Kris 2026-11-28）；后面才加的（例如对战塔）等脚本跑完再补一次 */
 const DUO_LV=20;
 const okSp=(id,cap)=>{ const l=legendLv(id); return l?l<=cap:minLv(id)<=cap; };
 function pickId(rar,cap){ for(let r=rar;r>=1;r--){ const q=POOL[r].filter(id=>okSp(id,cap)); if(q.length) return formRoll(q[Math.floor(Math.random()*q.length)],cap); } return 10; }
@@ -1543,10 +1546,10 @@ const GIMC={dyn:[7,3],tera:[8,3]}; const SWSH=new Set([1, 2, 3, 4, 5, 6, 7, 8, 9
 const dynBase=id=>{ if(id<=1025) return id; if(typeof SGBASE!=='undefined'&&SGBASE[id]) return SGBASE[id]; if(typeof FCN!=='undefined'&&FCN[id]) return FCN[id]; if(typeof FORMS!=='undefined') for(const b in FORMS) if(FORMS[b].includes(id)) return +b; return id; };
 const NODYN={has:id=>{ if([888,889,890,10188,10189,10190].includes(id)) return true; if(typeof MEGA!=='undefined'&&Object.values(MEGA).some(L=>L.includes(id))) return true; return !SWSH.has(dynBase(id)); }};   /* 跟原作一样：只有剑 / 盾里有的宝可梦能极巨化，苍响、藏玛然特、无极汰那除外 */   /* 苍响、藏玛然特、无极汰那不能极巨化（照原作，Kris 2026-10-31） */   /* 极巨化：赢下伽勒尔 3 个道馆；太晶化：赢下帕底亚 3 个道馆 */
 const regGyms=ri=>TR.regions[ri].gyms.filter((g,i)=>(S.badges||{})[ri+'-'+i]).length;
-const gimOK=k=>{ const c=GIMC[k]; return !c||regGyms(c[0])>=c[1]; };
+const gimOK=k=>{ const c=GIMC[k]; return DEVALL()||!c||regGyms(c[0])>=c[1]; };
 const gimNeed=k=>{ const c=GIMC[k]; return `赢下${TR.regions[c[0]].region_zh} ${c[1]} 个道馆后开放（现在 ${regGyms(c[0])} 个）`; };
 const gymBest=()=>Math.max(0,...TR.regions.map((r,ri)=>r.gyms.filter((g,i)=>(S.badges||{})[ri+'-'+i]).length));
-const biOK=k=>{ const c=BICOND[k]; if(!c) return true; return c[0]==='g'?gymBest()>=c[1]:champCount()>=c[1]; };
+const biOK=k=>{ const c=BICOND[k]; if(!c||DEVALL()) return true; return c[0]==='g'?gymBest()>=c[1]:champCount()>=c[1]; };
 const biNeed=k=>{ const c=BICOND[k]; return c[0]==='g'?`赢下同一地区 ${c[1]} 个道馆开放（现在最多 ${gymBest()} 个）`:`拿下 ${c[1]} 个地区的冠军开放（现在 ${champCount()} 个）`; };
 const unlockText=k=>{ const b=BI.find(x=>x[0]===k); return b&&!biOK(k)?biNeed(k):''; };
 
@@ -5181,7 +5184,7 @@ function catchP(b,key){ const x=BALLS.find(y=>y.k===key)||BALLS[0]; const f=b.fo
 const ITEMPRICE={berry:20,ball:30,potion:40,link:500,abcap:30000};   /* 传说道具售价 25000（Kris 2026-10-29） */
 const RARE={candy:1};   /* 稀有道具：训练家星星够了才开放，商场不卖 */
 const myStars=()=>starsOf(myCard());
-const rareOK=k=>!RARE[k]||myStars()>=RARE[k];
+const rareOK=k=>DEVALL()||!RARE[k]||myStars()>=RARE[k];
 const rareNeed=k=>`稀有道具，训练家 ${RARE[k]} 星后开放（现在 ${myStars()} 星）`;
 const evoPrice=k=>/之石$/.test(ITEMS[k][0])?400:600;
 const tmPrice=n=>MV[TMS[n]][2]?3000+MV[TMS[n]][2]*50:5000;   /* ×10（Kris 2026-10-30） */
@@ -5304,7 +5307,7 @@ let gymRM=false;
 /* 重赛模式下每位馆主显示「现在的难度」：已开放里还没通关的那个；全部通关就显示地狱 */
 const gymCurDk=(ri,gi)=>GRK.find(dk=>grOK(ri,gi,dk)&&!(grGet(ri+'-'+gi)[dk]||{}).c)||GRK[GRK.length-1];
 function rGym(){
-  const ri=trTab.gym, R=TR.regions[ri], got=R.gyms.filter((g,i)=>S.badges[ri+'-'+i]).length, best=myBest(), reOK=got===R.gyms.length, RM=gymRM&&reOK;
+  const ri=trTab.gym, R=TR.regions[ri], got=R.gyms.filter((g,i)=>S.badges[ri+'-'+i]).length, best=myBest(), reOK=DEVALL()||got===R.gyms.length, RM=gymRM&&reOK;
   $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">道馆${reOK?`<button class="btn ${RM?'':'alt'}" id="gymrm" aria-pressed="${RM}" style="font-size:14px;padding:4px 14px">${RM?'重赛中 · 返回':'重赛'}</button>`:''}</h2><div class="muted">${RM?`道馆重赛：普通 Lv${GRD[GRK[0]].lv}（馆员 2 位 × 3 只）→ 困难 Lv${GRD[GRK[1]].lv}（2 位 × 4 只）→ 地狱 Lv${GRD[GRK[2]].lv}（3 位 × 5 只），通关前一个难度才开放下一个。馆主带 6 只，会特殊能力和回复道具；开场有道馆属性的天气。点难度看对手阵容；同一位馆主三个难度合计 9 星送 1 个粘糕。`:`每个地区 ${R.gyms.length} 个道馆。挑战馆主前要先连战 2 位馆员（中间 HP 不回复）。第一次打赢得徽章、TM、金币和星尘，之后只给少量金币；集齐徽章去「四天王」${reOK?'，也可以点「重赛」挑战更高难度':'；集齐这个地区的徽章后可以重赛'}。你是训练家 Lv${S.tl||1}。`}</div>${trTabs('gym')}
   <div class="muted">${R.region_zh}（${R.games}）· 已获得徽章 ${got}/${R.gyms.length}${regOpen(ri)?'':` · <b style="color:var(--red)">未开放：要先成为${TR.regions[ri-1].region_zh}冠军</b>`}</div><div class="row" style="margin-top:6px">${R.gyms.map((g,i)=>badgeIcon(g,S.badges[ri+'-'+i],ri,i)).join('')}</div></div>
   <div class="list">${R.gyms.map((g,i)=>{ const done=S.badges[ri+'-'+i], ace=g.team[g.team.length-1][0]; return `<div class="item trc"><div class="l">${trAv(g,ace)}<div style="min-width:0"><b>${g.zh}</b> <span class="muted">${g.en}</span>${g.en.includes('&')?' <span class="tag r3" title="双打：场上两边各 2 只，队伍至少要 2 只">双打</span>':''} <span class="tag" style="background:${TYC[g.type_zh]||'#ccc'}33;border-color:${TYC[g.type_zh]||'#ccc'}">${g.type_zh}系</span>${done?' <span class="tag r4">已通关</span>':''}${RM?(()=>{ const dk=gymCurDk(ri,i), P=grPlan(ri,i,dk), D0=GRD[dk]; return `<div class="muted">重赛天气：<b>${WXN[P.wx][0]}</b>（${WXN[P.wx][1]}） · 现在的难度：<b>${D0.nm}</b> Lv${D0.lv}</div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(P.lead.map(id=>[id,D0.lv]))}</div>`; })():`<div class="muted">${g.city_zh} · ${bImg(ri,i,20)}${g.badge_zh||''}${g.tm_zh?` · 奖励 TM「${g.tm_zh}」`:''} · 平均 Lv${avgLv(g.team)} · <b style="color:${S.tl>=reqLv(g.team)?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(g.team)}</b> · ${gateTxt(g.team,ri)}</div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(g.team)}</div>`}</div></div>${RM?(()=>{ const st=grGet(ri+'-'+i); return `<div class="row grbtns">${GRK.map(dk=>grBtns(grOK(ri,i,dk),st[dk]||{},dk,`pv:${ri}:${i}:${dk}`,'Lv'+GRD[dk].lv)).join('')}</div>`; })():`<button class="btn red" data-gfight="${i}" ${gate(g.team,ri)?'disabled':''} title="${gate(g.team,ri)}">${gate(g.team,ri)?(regOpen(ri)?'等级不够':'地区未开放'):(done?'再次挑战':'挑战')}</button>`}</div>`; }).join('')}</div></section>`;
@@ -5378,8 +5381,8 @@ function e4Plan(ri,dk){ const R=TR.regions[ri], E=E4D[dk], it=GRD[dk].items, out
   const c=R.champion, rnd=grRng(grHash('ch'+ri+dk)), ts=[...new Set(c.team.flatMap(([id])=>[SP[grFinal(id)][2],SP[grFinal(id)][8]]).filter(Boolean))], pool=[...new Set(ts.flatMap(grPool))].filter(id=>bstOf(id)>=480).sort((a,b)=>bstOf(b)-bstOf(a)), {six}=grSix(c.team,pool.length>=12?pool:[...new Set(ts.flatMap(grPool))],rnd,new Set()), at=SP[six[5]][2];
   out.push({o:c,t:at,team:six,lv:E.ch,wx:GWX[at]||'sun',gk:grGk(six[5],rnd),items:it,name:`冠军 ${c.zh}`,champ:1});
   return out; }
-const grOK=(ri,gi,dk)=>{ const key=ri+'-'+gi, i=GRK.indexOf(dk); return !!S.badges[key]&&(i===0||!!(grGet(key)[GRK[i-1]]||{}).c); };
-const e4OK=(ri,dk)=>{ const i=GRK.indexOf(dk); return !!S.champ[ri]&&(i===0||!!(e4Get(ri)[GRK[i-1]]||{}).c); };
+const grOK=(ri,gi,dk)=>{ if(DEVALL()) return true; const key=ri+'-'+gi, i=GRK.indexOf(dk); return !!S.badges[key]&&(i===0||!!(grGet(key)[GRK[i-1]]||{}).c); };
+const e4OK=(ri,dk)=>{ if(DEVALL()) return true; const i=GRK.indexOf(dk); return !!S.champ[ri]&&(i===0||!!(e4Get(ri)[GRK[i-1]]||{}).c); };
 /* 通用连战：fights=[{name,team,lv,wx,gk,tt,items,av}]，赢一场接下一场，HP 不回复 */
 let CHN=null;
 function chnStart(o){ CHN={...o,step:0,carry:null}; chnStep(); }
@@ -5466,12 +5469,12 @@ function rE4RM(ri,R,seq,got,need){ const dk=e4CurDk(ri), L=e4Plan(ri,dk), D0=GRD
 let e4RM=false;
 const e4CurDk=ri=>GRK.find(dk=>e4OK(ri,dk)&&!(e4Get(ri)[dk]||{}).c)||GRK[GRK.length-1];
 function rE4(){
-  const ri=trTab.e4, R=TR.regions[ri], need=R.gyms.length, got=R.gyms.filter((g,i)=>S.badges[ri+'-'+i]).length, seq=[...R.elite4,R.champion], prog=S.e4[ri]||0, ok=got>=need, reOK=!!S.champ[ri], RM=e4RM&&reOK;
+  const ri=trTab.e4, R=TR.regions[ri], need=R.gyms.length, got=R.gyms.filter((g,i)=>S.badges[ri+'-'+i]).length, seq=[...R.elite4,R.champion], prog=S.e4[ri]||0, ok=DEVALL()||got>=need, reOK=DEVALL()||!!S.champ[ri], RM=e4RM&&reOK;
   if(RM) return rE4RM(ri,R,seq,got,need);
   $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">四天王${reOK?'<button class="btn alt" id="e4rm" aria-pressed="false" style="font-size:14px;padding:4px 14px">重赛</button>':''}</h2><div class="muted"><b>集齐该地区全部徽章 + 训练家等级够</b>才能挑战；要连续打败${R.elite4.length?'四天王':''}和冠军，中途输了从头再来${reOK?'。已是冠军，可以点「重赛」挑战更高难度':'；成为冠军后可以重赛'}。</div>${trTabs('e4')}
   <div class="muted">${R.region_zh}（${R.games}）· 徽章 ${got}/${need}${ok?'，可以挑战':'，还没集齐'}${S.champ[ri]?' · 已是冠军':''}</div><div class="row" style="margin-top:6px">${R.gyms.map((g,i)=>badgeIcon(g,S.badges[ri+'-'+i],ri,i)).join('')}</div></div>
   <div class="list">${seq.map((o,i)=>{ const isC=i===seq.length-1, st=i<prog?'done':i===prog?'next':'lock', ace=o.team[o.team.length-1][0];
-    return `<div class="item trc" style="${st==='lock'?'opacity:.6':''}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span> ${o.type_zh?`<span class="tag" style="background:${TYC[o.type_zh]||'#ccc'}33;border-color:${TYC[o.type_zh]||'#ccc'}">${o.type_zh}系</span>`:''} <span class="tag ${isC?'r4':''}">${isC?'冠军':'四天王 '+(i+1)}</span>${st==='done'?' <span class="tag r4">本轮已击败</span>':''}<div class="muted">平均 Lv${avgLv(o.team)} · <b style="color:${S.tl>=reqLv(o.team)?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b> · ${gateTxt(o.team,ri)}</div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div></div></div><button class="btn red" data-e4="${i}" ${(ok&&st==='next'&&!gate(o.team,ri))?'':'disabled'} title="${st==='next'?gate(o.team,ri):''}">${st==='done'?'已击败':st==='next'?(!ok?'没集齐徽章':gate(o.team,ri)?'等级不够':i===0?'开始挑战':'下一位'):'未到'}</button></div>`; }).join('')}</div>
+    return `<div class="item trc" style="${st==='lock'?'opacity:.6':''}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span> ${o.type_zh?`<span class="tag" style="background:${TYC[o.type_zh]||'#ccc'}33;border-color:${TYC[o.type_zh]||'#ccc'}">${o.type_zh}系</span>`:''} <span class="tag ${isC?'r4':''}">${isC?'冠军':'四天王 '+(i+1)}</span>${st==='done'?' <span class="tag r4">本轮已击败</span>':''}<div class="muted">平均 Lv${avgLv(o.team)} · <b style="color:${S.tl>=reqLv(o.team)?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b> · ${gateTxt(o.team,ri)}</div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div></div></div><button class="btn red" data-e4="${i}" ${(ok&&(st==='next'||DEVALL())&&!gate(o.team,ri))?'':'disabled'} title="${st==='next'?gate(o.team,ri):''}">${st==='done'?'已击败':st==='next'?(!ok?'没集齐徽章':gate(o.team,ri)?'等级不够':i===0?'开始挑战':'下一位'):'未到'}</button></div>`; }).join('')}</div>
   ${prog>0?`<div class="row"><button class="btn alt" id="e4reset">放弃本轮，重新开始</button></div>`:''}</section>`;
   bindTrTabs(rE4); { const t=$('#e4rm'); if(t) t.onclick=()=>{ e4RM=true; rE4(); }; }
   const rs=$('#e4reset'); if(rs) rs.onclick=()=>{ S.e4[ri]=0; rE4(); };
@@ -5513,7 +5516,7 @@ function legGroups(){ const order=[...REGIONS,'动画'], g={}; TR.legend.forEach
 let lgRM=false;
 const LGD={n:{ev:25,bp:10},h:{ev:50,bp:20},x:{ev:100,bp:30}};
 const lgGet=o=>(S.lgR||{})[o.en]||{};
-const lgOK=(o,dk)=>{ if(TEST) return true;   /* 开发者模式：传奇训练家全部开放（Kris 2026-11-28） */ const i=GRK.indexOf(dk); return !!S.legendBeat[o.en]&&(i===0||!!(lgGet(o)[GRK[i-1]]||{}).c); };
+const lgOK=(o,dk)=>{ if(DEVALL()) return true;   /* 开发者模式：传奇训练家全部开放（Kris 2026-11-28） */ const i=GRK.indexOf(dk); return !!S.legendBeat[o.en]&&(i===0||!!(lgGet(o)[GRK[i-1]]||{}).c); };
 const lgCurDk=o=>GRK.find(dk=>lgOK(o,dk)&&!(lgGet(o)[dk]||{}).c)||(lgOK(o,GRK[0])?GRK[GRK.length-1]:GRK[0]);
 const GEM_OF=Object.fromEntries(Object.entries(GEMS).map(([k,t])=>[t,k]));
 function lgGem(id){ let best=null; try{ (initMoves(id,100)||[]).forEach(m=>{ const v=MV[m]; if(!v||!(v[2]>0)) return; if(!best||v[2]>best[2]) best=v; }); }catch(e){} const t=(best&&best[1])||SP[id][2]; return GEM_OF[t]||GEM_OF[SP[id][2]]||'gm_0'; }   /* 威力最高的攻击招式是什么属性，就带那种宝石 */
@@ -5531,13 +5534,13 @@ function lgStart(i,dk){ const o=TR.legend[i]; if(!lgOK(o,dk)) return toast('还�
   chnStart({tag:'传奇训练家重赛',gimNow:dk==='x',label:`传奇训练家重赛 · ${GRD[dk].nm}`,fights:[{name:o.zh,team:L.map(f=>f.id),foes:L,lv:100,gk:GM_LEGEND[o.en]||null,tt:SP[ace.id][2],av:trAv(o,ace.id)}],
     finish:b=>{ S.lgR=S.lgR||{}; const st=S.lgR[o.en]=S.lgR[o.en]||{}, rec=st[dk]=st[dk]||{}; return `打败了传奇训练家 ${o.zh}（${GRD[dk].nm}）！`+grSettle(rec,b,[SP[ace.id][2],SP[ace.id][8]].filter(Boolean),E.first,E.daily,E.star); }}); }
 function rLegend(){
-  const cc=champCount(), reOK=TEST||TR.legend.some(o=>S.legendBeat[o.en]), RM=lgRM&&reOK;
+  const cc=champCount(), reOK=DEVALL()||TR.legend.some(o=>S.legendBeat[o.en]), RM=lgRM&&reOK;
   $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">传奇训练家${reOK?`<button class="btn ${RM?'':'alt'}" id="lgrm" aria-pressed="${RM}" style="font-size:14px;padding:4px 14px">${RM?'重赛中 · 返回':'重赛'}</button>`:''}</h2><div class="muted">${RM?`传奇训练家重赛：三个难度全员 Lv100，难度越高对手练得越足——普通：努力值每项 ${LGD.n.ev}%、粘糕每项 +${LGD.n.bp}；困难：努力值 ${LGD.h.ev}%、粘糕 +${LGD.h.bp}；地狱：努力值 ${LGD.x.ev}%、粘糕 +${LGD.x.bp}；每只都带自己最强招式属性的宝石。打赢过这一位才能重赛，通关前一个难度才开放下一个。点难度看对手阵容。`:`游戏里最强的几位训练家，队伍固定、等级很高。每位有<b>特定条件</b> + 训练家等级要求，第一次打赢奖励丰厚${reOK?'。打赢过的可以点「重赛」挑战更高难度':'；打赢以后可以重赛'}。`}</div></div>
-  ${legGroups().map(([reg,arr])=>`<div class="reghead"><b>${reg}</b><span class="muted">已击败 ${arr.filter(([o])=>S.legendBeat[o.en]).length}/${arr.length}</span></div><div class="list">${arr.map(([o,i])=>{ const lc=legC(o), cok=TEST||lc.ok(), lvok=TEST||S.tl>=reqLv(o.team), open=cok&&lvok, done=S.legendBeat[o.en]; const ace=o.team[o.team.length-1][0];
-    return `<div class="item trc" style="${(RM?(done||TEST):open)?'':'opacity:.6'}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span>${done?' <span class="tag r4">已击败</span>':''}${RM?(()=>{ const dk=lgCurDk(o), L=lgTeam(o,dk); return `<div class="muted">${done||TEST?`现在的难度：<b>${GRD[dk].nm}</b> · Lv100 · 努力值 ${LGD[dk].ev}% · 粘糕 +${LGD[dk].bp} · 带宝石`:'<b style="color:var(--red)">先打赢这一位才能重赛</b>'}</div><div class="row" style="gap:2px;margin-top:4px">${L.map(f=>`<span class="tmon"><img src="${SPR[f.id]}" alt="" title="${SP[f.id][0]} Lv100 · 带${ITEMS[f.gem][0]}"><small>${SP[f.id][0]} ${iImg(f.gem,12)}</small></span>`).join('')}</div>`; })():`<div class="muted">${o.game||''} · 平均 Lv${avgLv(o.team)}</div><div class="muted" title="${lc.t}"><b style="color:${cok?'var(--leaf)':'var(--red)'}">条件：${lc.t}</b>（${lc.pg()}） · <b style="color:${lvok?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b></div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div>`}</div></div>${RM?(()=>{ const st=lgGet(o); return `<div class="row grbtns">${GRK.map(dk=>grBtns(lgOK(o,dk),st[dk]||{},dk,`lgpv:${i}:${dk}`,'Lv100')).join('')}</div>`; })():`<button class="btn red" data-lg="${i}" ${open?'':'disabled'}>${done?'再次挑战':'挑战'}</button>`}</div>`; }).join('')}</div>`).join('')}</section>`;
+  ${legGroups().map(([reg,arr])=>`<div class="reghead"><b>${reg}</b><span class="muted">已击败 ${arr.filter(([o])=>S.legendBeat[o.en]).length}/${arr.length}</span></div><div class="list">${arr.map(([o,i])=>{ const lc=legC(o), cok=DEVALL()||lc.ok(), lvok=DEVALL()||S.tl>=reqLv(o.team), open=cok&&lvok, done=S.legendBeat[o.en]; const ace=o.team[o.team.length-1][0];
+    return `<div class="item trc" style="${(RM?(done||DEVALL()):open)?'':'opacity:.6'}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span>${done?' <span class="tag r4">已击败</span>':''}${RM?(()=>{ const dk=lgCurDk(o), L=lgTeam(o,dk); return `<div class="muted">${done||DEVALL()?`现在的难度：<b>${GRD[dk].nm}</b> · Lv100 · 努力值 ${LGD[dk].ev}% · 粘糕 +${LGD[dk].bp} · 带宝石`:'<b style="color:var(--red)">先打赢这一位才能重赛</b>'}</div><div class="row" style="gap:2px;margin-top:4px">${L.map(f=>`<span class="tmon"><img src="${SPR[f.id]}" alt="" title="${SP[f.id][0]} Lv100 · 带${ITEMS[f.gem][0]}"><small>${SP[f.id][0]} ${iImg(f.gem,12)}</small></span>`).join('')}</div>`; })():`<div class="muted">${o.game||''} · 平均 Lv${avgLv(o.team)}</div><div class="muted" title="${lc.t}"><b style="color:${cok?'var(--leaf)':'var(--red)'}">条件：${lc.t}</b>（${lc.pg()}） · <b style="color:${lvok?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b></div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div>`}</div></div>${RM?(()=>{ const st=lgGet(o); return `<div class="row grbtns">${GRK.map(dk=>grBtns(lgOK(o,dk),st[dk]||{},dk,`lgpv:${i}:${dk}`,'Lv100')).join('')}</div>`; })():`<button class="btn red" data-lg="${i}" ${open?'':'disabled'}>${done?'再次挑战':'挑战'}</button>`}</div>`; }).join('')}</div>`).join('')}</section>`;
   document.querySelectorAll('[data-lg]').forEach(b=>b.onclick=()=>fightLegend(+b.dataset.lg)); { const t=$('#lgrm'); if(t) t.onclick=()=>{ lgRM=!lgRM; rLegend(); }; }
 }
-function fightLegend(i){ const o=TR.legend[i], first=!S.legendBeat[o.en]; if(!TEST&&S.tl<reqLv(o.team)) return toast(`训练家等级不够，需要 Lv${reqLv(o.team)}`); if(!TEST&&!legC(o).ok()) return toast('还没达成特定条件：'+legC(o).t); window.__trAvNext=trAv(o,o.team[o.team.length-1][0]);
+function fightLegend(i){ const o=TR.legend[i], first=!S.legendBeat[o.en]; if(!DEVALL()&&S.tl<reqLv(o.team)) return toast(`训练家等级不够，需要 Lv${reqLv(o.team)}`); if(!DEVALL()&&!legC(o).ok()) return toast('还没达成特定条件：'+legC(o).t); window.__trAvNext=trAv(o,o.team[o.team.length-1][0]);
   startTrainer('传奇训练家',`传奇训练家 · ${o.zh}`,o.team,first?{coins:3000,stars:50,items:{candy:10}}:{coins:300},()=>{ if(first){ S.legendBeat[o.en]=1; return `击败了传奇训练家 ${o.zh}！`+tgain(150); } return ''; },null,GM_LEGEND[o.en]); }
 
 /* ---------- 传说宝可梦挑战（Kris 2026-11-26，冒险）：每个地区的神兽 / 幻兽都能挑战，只拿奖励、不能捕获；每个地区有一只大 Boss（关都是超梦……）。
@@ -5559,9 +5562,9 @@ function lgcTera(id){ const t0=[SP[id][2],SP[id][8]].filter(Boolean), weak=TYPES
 const LGC_EXTRA={7:[10169,10170,10171]};   /* 伽勒尔的样子的传说的鸟放在伽勒尔（Kris 2026-11-27） */
 const lgcRegion=id=>{ if(LGC_BOSS.includes(id)) return LGC_BOSS.indexOf(id); for(const k in LGC_EXTRA) if(LGC_EXTRA[k].includes(id)) return +k; return SP[id][9]-1; };
 const lgcList=ri=>{ const boss=LGC_BOSS[ri]; return [...Object.keys(SP).map(Number).filter(id=>id<=1025&&SP[id][10]>=2&&SP[id][9]===ri+1&&id!==boss).sort((a,b)=>a-b),...(LGC_EXTRA[ri]||[])]; };
-const lgcOpen=ri=>!!S.champ[ri];
+const lgcOpen=ri=>DEVALL()||!!S.champ[ri];
 const lgcLeft=ri=>lgcList(ri).filter(id=>!((S.lgc||{})[id]||{}).c).length;   /* 大 Boss 要先打赢这个地区其他全部神兽 / 幻兽（Kris 2026-11-26） */
-function lgcFight(id){ const ri=lgcRegion(id); if(!lgcOpen(ri)) return toast(`先成为${TR.regions[ri].region_zh}冠军`); const isB=LGC_BOSS[ri]===id; if(isB&&lgcLeft(ri)) return toast(`先打赢这个地区其他 ${lgcLeft(ri)} 只传说宝可梦`); const R=LGC_RW[isB?'b':'n'], lv=LGC_LV[isB?'b':'n'];
+function lgcFight(id){ const ri=lgcRegion(id); if(!lgcOpen(ri)) return toast(`先成为${TR.regions[ri].region_zh}冠军`); const isB=LGC_BOSS[ri]===id; if(isB&&lgcLeft(ri)&&!DEVALL()) return toast(`先打赢这个地区其他 ${lgcLeft(ri)} 只传说宝可梦`); const R=LGC_RW[isB?'b':'n'], lv=LGC_LV[isB?'b':'n'];
   S.lgc=S.lgc||{}; const rec=S.lgc[id]||{}, first=!rec.c, dly=!first&&rec.d!==today();
   const arm=isB&&id===150, fo=arm?armorFoe(lv):lgcFoe(id,lv);   /* 关都大 Boss 是盔甲超梦 */
   startBattle({kind:'npc',tag:'传说宝可梦挑战',title:`${isB?'传说大 Boss':'传说宝可梦'} · ${SP[fo.id][0]}`,foe:{...fo},foes:[fo],reward:null,bossFm:arm?null:lgcForm(id),
@@ -5590,9 +5593,9 @@ function lgcGrpFight(ri,gi){ const [nm,L]=LGC_GRP[ri][gi]; if(!lgcOpen(ri)) retu
    地狱、梦魇开场直接变身，普通、困难在第一次出招时才变身。奖励 = 原本的 ×1.5 / ×2 / ×3 / ×4 ---------- */
 const LGX={n:{nm:'普通',lv:80,bp:10,ev:25,now:0,rw:1.5},h:{nm:'困难',lv:90,bp:20,ev:50,now:0,rw:2},x:{nm:'地狱',lv:100,bp:30,ev:75,now:1,rw:3},m:{nm:'梦魇',lv:100,bp:30,ev:100,now:1,rw:4,dbl:1}};
 const LGX_S=['n','h','x'], LGX_G=['n','h','x','m'];
-const lgxOpen=ri=>!!(((S.lgc||{})[LGC_BOSS[ri]])||{}).c;
+const lgxOpen=ri=>DEVALL()||!!(((S.lgc||{})[LGC_BOSS[ri]])||{}).c;
 const lgxRec=k=>(S.lgcd||{})[k]||{};
-const lgxOK=(ri,k,dk,keys)=>{ const i=keys.indexOf(dk); return lgxOpen(ri)&&(i===0||!!(lgxRec(k)[keys[i-1]]||{}).c); };
+const lgxOK=(ri,k,dk,keys)=>{ if(DEVALL()) return true; const i=keys.indexOf(dk); return lgxOpen(ri)&&(i===0||!!(lgxRec(k)[keys[i-1]]||{}).c); };
 const lgxRW=(R,m)=>{ const sc=o=>{ const r={}; if(o.coins) r.coins=Math.round(o.coins*m); if(o.stars) r.stars=Math.round(o.stars*m); if(o.items) r.items=Object.fromEntries(Object.entries(o.items).map(([k,v])=>[k,Math.ceil(v*m)])); return r; }; return {first:sc(R.first),daily:sc(R.daily)}; };
 function lgxFoe(id,dk){ const D0=LGX[dk], e=Math.round(252*D0.ev/100), ev={}, bp={}; [4,5,6,7,8,9].forEach(k=>{ ev[k]=e; bp[k]=D0.bp; }); const arm=id===150&&LGC_BOSS.includes(150)&&lgxArmor;
   const f={id:arm?ARMOR_ID:id,lv:D0.lv,ev,bp,gem:lgGem(id),...(abHid(id)&&!arm?{ab:2}:{})}; if(arm){ f.ev[5]=f.ev[7]=252; } return f; }
@@ -5612,7 +5615,7 @@ setInterval(()=>{ const d=typeof D!=='undefined'?D:null; if(!d||!d.gimNow||d.ove
 const lgxBtns=(ri,k,keys,fn)=>lgxOpen(ri)?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${keys.map(dk=>{ const ok=lgxOK(ri,k,dk,keys), c=(lgxRec(k)[dk]||{}).c; return `<button class="btn ${ok?'':'alt'}" style="padding:3px 10px;font-size:12px" ${ok?`data-lgx="${fn}:${dk}"`:'disabled'} title="Lv${LGX[dk].lv}${LGX[dk].dbl?' · 双打':''}">${c?'✓ ':ok?'':'🔒 '}${LGX[dk].nm}</button>`; }).join('')}</div>`:'';
 function rLgc(){ const ri=lgcTab, R=TR.regions[ri], open=lgcOpen(ri), boss=LGC_BOSS[ri], L=lgcList(ri), rec=id=>(S.lgc||{})[id]||{}, beat=[boss,...L].filter(id=>rec(id).c).length;
   const left=lgcLeft(ri);
-  const row=(id,isB)=>{ const r=rec(id), lv=LGC_LV[isB?'b':'n'], RW=LGC_RW[isB?'b':'n'], dd=r.c&&r.d===today(), ok=open&&!(isB&&left);
+  const row=(id,isB)=>{ const r=rec(id), lv=LGC_LV[isB?'b':'n'], RW=LGC_RW[isB?'b':'n'], dd=r.c&&r.d===today(), ok=open&&!(isB&&left&&!DEVALL());
     return `<div class="item trc" style="${ok?'':'opacity:.6'}"><div class="l"><img src="${spf(isB?lgcShow(id):id,false)}" alt="" style="width:${isB?96:72}px;height:${isB?96:72}px;image-rendering:pixelated;flex:none;object-fit:contain"><div style="min-width:0"><b>${SP[isB?lgcShow(id):id][0]}</b> <span class="muted">${SP[isB?lgcShow(id):id][1]}</span> ${isB?'<span class="tag r4">地区大 Boss</span>':`<span class="tag r3">${SP[id][10]===3?'幻兽':'神兽'}</span>`}${r.c?' <span class="tag r4">已击败</span>':''}<div class="muted">${typeStr(isB?lgcShow(id):id)} · Lv${lv}</div>${isB&&left?`<div class="muted"><b style="color:var(--red)">先打赢这个地区其他 ${left} 只传说宝可梦（${L.length-left}/${L.length}）</b></div>`:''}<div class="muted">${r.c?`每天第一次打赢：${rtext(RW.daily)}${dd?'（今天已领）':''}`:`第一次打赢：${rtext(RW.first)}`}</div>${lgxBtns(ri,'m'+id,LGX_S,'s:'+id)}</div></div><button class="btn red" data-lgc="${id}" ${ok?'':'disabled'}>${!open?'未开放':isB&&left?'还没解锁':r.c?'再次挑战':'挑战'}</button></div>`; };
   $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART['rg'+(ri+1)]||XART.wild})"></div><h2 class="xt">传说宝可梦挑战</h2><div class="muted">成为地区冠军后开放。打赢其他神兽、幻兽才能挑战<b>大 Boss</b>；打赢大 Boss 开放难度。<b>只拿奖励、不能捕获</b>。</div>
   <div class="row" style="margin:10px 0">${TR.regions.map((r,i)=>`<button class="btn fchip ${lgcTab===i?'on':'alt'}" data-lgct="${i}">${r.region_zh}</button>`).join('')}</div>
@@ -5628,7 +5631,7 @@ function rLgc(){ const ri=lgcTab, R=TR.regions[ri], open=lgcOpen(ri), boss=LGC_B
    双打：霸主开场带霸主气场（能力提升），马上呼叫同伴一起上；霸主第一次出招就用 Z 招式 ---------- */
 const TTM=[[735,734,{def:1},'茂诗的试炼'],[10092,10091,{def:1},'茂诗的试炼'],[746,594,{def:1},'水莲的试炼'],[752,751,{spd:2},'水莲的试炼'],[754,753,{spe:1},'玛奥的试炼'],[758,757,{spd:1},'卡奇的试炼'],
   [10115,104,{def:1},'卡奇的试炼'],[738,737,{spa:1},'马玛内的试炼'],[777,702,{def:1},'马玛内的试炼'],[743,742,{spe:2},'莉拉的试炼'],[778,354,{atk:1,def:1,spa:1,spd:1,spe:1},'阿塞萝拉的试炼'],[784,783,{atk:1,def:1,spa:1,spd:1,spe:1},'波尼大峡谷']];
-const TTM_RI=6, TTM_LV=[75,70], ttmOpen=()=>!!S.champ[TTM_RI];
+const TTM_RI=6, TTM_LV=[75,70], ttmOpen=()=>DEVALL()||!!S.champ[TTM_RI];
 const ttmZ=id=>Object.keys(ZC).find(c=>ZC[c].t===SP[id][2]&&!ZC[c].sp);
 const ttmRW=id=>{ const z=ttmZ(id); return {first:{coins:4000,stars:80,items:z?{[z]:1}:{}},daily:{coins:600}}; };
 const ttmAura=st=>Object.keys(st).length>=5?'全部能力':Object.entries(st).map(([k,v])=>STG_N[k]+(v>1?` +${v}`:'')).join('、');
@@ -5663,7 +5666,7 @@ const EVORG=[
   {k:'yell',ri:7,nm:'呐喊队',col:'#1c1c1c',f:[['呐喊队成员',[859,509],'g','Yell_Grunt'],['呐喊队成员',[559,827],'g','Yell_Grunt_f'],['呐喊队老大 聂梓',[560,435,687,862],'b','@Piers','dyn']]},
   {k:'macro',ri:7,nm:'马洲集团',col:'#7d6608',f:[['马洲集团秘书 奥利薇',[478,350,758,763,569],'a','Oleana','dyn'],['马洲集团总裁 洛兹',[589,601,598,863,879],'b','Rose','dyn']]},
   {k:'star',ri:8,nm:'天星队',col:'#6c3483',f:[['天星队恶组老大 皮拿',[332,430,943,553,983],'a','Star_Giacomo'],['天星队炎组老大 梅洛可',[324,839,229,59,936],'a','Star_Mela'],['天星队毒组老大 秋明',[435,89,691,748,966],'a','Star_Atticus'],['天星队仙组老大 奥尔迪加',[707,184,40,858,927],'a','Star_Ortega'],['天星队斗组老大 枇琶',[57,454,766,448,979],'a','Star_Eri'],['天星队老大 牡丹',[197,134,135,136,470,700],'b','Star_Penny','tera','妖精']]}];
-const EV_NEED=4, evOpen=o=>regGyms(o.ri)>=EV_NEED;
+const EV_NEED=4, evOpen=o=>DEVALL()||regGyms(o.ri)>=EV_NEED;
 const evLv=ri=>{ const G=TR.regions[ri].gyms, g=G[Math.min(4,G.length-1)]; return Math.max(...g.team.map(x=>x[1])); };
 /* 难度（Kris 2026-11-28）：普通 / 困难 / 地狱，等级 +0 / +10 / +20（最高 Lv100），首次和每日奖励 ×1 / ×2 / ×3；打赢普通才开困难，打赢困难才开地狱，每个难度各自有首次和每日奖励 */
 const EV_DF=[{n:'普通',lv:0,m:1},{n:'困难',lv:10,m:2},{n:'地狱',lv:20,m:3}];
@@ -5672,7 +5675,7 @@ const evMul=(r,m)=>({coins:r.coins*m,...(r.stars?{stars:r.stars*m}:{}),...(r.ite
 const evRW=(o,df=0)=>{ const m=EV_DF[df].m; return {first:evMul({coins:3000+o.f.length*500,stars:60+o.f.length*10,items:{candy:2}},m),daily:evMul({coins:400+o.f.length*100},m)}; };
 const evKey=df=>df?['c'+df,'d'+df]:['c','d'];
 const evDone=(o,df)=>{ const r=(S.evil||{})[o.k]||{}; return !!r[evKey(df)[0]]; };
-const evDfOK=(o,df)=>!df||evDone(o,df-1);
+const evDfOK=(o,df)=>DEVALL()||!df||evDone(o,df-1);
 const evLvA=(lv,df)=>Math.min(100,lv+EV_DF[df].lv);
 /* 讨伐战的变身跟着地区（Kris 2026-11-28）：丰缘、卡洛斯 Mega，阿罗拉 Z 招式，伽勒尔 极巨化，帕底亚 太晶化；首领和干部都会用，手下不用 */
 const EV_GIM={2:'mega',5:'mega',6:'z',7:'dyn',8:'tera'};
