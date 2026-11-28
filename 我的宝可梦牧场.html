@@ -1416,6 +1416,7 @@ const regOpen=ri=>ri===0||!!(S.champ&&S.champ[ri-1]);
 const gate=(team,ri)=>!regOpen(ri)?`要先成为${TR.regions[ri-1].region_zh}冠军`:S.tl<reqLv(team)?`训练家等级不够，需要 Lv${reqLv(team)}`:teamAvgLv()<needTeam(team)?`队伍平均等级不够：需要 Lv${needTeam(team)}（现在 Lv${teamAvgLv()}）`:'';
 const gateTxt=(team,ri)=>`<b style="color:${teamAvgLv()>=needTeam(team)?'var(--leaf)':'var(--red)'}">队伍平均需要 Lv${needTeam(team)}（现在 ${teamAvgLv()}）</b>`;
 const FEAT={nursery:15,wk:10,arena:3,gym:5,e4:15,legend:30,farm:8,explore:12,mine:10,fish:10,fossil:20,urg:5,sq:10,auction:15,trade:10};
+if(TEST) FEAT.legend=0;   /* 开发者模式：传奇训练家全部开放，不看训练家等级（Kris 2026-11-28） */
 const DUO_LV=20;
 const okSp=(id,cap)=>{ const l=legendLv(id); return l?l<=cap:minLv(id)<=cap; };
 function pickId(rar,cap){ for(let r=rar;r>=1;r--){ const q=POOL[r].filter(id=>okSp(id,cap)); if(q.length) return formRoll(q[Math.floor(Math.random()*q.length)],cap); } return 10; }
@@ -5512,7 +5513,7 @@ function legGroups(){ const order=[...REGIONS,'动画'], g={}; TR.legend.forEach
 let lgRM=false;
 const LGD={n:{ev:25,bp:10},h:{ev:50,bp:20},x:{ev:100,bp:30}};
 const lgGet=o=>(S.lgR||{})[o.en]||{};
-const lgOK=(o,dk)=>{ const i=GRK.indexOf(dk); return !!S.legendBeat[o.en]&&(i===0||!!(lgGet(o)[GRK[i-1]]||{}).c); };
+const lgOK=(o,dk)=>{ if(TEST) return true;   /* 开发者模式：传奇训练家全部开放（Kris 2026-11-28） */ const i=GRK.indexOf(dk); return !!S.legendBeat[o.en]&&(i===0||!!(lgGet(o)[GRK[i-1]]||{}).c); };
 const lgCurDk=o=>GRK.find(dk=>lgOK(o,dk)&&!(lgGet(o)[dk]||{}).c)||(lgOK(o,GRK[0])?GRK[GRK.length-1]:GRK[0]);
 const GEM_OF=Object.fromEntries(Object.entries(GEMS).map(([k,t])=>[t,k]));
 function lgGem(id){ let best=null; try{ (initMoves(id,100)||[]).forEach(m=>{ const v=MV[m]; if(!v||!(v[2]>0)) return; if(!best||v[2]>best[2]) best=v; }); }catch(e){} const t=(best&&best[1])||SP[id][2]; return GEM_OF[t]||GEM_OF[SP[id][2]]||'gm_0'; }   /* 威力最高的攻击招式是什么属性，就带那种宝石 */
@@ -5530,13 +5531,13 @@ function lgStart(i,dk){ const o=TR.legend[i]; if(!lgOK(o,dk)) return toast('还�
   chnStart({tag:'传奇训练家重赛',gimNow:dk==='x',label:`传奇训练家重赛 · ${GRD[dk].nm}`,fights:[{name:o.zh,team:L.map(f=>f.id),foes:L,lv:100,gk:GM_LEGEND[o.en]||null,tt:SP[ace.id][2],av:trAv(o,ace.id)}],
     finish:b=>{ S.lgR=S.lgR||{}; const st=S.lgR[o.en]=S.lgR[o.en]||{}, rec=st[dk]=st[dk]||{}; return `打败了传奇训练家 ${o.zh}（${GRD[dk].nm}）！`+grSettle(rec,b,[SP[ace.id][2],SP[ace.id][8]].filter(Boolean),E.first,E.daily,E.star); }}); }
 function rLegend(){
-  const cc=champCount(), reOK=TR.legend.some(o=>S.legendBeat[o.en]), RM=lgRM&&reOK;
+  const cc=champCount(), reOK=TEST||TR.legend.some(o=>S.legendBeat[o.en]), RM=lgRM&&reOK;
   $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.gym})"></div><h2 class="xt" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">传奇训练家${reOK?`<button class="btn ${RM?'':'alt'}" id="lgrm" aria-pressed="${RM}" style="font-size:14px;padding:4px 14px">${RM?'重赛中 · 返回':'重赛'}</button>`:''}</h2><div class="muted">${RM?`传奇训练家重赛：三个难度全员 Lv100，难度越高对手练得越足——普通：努力值每项 ${LGD.n.ev}%、粘糕每项 +${LGD.n.bp}；困难：努力值 ${LGD.h.ev}%、粘糕 +${LGD.h.bp}；地狱：努力值 ${LGD.x.ev}%、粘糕 +${LGD.x.bp}；每只都带自己最强招式属性的宝石。打赢过这一位才能重赛，通关前一个难度才开放下一个。点难度看对手阵容。`:`游戏里最强的几位训练家，队伍固定、等级很高。每位有<b>特定条件</b> + 训练家等级要求，第一次打赢奖励丰厚${reOK?'。打赢过的可以点「重赛」挑战更高难度':'；打赢以后可以重赛'}。`}</div></div>
-  ${legGroups().map(([reg,arr])=>`<div class="reghead"><b>${reg}</b><span class="muted">已击败 ${arr.filter(([o])=>S.legendBeat[o.en]).length}/${arr.length}</span></div><div class="list">${arr.map(([o,i])=>{ const lc=legC(o), cok=lc.ok(), lvok=S.tl>=reqLv(o.team), open=cok&&lvok, done=S.legendBeat[o.en]; const ace=o.team[o.team.length-1][0];
-    return `<div class="item trc" style="${(RM?done:open)?'':'opacity:.6'}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span>${done?' <span class="tag r4">已击败</span>':''}${RM?(()=>{ const dk=lgCurDk(o), L=lgTeam(o,dk); return `<div class="muted">${done?`现在的难度：<b>${GRD[dk].nm}</b> · Lv100 · 努力值 ${LGD[dk].ev}% · 粘糕 +${LGD[dk].bp} · 带宝石`:'<b style="color:var(--red)">先打赢这一位才能重赛</b>'}</div><div class="row" style="gap:2px;margin-top:4px">${L.map(f=>`<span class="tmon"><img src="${SPR[f.id]}" alt="" title="${SP[f.id][0]} Lv100 · 带${ITEMS[f.gem][0]}"><small>${SP[f.id][0]} ${iImg(f.gem,12)}</small></span>`).join('')}</div>`; })():`<div class="muted">${o.game||''} · 平均 Lv${avgLv(o.team)}</div><div class="muted" title="${lc.t}"><b style="color:${cok?'var(--leaf)':'var(--red)'}">条件：${lc.t}</b>（${lc.pg()}） · <b style="color:${lvok?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b></div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div>`}</div></div>${RM?(()=>{ const st=lgGet(o); return `<div class="row grbtns">${GRK.map(dk=>grBtns(lgOK(o,dk),st[dk]||{},dk,`lgpv:${i}:${dk}`,'Lv100')).join('')}</div>`; })():`<button class="btn red" data-lg="${i}" ${open?'':'disabled'}>${done?'再次挑战':'挑战'}</button>`}</div>`; }).join('')}</div>`).join('')}</section>`;
+  ${legGroups().map(([reg,arr])=>`<div class="reghead"><b>${reg}</b><span class="muted">已击败 ${arr.filter(([o])=>S.legendBeat[o.en]).length}/${arr.length}</span></div><div class="list">${arr.map(([o,i])=>{ const lc=legC(o), cok=TEST||lc.ok(), lvok=TEST||S.tl>=reqLv(o.team), open=cok&&lvok, done=S.legendBeat[o.en]; const ace=o.team[o.team.length-1][0];
+    return `<div class="item trc" style="${(RM?(done||TEST):open)?'':'opacity:.6'}"><div class="l">${trAv(o,ace)}<div style="min-width:0"><b>${o.zh}</b> <span class="muted">${o.en}</span>${done?' <span class="tag r4">已击败</span>':''}${RM?(()=>{ const dk=lgCurDk(o), L=lgTeam(o,dk); return `<div class="muted">${done||TEST?`现在的难度：<b>${GRD[dk].nm}</b> · Lv100 · 努力值 ${LGD[dk].ev}% · 粘糕 +${LGD[dk].bp} · 带宝石`:'<b style="color:var(--red)">先打赢这一位才能重赛</b>'}</div><div class="row" style="gap:2px;margin-top:4px">${L.map(f=>`<span class="tmon"><img src="${SPR[f.id]}" alt="" title="${SP[f.id][0]} Lv100 · 带${ITEMS[f.gem][0]}"><small>${SP[f.id][0]} ${iImg(f.gem,12)}</small></span>`).join('')}</div>`; })():`<div class="muted">${o.game||''} · 平均 Lv${avgLv(o.team)}</div><div class="muted" title="${lc.t}"><b style="color:${cok?'var(--leaf)':'var(--red)'}">条件：${lc.t}</b>（${lc.pg()}） · <b style="color:${lvok?'var(--leaf)':'var(--red)'}">需要训练家 Lv${reqLv(o.team)}</b></div><div class="row" style="gap:2px;margin-top:4px">${teamImgs(o.team)}</div>`}</div></div>${RM?(()=>{ const st=lgGet(o); return `<div class="row grbtns">${GRK.map(dk=>grBtns(lgOK(o,dk),st[dk]||{},dk,`lgpv:${i}:${dk}`,'Lv100')).join('')}</div>`; })():`<button class="btn red" data-lg="${i}" ${open?'':'disabled'}>${done?'再次挑战':'挑战'}</button>`}</div>`; }).join('')}</div>`).join('')}</section>`;
   document.querySelectorAll('[data-lg]').forEach(b=>b.onclick=()=>fightLegend(+b.dataset.lg)); { const t=$('#lgrm'); if(t) t.onclick=()=>{ lgRM=!lgRM; rLegend(); }; }
 }
-function fightLegend(i){ const o=TR.legend[i], first=!S.legendBeat[o.en]; if(S.tl<reqLv(o.team)) return toast(`训练家等级不够，需要 Lv${reqLv(o.team)}`); if(!legC(o).ok()) return toast('还没达成特定条件：'+legC(o).t); window.__trAvNext=trAv(o,o.team[o.team.length-1][0]);
+function fightLegend(i){ const o=TR.legend[i], first=!S.legendBeat[o.en]; if(!TEST&&S.tl<reqLv(o.team)) return toast(`训练家等级不够，需要 Lv${reqLv(o.team)}`); if(!TEST&&!legC(o).ok()) return toast('还没达成特定条件：'+legC(o).t); window.__trAvNext=trAv(o,o.team[o.team.length-1][0]);
   startTrainer('传奇训练家',`传奇训练家 · ${o.zh}`,o.team,first?{coins:3000,stars:50,items:{candy:10}}:{coins:300},()=>{ if(first){ S.legendBeat[o.en]=1; return `击败了传奇训练家 ${o.zh}！`+tgain(150); } return ''; },null,GM_LEGEND[o.en]); }
 
 /* ---------- 传说宝可梦挑战（Kris 2026-11-26，冒险）：每个地区的神兽 / 幻兽都能挑战，只拿奖励、不能捕获；每个地区有一只大 Boss（关都是超梦……）。
@@ -5664,7 +5665,18 @@ const EVORG=[
   {k:'star',ri:8,nm:'天星队',col:'#6c3483',f:[['天星队恶组老大 皮拿',[332,430,943,553,983],'a','Star_Giacomo'],['天星队炎组老大 梅洛可',[324,839,229,59,936],'a','Star_Mela'],['天星队毒组老大 秋明',[435,89,691,748,966],'a','Star_Atticus'],['天星队仙组老大 奥尔迪加',[707,184,40,858,927],'a','Star_Ortega'],['天星队斗组老大 枇琶',[57,454,766,448,979],'a','Star_Eri'],['天星队老大 牡丹',[197,134,135,136,470,700],'b','Star_Penny','tera','妖精']]}];
 const EV_NEED=4, evOpen=o=>regGyms(o.ri)>=EV_NEED;
 const evLv=ri=>{ const G=TR.regions[ri].gyms, g=G[Math.min(4,G.length-1)]; return Math.max(...g.team.map(x=>x[1])); };
-const evRW=o=>({first:{coins:3000+o.f.length*500,stars:60+o.f.length*10,items:{candy:2}},daily:{coins:400+o.f.length*100}});
+/* 难度（Kris 2026-11-28）：普通 / 困难 / 地狱，等级 +0 / +10 / +20（最高 Lv100），首次和每日奖励 ×1 / ×2 / ×3；打赢普通才开困难，打赢困难才开地狱，每个难度各自有首次和每日奖励 */
+const EV_DF=[{n:'普通',lv:0,m:1},{n:'困难',lv:10,m:2},{n:'地狱',lv:20,m:3}];
+let evDf=0;
+const evMul=(r,m)=>({coins:r.coins*m,...(r.stars?{stars:r.stars*m}:{}),...(r.items?{items:Object.fromEntries(Object.entries(r.items).map(([k,v])=>[k,v*m]))}:{})});
+const evRW=(o,df=0)=>{ const m=EV_DF[df].m; return {first:evMul({coins:3000+o.f.length*500,stars:60+o.f.length*10,items:{candy:2}},m),daily:evMul({coins:400+o.f.length*100},m)}; };
+const evKey=df=>df?['c'+df,'d'+df]:['c','d'];
+const evDone=(o,df)=>{ const r=(S.evil||{})[o.k]||{}; return !!r[evKey(df)[0]]; };
+const evDfOK=(o,df)=>!df||evDone(o,df-1);
+const evLvA=(lv,df)=>Math.min(100,lv+EV_DF[df].lv);
+/* 讨伐战的变身跟着地区（Kris 2026-11-28）：丰缘、卡洛斯 Mega，阿罗拉 Z 招式，伽勒尔 极巨化，帕底亚 太晶化；首领和干部都会用，手下不用 */
+const EV_GIM={2:'mega',5:'mega',6:'z',7:'dyn',8:'tera'};
+const EV_TT={'天星队恶组老大 皮拿':'恶','天星队炎组老大 梅洛可':'火','天星队毒组老大 秋明':'毒','天星队仙组老大 奥尔迪加':'妖精','天星队斗组老大 枇琶':'格斗'};
 const evAv=(a,ace,sz)=>{ const b=a&&a[0]==='@'?TRIMG[a.slice(1)]:EVIMG[a]; return b?`<img src="data:image/png;base64,${b}" alt="" style="width:${Math.round(sz*1.3)}px;height:${sz}px;object-fit:contain;object-position:center bottom;image-rendering:${sz>=100?'pixelated':'auto'};flex:none">`:`<img src="${SPR[ace]}" alt="" style="width:${sz}px;height:${sz}px;object-fit:contain;image-rendering:pixelated;flex:none">`; };
 let evTab=0;
 const EVF={g:'F'}, EVM={g:'M'}, EV_SET={   /* 照原作的队伍（Kris 2026-11-28，X·Y 弗拉达利研究所）：[id, 等级, 特性, 招式, 其他]；四位科学家的宝可梦全部是雌性，等级照原作，库瑟洛斯奇和弗拉达利也跟着原作的等级 */
@@ -5686,23 +5698,28 @@ const EVF={g:'F'}, EVM={g:'M'}, EV_SET={   /* 照原作的队伍（Kris 2026-11-
   '天星队斗组老大 枇琶':[[57,65,72,[441,707,238,157],EVF],[454,65,107,[398,280,389,8],EVM],[766,65,222,[370,441,402,89],EVM],[448,65,80,[406,396,399,245],EVM],[979,66,72,[889,370,8,441],EVM]],
   '天星队老大 牡丹':[[197,62,28,[399,98,608,94],EVM],[134,62,11,[56,98,608,62],EVM],[135,62,95,[87,98,608,42],EVM],[136,62,18,[394,98,608,83],EVM],[470,62,102,[348,98,608,404],EVF],[700,63,56,[585,98,608,247],EVF]],
   '马洲集团总裁 洛兹':[[589,55,75,[529,442,224,14],EVM],[601,56,57,[544,508,528,372]],[598,55,160,[360,438,776,174],EVM],[863,55,181,[442,103,421,675],EVF],[879,57,125,[484,442,667,428],EVF]]};
-function evRange(o){ const L=evLv(o.ri), v=o.f.flatMap(([n,t,r])=>EV_SET[n]?EV_SET[n].map(x=>x[1]):[L+(r==='g'?-5:r==='a'?-2:3)]), a=Math.min(...v), b=Math.max(...v); return a===b?a:`${a}–${b}`; }
-function evFin(o){ const k=o.k; S.evil=S.evil||{}; const r=S.evil[k]=S.evil[k]||{}, RW=evRW(o); let t; if(!r.c){ r.c=1; r.d=today(); give(RW.first); t=`成功讨伐了${o.nm}！奖励：${rtext(RW.first)}`; } else if(r.d!==today()){ r.d=today(); give(RW.daily); t=`今天第一次讨伐${o.nm}成功：${rtext(RW.daily)}`; } else t=`又一次讨伐了${o.nm}（今天的奖励已经领过了）`; save(); return t; }
-function evFight(k){ const o=EVORG.find(x=>x.k===k); if(!o) return; if(!evOpen(o)) return toast(`要先拿到${TR.regions[o.ri].region_zh} ${EV_NEED} 个徽章`); const L=evLv(o.ri);
+function evRange(o,df=0){ const L=evLv(o.ri), v=o.f.flatMap(([n,t,r])=>EV_SET[n]?EV_SET[n].map(x=>x[1]):[L+(r==='g'?-5:r==='a'?-2:3)]).map(x=>evLvA(x,df)), a=Math.min(...v), b=Math.max(...v); return a===b?a:`${a}–${b}`; }
+function evFin(o,df=0){ const k=o.k; S.evil=S.evil||{}; const r=S.evil[k]=S.evil[k]||{}, RW=evRW(o,df), [ck,dk]=evKey(df), dn=df?`（${EV_DF[df].n}）`:''; let t; if(!r[ck]){ r[ck]=1; r[dk]=today(); give(RW.first); t=`成功讨伐了${o.nm}${dn}！奖励：${rtext(RW.first)}`; } else if(r[dk]!==today()){ r[dk]=today(); give(RW.daily); t=`今天第一次讨伐${o.nm}${dn}成功：${rtext(RW.daily)}`; } else t=`又一次讨伐了${o.nm}${dn}（今天的奖励已经领过了）`; save(); return t; }
+function evFight(k,df=0){ const o=EVORG.find(x=>x.k===k); if(!o) return; if(!evOpen(o)) return toast(`要先拿到${TR.regions[o.ri].region_zh} ${EV_NEED} 个徽章`); if(!evDfOK(o,df)) return toast(`要先打赢${EV_DF[df-1].n}难度`); const L=evLv(o.ri), A=lv=>evLvA(lv,df), dn=df?`（${EV_DF[df].n}）`:'';
   /* 火箭队三人组（Kris 2026-11-28）：双打，武藏和小次郎一起上，喵喵最后出来 */
-  if(o.dbl){ const [nm,team]=o.f[0]; return startDouble(`讨伐战 · ${o.nm}`,team.map(id=>({id,lv:L+3})),null,undefined,()=>evFin(o),undefined,undefined,{av:evAv(o.f[0][3],team[team.length-1],122),init:d=>{ d.log[0]=`${o.nm}登场了！「既然你诚心诚意地发问了，我们就大发慈悲地告诉你！」`; }}); }
-  const fights=o.f.map(([name,team,r,av,gk,tt,shy])=>{ const lv=L+(r==='g'?-5:r==='a'?-2:3); const set=EV_SET[name]; if(set) return {name,team,lv:Math.max(...set.map(x=>x[1])),gk:gk||null,tt:tt||null,av:evAv(av,team[team.length-1],122),foes:set.map(([id,l,ab,mv,x])=>({id,lv:l,...(ab?{abO:ab}:{}),...(mv?{mv}:{}),...(x||{})}))};
-    return {name,team,lv,gk:gk||null,tt:tt||null,av:evAv(av,team[team.length-1],122),...(shy?{foes:team.map(id=>({id,lv,...(shy.includes(id)?{shiny:true}:{})}))}:{})}; });   /* 弗拉达利的暴鲤龙是异色的（Kris 2026-11-28） */
-  chnStart({tag:'讨伐战',label:`讨伐战 · ${o.nm}`,fights,finish:()=>evFin(o)}); }
+  if(o.dbl){ const [nm,team]=o.f[0]; return startDouble(`讨伐战 · ${o.nm}${dn}`,team.map(id=>({id,lv:A(L+3)})),null,undefined,()=>evFin(o,df),undefined,undefined,{av:evAv(o.f[0][3],team[team.length-1],122),init:d=>{ d.log[0]=`${o.nm}登场了！「既然你诚心诚意地发问了，我们就大发慈悲地告诉你！」`; }}); }
+  const G=EV_GIM[o.ri]||null;
+  const fights=o.f.map(([name,team,r,av,gk,tt,shy])=>{ const lv=A(L+(r==='g'?-5:r==='a'?-2:3)); const set=EV_SET[name];
+    const g=gk||(r==='a'?G:null), t=tt||(g==='tera'?(EV_TT[name]||SP[team[team.length-1]][2]):null);   /* 干部也用地区的变身 */
+    if(set) return {name,team,lv:A(Math.max(...set.map(x=>x[1]))),gk:g,tt:t,av:evAv(av,team[team.length-1],122),foes:set.map(([id,l,ab,mv,x])=>({id,lv:A(l),...(ab?{abO:ab}:{}),...(mv?{mv}:{}),...(x||{})}))};
+    return {name,team,lv,gk:g,tt:t,av:evAv(av,team[team.length-1],122),foes:team.map(id=>({id,lv,...(shy&&shy.includes(id)?{shiny:true}:{})}))}; });   /* 弗拉达利的暴鲤龙是异色的（Kris 2026-11-28）；都给 foes，Mega 会挑队伍里能 Mega 的那只 */
+  chnStart({tag:'讨伐战',label:`讨伐战 · ${o.nm}${dn}`,fights,finish:()=>evFin(o,df)}); }
 function rEvil(){ const R=TR.regions[evTab], L=EVORG.filter(o=>o.ri===evTab), rec=k=>(S.evil||{})[k]||{}, done=EVORG.filter(o=>rec(o.k).c).length;
-  $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART['rg'+(evTab+1)]||XART.wild})"></div><h2 class="xt">讨伐战</h2><div class="muted">拿到该地区 ${EV_NEED} 个徽章后开放。手下 → 干部 → 首领连战，中间 HP 不回复。</div>
+  $('#main').innerHTML=`<section class="panel"><div class="card xhero bgh"><div class="xart" style="background-image:url(${XART['rg'+(evTab+1)]||XART.wild})"></div><h2 class="xt">讨伐战</h2><div class="muted">拿到该地区 ${EV_NEED} 个徽章后开放。手下 → 干部 → 首领连战，中间 HP 不回复。丰缘、卡洛斯的干部和首领会 Mega 进化，阿罗拉用 Z 招式，伽勒尔极巨化，帕底亚太晶化。</div>
+  <div class="row" style="margin:10px 0 0;gap:6px;align-items:center"><b>难度</b>${EV_DF.map((d,i)=>`<button class="btn fchip ${evDf===i?'on':'alt'}" data-evd="${i}" aria-pressed="${evDf===i}">${d.n}</button>`).join('')}<span class="muted">${evDf?`等级 +${EV_DF[evDf].lv}（最高 Lv100），奖励 ×${EV_DF[evDf].m}；要先打赢${EV_DF[evDf-1].n}难度`:'困难：等级 +10、奖励 ×2；地狱：等级 +20、奖励 ×3'}</span></div>
   <div class="row" style="margin:10px 0">${TR.regions.map((r,i)=>`<button class="btn fchip ${evTab===i?'on':'alt'}" data-evt="${i}">${r.region_zh}</button>`).join('')}</div>
   <div class="muted">已讨伐 ${done}/${EVORG.length} 个组织</div></div>
-  <div class="list">${L.map(o=>{ const r=rec(o.k), ok=evOpen(o), RW=evRW(o), dd=r.c&&r.d===today(), lv=evLv(o.ri), last=o.f[o.f.length-1];
-    return `<div class="item trc" style="${ok?'':'opacity:.6'}"><div class="l">${evAv(last[3],last[1][last[1].length-1],122)}<div style="min-width:0"><b style="color:${o.col}">${o.nm}</b>${r.c?' <span class="tag r4">已讨伐</span>':''}<div class="muted">${o.dbl?`双打 · ${last[1].length} 只 · Lv${lv+3}`:`${o.f.length} 连战 · Lv${evRange(o)} · 首领：${last[0].replace(/^.*? /,'')}`}</div>${ok?'':`<div class="muted"><b style="color:var(--red)">要先拿到${R.region_zh} ${EV_NEED} 个徽章（现在 ${regGyms(o.ri)} 个）</b></div>`}<div class="muted">${r.c?`每天第一次讨伐成功：${rtext(RW.daily)}${dd?'（今天已领）':''}`:`第一次讨伐成功：${rtext(RW.first)}`}</div>
-      <div class="row" style="gap:4px;margin-top:4px;flex-wrap:wrap">${o.dbl?last[1].map(id=>`<span class="tmon" title="${SP[id][0]}"><img src="${SPR[id]}" alt="" style="width:40px;height:40px;object-fit:contain;image-rendering:pixelated"><small>${SP[id][0]}</small></span>`).join(''):o.f.map(([n,t,,a])=>`<span class="tmon" title="${n}">${evAv(a,t[t.length-1],56)}<small>${n.replace(/^.*? /,'').replace(/^(.*)(手下|成员|职员|员工)$/,'$2')}</small></span>`).join('')}</div></div></div><button class="btn red" data-evf="${o.k}" ${ok?'':'disabled'}>${!ok?'未开放':r.c?'再次讨伐':'讨伐'}</button></div>`; }).join('')}</div></section>`;
+  <div class="list">${L.map(o=>{ const r=rec(o.k), [ck,dk]=evKey(evDf), dfok=evDfOK(o,evDf), ok=evOpen(o)&&dfok, RW=evRW(o,evDf), dd=r[ck]&&r[dk]===today(), lv=evLvA(evLv(o.ri)+3,evDf), last=o.f[o.f.length-1];
+    return `<div class="item trc" style="${ok?'':'opacity:.6'}"><div class="l">${evAv(last[3],last[1][last[1].length-1],122)}<div style="min-width:0"><b style="color:${o.col}">${o.nm}</b>${EV_DF.map((d,i)=>r[evKey(i)[0]]?` <span class="tag r4">${i?d.n:'已讨伐'}</span>`:'').join('')}<div class="muted">${o.dbl?`双打 · ${last[1].length} 只 · Lv${lv}`:`${o.f.length} 连战 · Lv${evRange(o,evDf)} · 首领：${last[0].replace(/^.*? /,'')}`}</div>${!evOpen(o)?`<div class="muted"><b style="color:var(--red)">要先拿到${R.region_zh} ${EV_NEED} 个徽章（现在 ${regGyms(o.ri)} 个）</b></div>`:!dfok?`<div class="muted"><b style="color:var(--red)">要先打赢${EV_DF[evDf-1].n}难度</b></div>`:''}<div class="muted">${r[ck]?`每天第一次讨伐成功：${rtext(RW.daily)}${dd?'（今天已领）':''}`:`第一次讨伐成功：${rtext(RW.first)}`}</div>
+      <div class="row" style="gap:4px;margin-top:4px;flex-wrap:wrap">${o.dbl?last[1].map(id=>`<span class="tmon" title="${SP[id][0]}"><img src="${SPR[id]}" alt="" style="width:40px;height:40px;object-fit:contain;image-rendering:pixelated"><small>${SP[id][0]}</small></span>`).join(''):o.f.map(([n,t,,a])=>`<span class="tmon" title="${n}">${evAv(a,t[t.length-1],56)}<small>${n.replace(/^.*? /,'').replace(/^(.*)(手下|成员|职员|员工)$/,'$2')}</small></span>`).join('')}</div></div></div><button class="btn red" data-evf="${o.k}" ${ok?'':'disabled'}>${!ok?'未开放':r[ck]?'再次讨伐':'讨伐'}</button></div>`; }).join('')}</div></section>`;
   document.querySelectorAll('[data-evt]').forEach(b=>b.onclick=()=>{ evTab=+b.dataset.evt; rEvil(); });
-  document.querySelectorAll('[data-evf]').forEach(b=>b.onclick=()=>evFight(b.dataset.evf)); }
+  document.querySelectorAll('[data-evd]').forEach(b=>b.onclick=()=>{ evDf=+b.dataset.evd; rEvil(); });
+  document.querySelectorAll('[data-evf]').forEach(b=>b.onclick=()=>evFight(b.dataset.evf,evDf)); }
 
 /* ---------- dex ---------- */
 let dexN=60, dexF={q:'',g:'0',o:'0',t:'0',e:'0'};
