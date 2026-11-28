@@ -4752,10 +4752,12 @@ function bGimmick(m){
   else if(m==='z'){ if(b.gu[b.mon.uid]) return; b.zOn=!b.zOn; }
   bRender();
 }
+/* 单打：倒下后队伍里只剩一只能上场就直接派出，不用选（Kris 2026-11-28）；等倒下的回放放完才换 */
+setInterval(()=>{ const b=typeof B!=='undefined'?B:null; if(!b||!b.pick||b.over||b.busy||b.pivot||(b.beats&&b.beats.length)) return; const c=b.party.map((p,i)=>i).filter(i=>i!==b.cur&&b.party[i].mh>0); if(c.length===1) bSwitch(c[0]); },250);
 function endDyn(){ const b=B; if(b.dyn>0){ b.mx=maxhp(b.me); b.mh=Math.min(b.mx,Math.ceil(b.mh/1.5)); b.dyn=0; } }
 function bPlayerDown(){
   const b=B; b.dyn=0; b.zOn=false; b.mh=0; { const o=b.me; o.stg={}; o.sta=''; o.cnf=0; o.seed=0; o.prot=0; o.protLast=0; o.endure=0; } saveActive(); b.log.push(`${SP[b.me.id][0]} 倒下了。`);
-  if(b.party.some((p,i)=>i!==b.cur&&p.mh>0)){ b.pick=true; b.log.push('请选择下一只宝可梦。'); } else { b.log.push('队伍全部倒下了……眼前一片漆黑！'); b.over='end'; b.whiteout=1; if(b.cfg.onLose) b.cfg.onLose(); save(); }
+  if(b.party.some((p,i)=>i!==b.cur&&p.mh>0)){ b.pick=true; if(b.party.filter((p,i)=>i!==b.cur&&p.mh>0).length>1) b.log.push('请选择下一只宝可梦。'); } else { b.log.push('队伍全部倒下了……眼前一片漆黑！'); b.over='end'; b.whiteout=1; if(b.cfg.onLose) b.cfg.onLose(); save(); }
   bRender();
 }
 const EVIDX=[4,5,6,8,9,7];   /* BASE6 的顺序（HP 攻 防 特攻 特防 速）对应的能力编号 */
@@ -5616,6 +5618,18 @@ function lgxGrpFight(ri,gi,dk){ const [nm,L]=LGC_GRP[ri][gi], k='g'+lgcGrpKey(ri
 /* 双打（梦魇）：对方每只一上场就变身 */
 setInterval(()=>{ const d=typeof D!=='undefined'?D:null; if(!d||!d.gimNow||d.over||d.busy||(d.beats&&d.beats.length)||entWait()>0) return; if(window.__opening||window.__openHold||document.body.classList.contains('btwait')||$('#modal').hidden||!document.querySelector('#battle .garena.dbl')) return;
   const f=(d.fo||[]).map(i=>i>=0?d.foes[i]:null).find(f=>f&&f.fh>0&&f.gm&&!f.gm.used&&f.gm.k!=='z'); if(!f) return; try{ dFoeGim(f); saveActive&&saveActive(); dRender(); }catch(e){ console.warn(e); } },150);
+/* 开场变身一定在开场后马上发生（Kris 2026-11-28：不能等玩家点「战斗」才变）：
+   有还没变身的（Boss 开场变身、地狱难度王牌、梦魇双打）时把按钮锁住，开场一结束就变；画面动画的标记卡住超过 1.2 秒也直接变，不再等 */
+const gimPendNow=()=>{ if($('#modal').hidden) return null; const b=typeof B!=='undefined'?B:null, d=typeof D!=='undefined'?D:null;
+  if(b){ if(b.over) return null; if(b.cfg&&b.cfg.bossFm&&!b.__gimDone) return {k:'boss',b}; if(gimNowPend(b)) return {k:'now',b}; return null; }
+  if(d&&d.my&&d.gimNow&&!d.over){ const f=(d.fo||[]).map(i=>i>=0?d.foes[i]:null).find(f=>f&&f.fh>0&&f.gm&&!f.gm.used&&f.gm.k!=='z'); if(f) return {k:'dbl',d,f}; } return null; };
+let GIMP0=0;
+setInterval(()=>{ const P=gimPendNow(); document.body.classList.toggle('gimlock',!!P); if(!P){ GIMP0=0; return; }
+  const s=P.b||P.d; if(window.__opening||window.__openHold||s.busy||(s.beats&&s.beats.length)||s.pick||s.shift){ GIMP0=0; return; }
+  if(!GIMP0){ GIMP0=performance.now(); return; } if(performance.now()-GIMP0<1200) return; GIMP0=0;   /* 其他检查卡住了：直接变身 */
+  try{ if(P.k==='boss'){ if(!s.__bossGim){ s.__bossGim=1; bossGimGo(s,s.cfg.bossFm); } }
+    else if(P.k==='now'){ foeGim(); saveActive(); bRender(); s.__gimUntil=Math.max(GFXEND,performance.now()+300); }
+    else { dFoeGim(P.f); saveActive&&saveActive(); dRender(); } }catch(e){ console.warn(e); } },150);
 const lgxBtns=(ri,k,keys,fn)=>lgxOpen(ri)?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${keys.map(dk=>{ const ok=lgxOK(ri,k,dk,keys), c=(lgxRec(k)[dk]||{}).c; return `<button class="btn ${ok?'':'alt'}" style="padding:3px 10px;font-size:12px" ${ok?`data-lgx="${fn}:${dk}"`:'disabled'} title="Lv${LGX[dk].lv}${LGX[dk].dbl?' · 双打':''}">${c?'✓ ':ok?'':'🔒 '}${LGX[dk].nm}</button>`; }).join('')}</div>`:'';
 function rLgc(){ const ri=lgcTab, R=TR.regions[ri], open=lgcOpen(ri), boss=LGC_BOSS[ri], L=lgcList(ri), rec=id=>(S.lgc||{})[id]||{}, beat=[boss,...L].filter(id=>rec(id).c).length;
   const left=lgcLeft(ri);
@@ -6284,12 +6298,12 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
 /* 双打的天气特性：和单打一样，出场就改天气，沙暴 / 冰雹每回合结束时伤害场上所有不免疫的宝可梦 */
 function dWxEnd(){ const d=D, w=d.wx; if(w!=='sand'&&w!=='hail') return; const imm=w==='sand'?['岩石','地面','钢']:['冰'], pn=WXN[w][0], hurt=o=>o.tera?!imm.includes(o.tera):!imm.some(t=>hasTy(o,t)); let any=0;
   dAlive('m').forEach(([pi,sl])=>{ const p=d.party[pi]; if(!hurt(p.me)) return; const x=Math.max(1,Math.floor(p.mx/16)); p.mh=Math.max(0,p.mh-x); d.log.push(`${pn}伤害了 ${SP[p.me.id][0]}（-${x}）`); any=1;
-    if(p.mh<=0){ p.me._chg=0; p.me._semi=0; d.log.push(`${SP[p.me.id][0]} 倒下了。`); let nx=-1; for(let i=0;i<d.party.length;i++){ if(d.party[i].mh>0&&!d.my.includes(i)){ nx=i; break; } } if(nx>=0){ d.my[sl]=nx; d.part.add(nx); d.log.push(`去吧，${SP[d.party[nx].me.id][0]}！`); wxEnter(d.party[nx].me.id,true,d.party[nx].me); } else d.my[sl]=-1; } });
+    if(p.mh<=0){ p.me._chg=0; p.me._semi=0; d.log.push(`${SP[p.me.id][0]} 倒下了。`); dMyDown(sl); } });
   dAlive('f').forEach(([fi,fs])=>{ const f=d.foes[fi]; if(!hurt(f)) return; const x=Math.max(1,Math.floor(f.fx/16)); f.fh=Math.max(0,f.fh-x); d.log.push(`${pn}伤害了对方的 ${SP[f.id][0]}（-${x}）`); any=1;
     if(f.fh<=0){ d.log.push(`对方的 ${SP[f.id][0]} 倒下了！`); d.xp+=f.lv*9+10; d.fo[fs]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(fs); } });
   if(any) dBeat(null,0,null,0);
   if(!dAlive('f').length&&d.nf>=d.foes.length) return dWin();   /* 对方还有没派出来的就还没赢（Kris 2026-11-20：两只同时被打倒、只剩一只没派时，以前直接算赢了） */
-  if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); } }
+  if(!dAnyM()){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); } }
 /* 双打的变身 / Z 招式 / 道具 / 对方王牌特殊能力：和单打同一套规则（每只宝可梦各自可以变身一次、一只只能选一种：Mega、极巨化、太晶化、Z 招式；变身在选招前生效） */
 function dRevertDyn(p){ if(p&&p.me){ p.me._chg=0; p.me._semi=0; } if(p.dyn>0){ p.dyn=0; p.mx=maxhp(p.me); p.mh=Math.min(p.mx,Math.ceil(p.mh/1.5)); } p.zOn=false; }
 function dShown(p,i,z){ const base=plain(p.mvs[i]); if(p.dyn>0&&base.pow>0) return {...base,name:gmxName(p.me.id,base.type),pow:gmxPow(p.me.id,base.type,base.pow),acc:101,tag:gmxOn(p.me.id,base.type)?'超极巨招式':'极巨招式'};
@@ -6352,7 +6366,7 @@ function dTurn(){
     if(act){ if(!rel&&two){ chgNow=true; A._chg=sh.id; A._chgT=a.tg; if(DSEMI[sh.id]) A._semi=sh.id; d.log.push(`${nm} 使用了 ${sh.name}，${nm} ${DSEMI[sh.id]?DSEMI[sh.id][0]:TWOTURN[sh.id]}`); }
       else if(sh.pow===0&&MVS[sh.id]) useStatus(SC2,A,T,sh,a.side==='m'); else dm=dHit(A,T,sh,a.side==='m',nm); }
     if(tside==='f'){ const f=d.foes[tgt]; f.fh=Math.max(0,f.fh-dm); if(f.fh<=0){ d.log.push(`对方的 ${SP[f.id][0]} 倒下了！`); d.xp+=f.lv*9+10; d.fo[tslot]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(tslot); } }
-    else { const p=d.party[tgt]; p.mh=Math.max(0,p.mh-dm); if(p.mh<=0){ p.me._chg=0; p.me._semi=0; d.log.push(`${SP[p.me.id][0]} 倒下了。`); let nx=-1; for(let i=0;i<d.party.length;i++){ if(d.party[i].mh>0&&!d.my.includes(i)){ nx=i; break; } } if(nx>=0){ d.my[tslot]=nx; d.part.add(nx); d.log.push(`去吧，${SP[d.party[nx].me.id][0]}！`); wxEnter(d.party[nx].me.id,true,d.party[nx].me); } else d.my[tslot]=-1; } }
+    else { const p=d.party[tgt]; p.mh=Math.max(0,p.mh-dm); if(p.mh<=0){ p.me._chg=0; p.me._semi=0; d.log.push(`${SP[p.me.id][0]} 倒下了。`); dMyDown(tslot); } }
     if(a.side==='f'&&att.dyn>0){ att.dyn--; if(att.dyn===0){ att.fx=maxhp(att); att.fh=att.fh>0?Math.max(1,Math.min(att.fx,Math.ceil(att.fh/1.5))):0; d.log.push('对方的极巨化结束了。'); } }
     dBeat(a.side,a.slot,tside,tslot); { const e=d.beats&&d.beats[d.beats.length-1];   /* 这一拍出的招式和打中的每一只，回放时放特效用（Kris 2026-11-18） */
       if(e&&chgNow){ e.mv=null; e.chg=sh.id; e.semi=DSEMI[sh.id]?'semi1:'+sh.id:null; }
@@ -6360,17 +6374,28 @@ function dTurn(){
         const hl=(D.__hl||[]).map(([o,m])=>{ let w=where(o); if(!(w&&w[1]>=0)) w=D.__pos&&D.__pos.get(o); return w&&w[1]>=0?[w[0],w[1],m]:null; }).filter(Boolean);   /* 被打倒的也要算进打中的目标：才会闪、才有命中音效（Kris 2026-11-20：双打打倒对方时没有音效） */
         e.mv=sh.id; e.z=sh.tag?sh.name:null; e.semi=A.__semi2||null; e.cat=sh.pow>0?(SPECIAL.has(sh.id)?'sp':'ph'):'st'; e.tgs=hl.length?hl:[[tside,tslot,sh.pow>0?0:1]]; } A.__semi2=null; D.__hl=null; }
     if(!dAlive('f').length&&d.nf>=d.foes.length) { dWin(); break; }
-    if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); break; } }
+    if(!dAnyM()){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); break; } }
   d.party.forEach(p=>{ if(p.dyn>0){ p.dyn--; if(p.dyn===0){ p.mx=maxhp(p.me); p.mh=p.mh>0?Math.max(1,Math.min(p.mx,Math.ceil(p.mh/1.5))):0; d.log.push(`${SP[p.me.id][0]} 极巨化结束了，变回原来的大小。`); } } });
   if(!d.over){ dWxEnd(); wxTick(d); statEnd2(); }
   d.sel=[]; d.pm=null; d.menu='main';
+  if(!d.over&&d.mneed&&d.mneed.length) return dMyFill();
   if(!d.over&&d.need&&d.need.length){ if(d.party.some((p,i)=>p.mh>0&&!d.my.includes(i))){ d.shift={step:0}; return dRender(); } return dSendFoes(); }
   dRender(); }
+/* 双打：我方倒下后自己选下一只上场（Kris 2026-11-28）：回合结束才补上；队伍里只剩一只（或能上场的不比空位多）就直接派出 */
+const dAnyM=()=>D.party.some(p=>p.mh>0);
+function dMyDown(sl){ const d=D; d.my[sl]=-1; if(d.party.some((p,i)=>p.mh>0&&!d.my.includes(i))) (d.mneed=d.mneed||[]).includes(sl)||d.mneed.push(sl); }
+function dMyGo(sl,ni){ const d=D, p=d.party[ni]; d.my[sl]=ni; d.part.add(ni); d.log.push(`去吧，${SP[p.me.id][0]}！`); wxEnter(p.me.id,true,p.me); d.mneed=(d.mneed||[]).filter(x=>x!==sl); }
+function dMyFill(){ const d=D; d.mneed=(d.mneed||[]).filter(s=>d.my[s]<0); const cand=d.party.map((p,i)=>i).filter(i=>d.party[i].mh>0&&!d.my.includes(i));
+  if(!d.mneed.length||!cand.length){ d.mneed=[]; return dAfterFill(); }
+  if(cand.length<=d.mneed.length){ d.mneed.slice().forEach((sl,k)=>{ if(cand[k]!=null) dMyGo(sl,cand[k]); }); d.mneed=[]; return dAfterFill(); }
+  d.shift={step:'f',slot:d.mneed[0]}; return dRender(); }
+function dAfterFill(){ const d=D; d.shift=null; if(!d.over&&d.need&&d.need.length){ if(d.party.some((p,i)=>p.mh>0&&!d.my.includes(i))){ d.shift={step:0}; return dRender(); } return dSendFoes(); } dRender(); }
 /* 双打：倒下的对手由下一批补上；补上之前先问要不要更换宝可梦应对 */
 function dSendFoes(){ const d=D; (d.need||[]).forEach(s=>{ if(d.nf<d.foes.length){ d.fo[s]=d.nf; d.log.push(`对方派出了 ${SP[d.foes[d.nf].id][0]} Lv${d.foes[d.nf].lv}！`); wxEnter(d.foes[d.nf].id,false,d.foes[d.nf]); d.nf++; } }); d.need=[]; d.shift=null; d.sel=[]; d.pm=null; d.menu='main'; dRender(); }
 function dShiftPop(d){ const st=d.shift.step, inc=d.foes.slice(d.nf,d.nf+(d.need||[]).length);
   const prev=inc.map(f=>{ const s=SP[f.id], ty=[s[2],s[8]].filter(Boolean); return `<div class="shiftmon"><img src="${spfM(f,f.shiny)}" alt=""><b>${s[0]}${gSym(f.g)}</b><span class="muted">Lv${f.lv}</span><div class="tys">${ty.map(x=>`<i style="background:${TYC[x]||'#aaa'}">${x}</i>`).join('')}</div></div>`; }).join('');
   let body;
+  if(st==='f'){ body=`<div class="shifttxt">选择要派出的宝可梦${d.mneed&&d.mneed.length>1?`<small>还有 ${d.mneed.length} 个空位</small>`:''}</div><div class="gparty">${d.party.map((p,i)=>d.my.includes(i)?'':`<button class="gpm ${p.mh<=0?'down':''}" data-d="shift:f:${i}" ${p.mh<=0?'disabled':''}><img src="${spfM(p.me,p.real.shiny)}" alt=""><span><span class="gpn"><b>${SP[p.me.id][0]}</b><em>Lv${p.me.lv}</em></span><small>${Math.max(0,p.mh)}/${p.mx}</small></span></button>`).join('')}</div>`; return `<div class="shiftpop" role="dialog" aria-modal="true"><div class="shiftcard wide">${body}</div></div>`; }
   if(st===0) body=`<div class="muted">${d.title} 要派出下一${inc.length>1?'批':'只'}宝可梦</div><div class="shiftrow">${prev}</div><div class="shifttxt">要更换宝可梦应对吗？<small>换人不会被对方攻击。</small></div><div class="row" style="justify-content:center"><button class="btn" data-d="shift:yes">更换宝可梦</button><button class="btn alt" data-d="shift:no">不换，继续</button></div>`;
   else if(st===1) body=`<div class="shifttxt">选择要换下的宝可梦</div><div class="gparty">${d.my.map((pi,sl)=>pi<0?'':(p=>`<button class="gpm" data-d="shift:s:${sl}" ${p.mh<=0?'disabled':''}><img src="${spfM(p.me,p.real.shiny)}" alt=""><span><span class="gpn"><b>${SP[p.me.id][0]}</b><em>Lv${p.me.lv}</em></span><small>${Math.max(0,p.mh)}/${p.mx}</small></span></button>`)(d.party[pi])).join('')}</div><div class="row" style="justify-content:center"><button class="btn alt" data-d="shift:q">返回</button></div>`;
   else body=`<div class="shifttxt">选择要换上的宝可梦</div><div class="gparty">${d.party.map((p,i)=>d.my.includes(i)?'':`<button class="gpm ${p.mh<=0?'down':''}" data-d="shift:b:${i}" ${p.mh<=0?'disabled':''}><img src="${spfM(p.me,p.real.shiny)}" alt=""><span><span class="gpn"><b>${SP[p.me.id][0]}</b><em>Lv${p.me.lv}</em></span><small>${Math.max(0,p.mh)}/${p.mx}</small></span></button>`).join('')}</div><div class="row" style="justify-content:center"><button class="btn alt" data-d="shift:yes">返回</button></div>`;
@@ -6382,6 +6407,7 @@ $('#battle').addEventListener('click',e=>{ if(!D) return; if(D.busy) return; con
   if(m==='close'){ D=null; $('#modal').hidden=true; return render(); }
   if(m==='run'){ D.log.push('你认输了。'); D.over='lose'; if(D.onLose) D.onLose(); return dRender(); }
   if(m.startsWith('shift:')){ const d=D; if(!d.shift) return; const a=m.split(':');
+    if(a[1]==='f'){ const ni=+a[2], p=d.party[ni], sl=d.shift.slot; if(!p||p.mh<=0||d.my.includes(ni)||d.my[sl]>=0) return; dMyGo(sl,ni); d.shift=null; return dMyFill(); }
     if(a[1]==='no') return dSendFoes();
     if(a[1]==='yes'){ d.shift={step:1}; return dRender(); }
     if(a[1]==='q'){ d.shift={step:0}; return dRender(); }
@@ -9736,9 +9762,9 @@ function xCall(C,A,T,id,mine,mult){ if(!MV[id]) return; const sh=plain(id); if(m
 /* 让一只宝可梦倒下（灭亡之歌、同命、临别礼物、治愈之愿、搏命）：单打直接把 HP 设成 0；双打照双打的规则换人 / 记下要补上的对手 */
 function xKO(C,o){ const x=C.hp(o); if(x<=0) return; if(C===SC1){ C.set(o,0); C.beat(o,x); return; }
   const d=D, pi=d.party.findIndex(p=>p.me===o);
-  if(pi>=0){ const p=d.party[pi], sl=d.my.indexOf(pi); p.mh=0; d.log.push(`${SP[o.id][0]} 倒下了。`); if(sl>=0){ let nx=-1; for(let i=0;i<d.party.length;i++){ if(d.party[i].mh>0&&!d.my.includes(i)){ nx=i; break; } } if(nx>=0){ d.my[sl]=nx; d.part.add(nx); d.log.push(`去吧，${SP[d.party[nx].me.id][0]}！`); wxEnter(d.party[nx].me.id,true,d.party[nx].me); } else d.my[sl]=-1; } return; }
+  if(pi>=0){ const p=d.party[pi], sl=d.my.indexOf(pi); p.mh=0; d.log.push(`${SP[o.id][0]} 倒下了。`); if(sl>=0){ dMyDown(sl); } return; }
   const fi=d.foes.indexOf(o); if(fi<0) return; const sl=d.fo.indexOf(fi); o.fh=0; d.log.push(`对方的 ${SP[o.id][0]} 倒下了！`); d.xp+=o.lv*9+10; if(sl>=0){ d.fo[sl]=-1; d.need=d.need||[]; if(d.nf+d.need.length<d.foes.length) d.need.push(sl); } }
-function xDblCheck(){ const d=D; if(!d||d.over) return; if(!dAlive('m').length){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); return; } if(!dAlive('f').length&&d.nf>=d.foes.length) dWin(); }
+function xDblCheck(){ const d=D; if(!d||d.over) return; if(!dAnyM()){ d.log.push('队伍全部倒下了……眼前一片漆黑！'); d.over='lose'; d.whiteout=1; if(d.onLose) d.onLose(); return; } if(!dAlive('f').length&&d.nf>=d.foes.length) dWin(); }
 
 /* ---------- 威力会变的招式 / 固定伤害 ---------- */
 function xPow(a,d,sh){ const id=sh.id, C=xC();
@@ -17140,7 +17166,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
 #battle .gsp.trgone,.trgone *,#battle .ginfo.trgone{visibility:hidden!important}#battle .ginfo.trhide{animation:trhide .3s .3s forwards}@keyframes trhide{to{opacity:0;visibility:hidden}}
 #battle .trwin{position:absolute;z-index:3;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}#battle .trwin img{width:auto!important;height:100%!important;max-width:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}#battle .trwin>span{height:100%;display:flex;align-items:flex-end;justify-content:center}#battle .trwin>span img{height:100%!important}
 #battle .trwin.in{animation:trin .55s .45s cubic-bezier(.2,.8,.3,1) both}@keyframes trin{from{transform:translateX(70%);opacity:0}to{transform:none;opacity:1}}#battle .trwin.me img:not(.bk){transform:scaleX(-1)}   /* 没有背面图的我方训练家左右翻转，面朝对方 */#battle .trwin.me img.bk{max-width:none}#battle .trwin.me.in{animation-name:trinm}@keyframes trinm{from{transform:translateX(-70%);opacity:0}to{transform:none;opacity:1}}
-body.btwait #modal,body.btwait #modal *{visibility:hidden!important}body.wxhold #battle .wxtag,body.wxhold #battle .wxcv{visibility:hidden}body.wxhold #battle .garena[class*="wx-"]::before,body.wxhold #battle .garena[class*="wx-"]::after{opacity:0!important}body.opn-hm #battle .gsp.me,body.opn-hm #battle .gsp.dm0,body.opn-hm #battle .gsp.dm1,body.opn-hf #battle .gsp.foe,body.opn-hf #battle .gsp.df0,body.opn-hf #battle .gsp.df1{visibility:hidden}body.opn-lock #battle button{pointer-events:none;filter:grayscale(.6);opacity:.55}#battle .garena .ginfo{transition:opacity .3s ease,transform .3s ease}body.opn-if #battle .ginfo.f,body.opn-if #battle .ginfo[class*=" df"]{opacity:0;transform:translateX(-40px)}body.opn-im #battle .ginfo.m,body.opn-im #battle .ginfo[class*=" dm"]{opacity:0;transform:translateX(40px)}.btin{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:all}.btin::before{content:"";position:absolute;inset:0;z-index:2;background:#fff;opacity:0;animation:btfl .34s linear 2}@keyframes btfl{0%,100%{opacity:0}45%,55%{opacity:1}}
+body.btwait #modal,body.btwait #modal *{visibility:hidden!important}body.wxhold #battle .wxtag,body.wxhold #battle .wxcv{visibility:hidden}body.wxhold #battle .garena[class*="wx-"]::before,body.wxhold #battle .garena[class*="wx-"]::after{opacity:0!important}body.opn-hm #battle .gsp.me,body.opn-hm #battle .gsp.dm0,body.opn-hm #battle .gsp.dm1,body.opn-hf #battle .gsp.foe,body.opn-hf #battle .gsp.df0,body.opn-hf #battle .gsp.df1{visibility:hidden}body.opn-lock #battle button,body.gimlock #battle button{pointer-events:none;filter:grayscale(.6);opacity:.55}#battle .garena .ginfo{transition:opacity .3s ease,transform .3s ease}body.opn-if #battle .ginfo.f,body.opn-if #battle .ginfo[class*=" df"]{opacity:0;transform:translateX(-40px)}body.opn-im #battle .ginfo.m,body.opn-im #battle .ginfo[class*=" dm"]{opacity:0;transform:translateX(40px)}.btin{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:all}.btin::before{content:"";position:absolute;inset:0;z-index:2;background:#fff;opacity:0;animation:btfl .34s linear 2}@keyframes btfl{0%,100%{opacity:0}45%,55%{opacity:1}}
 .btin i{position:absolute;z-index:1;background:#0b0d10;animation:btin .42s cubic-bezier(.4,0,.2,1) both}.btin.wild i{left:0;width:100%;height:12.6%}.btin.wild i:nth-child(odd){--f:-101%}.btin.wild i:nth-child(even){--f:101%}
 @keyframes btin{from{transform:translateX(var(--f))}to{transform:none}}
 ${[0,1,2,3,4,5,6,7].map(k=>`.btin i:nth-child(${k+1}){animation-delay:${(.68+k*.035).toFixed(3)}s}.btin.wild i:nth-child(${k+1}){top:${k*12.5}%}.btin.trainer i:nth-child(${k+1}){left:${k*12.5}%}.btin.boss i:nth-child(${k+1}){left:${k*19-26}%}`).join('')}
