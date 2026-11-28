@@ -4752,6 +4752,11 @@ function bGimmick(m){
   else if(m==='z'){ if(b.gu[b.mon.uid]) return; b.zOn=!b.zOn; }
   bRender();
 }
+/* 测试对战（特效测试、必杀技特效测试、变身测试……标题有「测试」的）：我方 HP 无限，不会被打倒，方便把招式测完（Kris 2026-11-28） */
+const isTestB=b=>!!(b&&b.cfg&&/测试/.test(b.cfg.title||''));
+{ const _bt=bTurn; bTurn=function(){ const b=B; if(isTestB(b)&&!b.busy&&!b.over){ b.mh=b.mx; if(b.me) b.me.endure=1; } return _bt.apply(this,arguments); }; }
+setInterval(()=>{ const b=typeof B!=='undefined'?B:null; if(!isTestB(b)||b.over||b.busy||(b.beats&&b.beats.length)||b.mh>=b.mx||$('#modal').hidden) return; b.mh=b.mx; saveActive(); bRender(); },400);   /* 回合放完就补满 */
+{ const _pd=bPlayerDown; bPlayerDown=function(){ const b=B; if(isTestB(b)){ b.mh=b.mx; b.log.push('（测试对战：我方 HP 回满，不会倒下）'); saveActive(); return bRender(); } return _pd.apply(this,arguments); }; }
 /* 单打：倒下后队伍里只剩一只能上场就直接派出，不用选（Kris 2026-11-28）；等倒下的回放放完才换 */
 setInterval(()=>{ const b=typeof B!=='undefined'?B:null; if(!b||!b.pick||b.over||b.busy||b.pivot||(b.beats&&b.beats.length)) return; const c=b.party.map((p,i)=>i).filter(i=>i!==b.cur&&b.party[i].mh>0); if(c.length===1) bSwitch(c[0]); },250);
 function endDyn(){ const b=B; if(b.dyn>0){ b.mx=maxhp(b.me); b.mh=Math.min(b.mx,Math.ceil(b.mh/1.5)); b.dyn=0; } }
