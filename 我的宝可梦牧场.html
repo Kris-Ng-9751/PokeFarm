@@ -5004,7 +5004,7 @@ const TMALL=new Set(Object.values(TMY));
   for(const sid in B){ const a=[]; const s0=TMC.d[sid]; if(s0){ const bin=atob(s0); for(let i=0;i<bin.length;i++) a.push(bin.charCodeAt(i)); } while(a.length<n) a.push(0); B[sid].forEach(i=>{ const bi=base+i; a[bi>>3]|=1<<(bi&7); }); TMC.d[sid]=btoa(String.fromCharCode(...a)); } })();
  const TMBIT=(()=>{ const o={}; TMC.m.forEach((id,i)=>o[id]=i); return o; })(), TMCACHE={};
 function tmBits(sid){ if(TMCACHE[sid]!==undefined) return TMCACHE[sid]; const s=TMC.d[sid]; if(!s) return TMCACHE[sid]=null; const bin=atob(s), a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return TMCACHE[sid]=a; }
-const tmOK=(m,id)=>{ if(window.WKS_&&window.WKS_[id]) return window.WKS_[id](m); if(TMALL.has(+id)) return true; const bits=tmBits(m.id), bi=TMBIT[id]; if(bits&&bi!==undefined) return !!(bits[bi>>3]&(1<<(bi&7))); if(!MV[id][2]) return false; const ty=MV[id][1]; return ty==='一般'||ty===SP[m.id][2]||ty===SP[m.id][8]; };
+const tmOK=(m,id)=>{ if(isDgId(m.id)) return false; if(window.WKS_&&window.WKS_[id]) return window.WKS_[id](m); if(TMALL.has(+id)) return true; const bits=tmBits(m.id), bi=TMBIT[id]; if(bits&&bi!==undefined) return !!(bits[bi>>3]&(1<<(bi&7))); if(!MV[id][2]) return false; const ty=MV[id][1]; return ty==='一般'||ty===SP[m.id][2]||ty===SP[m.id][8]; };
 let evoSel=null;
 function heldOpts(m){ return Object.keys(ITEMS).filter(k=>(typeof HOLDI!=='undefined'&&HOLDI[k])||(k.startsWith('ms_')&&STONES[k]&&STONES[k].sp===m.id)||(k.startsWith('zc_')&&(!ZC[k].sp||ZC[k].sp.includes(m.id)))).filter(k=>(S.items[k]||0)>0||m.held===k).sort((a,b)=>(typeof HOLDI!=='undefined'?(HOLDI[b]?1:0)-(HOLDI[a]?1:0):0)); }
 function equip(m,k){ if(m.held){ S.items[m.held]=(S.items[m.held]||0)+1; delete m.held; } if(k){ S.items[k]=Math.max(0,(S.items[k]||0)-1); m.held=k; } save(); }
@@ -18058,7 +18058,7 @@ const DGT={
   beam:(P,o={})=>[c=>t=>{ const {fx,fy,tx,ty,ux,uy,nx,ny,L}=c, x0=fx+ux*3, y0=fy+uy*3;
     if(t<380){ const r=2+t/380*6; for(let i=0;i<10;i++){ const a=i*.628+t/90, d=(1-t/380)*20+4; c.px(x0+Math.cos(a)*d,y0+Math.sin(a)*d,2,i%2?P[2]:P[3]); } dgOrb(c,x0,y0,r,P); }
     if(t>=380&&t<1050){ const len=L*Math.min(1,(t-380)/160), k=t>900?1-(t-900)/150:1, W=Math.max(2,Math.round((o.wide?8:6)*k)+(Math.random()<.5?0:1)); c.line(x0,y0,x0+ux*len,y0+uy*len,W+3,P[0]); c.line(x0,y0,x0+ux*len,y0+uy*len,W+1,P[1]); c.line(x0,y0,x0+ux*len,y0+uy*len,Math.max(1,W-2),P[2]); c.line(x0,y0,x0+ux*len,y0+uy*len,Math.max(1,W-4),P[3]);
-      for(let i=0;i<6;i++){ const d=Math.random()*len, s=c.rnd(-W,W); c.px(x0+ux*d+nx*s,y0+uy*d+ny*s,2,P[2]); } dgOrb(c,x0,y0,W*.8,P); }
+      for(let i=0;i<6;i++){ const d=Math.random()*len, s=c.rnd(-W,W); c.px(x0+ux*d+nx*s,y0+uy*d+ny*s,2,P[2]); } }   /* 光线根部不再画光球（蓄力用宝可梦的） */
     if(t>=540){ c.once(540,t,()=>c.shake()); const q=Math.min(1,(t-540)/700); dgBurst(c,tx,ty,q,P,o.wide?30:24); } },1400,540],
   flame:(P)=>[c=>{ const F=[]; return t=>{ const {fx,fy,tx,ty,dx,dy,ux,uy,nx,ny}=c;
     if(t<900) for(let i=0;i<3;i++) F.push({p:0,o:c.rnd(-2,2),v:c.rnd(.09,.13)});
@@ -18151,7 +18151,7 @@ const DGT={
     if(t>=450){ c.once(450,t,()=>c.shake()); } },1350,450],
   sunstorm:(P)=>[c=>t=>{ const {fx,fy,tx,ty,L}=c;   /* 闪金太阳风暴：身边空间压缩成一点 → 金色激光往四面八方射出，扫过对手 */
     if(t<600){ const q=t/600; for(let i=0;i<14;i++){ const a=i*.449+t/120, r=(1-q)*40+3; c.px(fx+Math.cos(a)*r,fy+Math.sin(a)*r*.8,2,i%2?P[2]:P[3]); } dgOrb(c,fx,fy,2+q*6,P); }
-    if(t>=600&&t<1500){ const q=Math.min(1,(t-600)/250), k=t>1300?1-(t-1300)/200:1, R=Math.max(L*1.05,70)*q; for(let i=0;i<12;i++){ const a=i*.5236+(t-600)/2000, W=Math.max(1,Math.round(3*k)); c.line(fx,fy,fx+Math.cos(a)*R,fy+Math.sin(a)*R,W+2,P[1]); c.line(fx,fy,fx+Math.cos(a)*R,fy+Math.sin(a)*R,W,P[3]); } dgOrb(c,fx,fy,7*k+1,P); }
+    if(t>=600&&t<1500){ const q=Math.min(1,(t-600)/250), k=t>1300?1-(t-1300)/200:1, R=Math.max(L*1.05,70)*q; for(let i=0;i<12;i++){ const a=i*.5236+(t-600)/2000, W=Math.max(1,Math.round(3*k)); c.line(fx,fy,fx+Math.cos(a)*R,fy+Math.sin(a)*R,W+2,P[1]); c.line(fx,fy,fx+Math.cos(a)*R,fy+Math.sin(a)*R,W,P[3]); } }
     if(t>=800){ c.once(800,t,()=>c.shake()); const q=Math.min(1,(t-800)/800); dgBurst(c,tx,ty,q,P,24); } },1700,800],
   ringbeam:(P)=>[c=>t=>{ const {fx,fy,tx,ty,dx,dy,ux,uy}=c;   /* 爆风激光：一串环状光线 */
     for(let i=0;i<6;i++){ const p=(t-i*80)/420; if(p<0||p>1) continue; const x=fx+dx*p, y=fy+dy*p, r=4+p*4; c.ring(x,y,r+1,2,P[0],1.2); c.ring(x,y,r,1,P[3],1.2); }
@@ -18237,7 +18237,7 @@ const DGT={
     for(let i=0;i<7;i++){ const t0=700+i*90, a=i/7*6.283+t/200, ox=fx+Math.cos(a)*22, oy=hy+Math.sin(a)*10; if(t<t0){ if(t>i*80) dgOrb(c,ox,oy,4,P); } else { const p=Math.min(1,(t-t0)/300); if(p<1) dgOrb(c,ox+(tx-ox)*p,oy+(ty-oy)*p,4,P); else c.once(t0+300,t,()=>c.shake()); } }
     if(t>=1000){ const q=Math.min(1,(t-1000)/1000); dgBurst(c,tx,ty,q,P,34); } }; },2100,1000],
 };
-const DG_SKIP={orb:360,darkorb:360,beam:380,blackhole:500,sunstorm:600};   /* 模板开头自己的蓄力段有多长：剪掉，改用宝可梦的蓄力 */
+const DG_SKIP={orb:360,darkorb:360,beam:380,blackhole:500,sunstorm:600,gaia:700,cross10:400,seven:450};   /* 模板开头自己的蓄力段有多长：剪掉，改用宝可梦的蓄力 */
 function dgFxOf(m,e){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m,e), opt={garuru:{},missile:{ice:m[2]==='冰',own:!['钢','火','一般'].includes(m[2])},slash:{n:/全部删除|王牌飞剑|劲力三叉爪|剑灵|赫金华尔兹|剑翼|封锁|辙剑审判/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉|正电子|阳电子|亡命冲击波|原子冲击波|极乐净土|混沌爆发|三重能量炮|大地毁灭者|飞龙之息|神之赎罪|彩虹交响曲|最终流星|圣剑格雷达尔法|闪光V热线/.test(m[0])}}[k]||{}; const SP=dgSp(m); if(SP) Object.assign(opt,SP.opt); const [setup0,total0,hit0]=mk(P,opt), sk=DG_SKIP[k]||0, setupA=sk?c=>{ const d=setup0(c); return t=>d(t+sk); }:setup0, setup=SP&&SP.from?c=>setupA(dgFrom(c,SP.from)):setupA, total=total0-sk, hit=Math.max(60,hit0-sk); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total},c:P[1]}; }
 const DGFX_DONE=new Set([1,2,3,4,9]);   /* 已经做好特效的分类（g）：1 大冒险、2 《02》、3 《驯兽师》、4 《无限地带》、9 其他（皇家骑士等）——全部做完了 */
 const dgFxReady=e=>DGFX_DONE.has(e.g);
@@ -18285,7 +18285,7 @@ async function dgRegister(list){ dgUnregister(); DGREG={ids:[],mvs:[]};
     const ws=w.reduce((a,x)=>a+x,0), b6=w.map(x=>Math.max(10,Math.round(tot*x/ws)));
     const t1=tys[0]||(e.at==='病毒种'?'恶':'一般'), t2=tys[1]&&tys[1]!==t1?tys[1]:'';
     SP[id]=[e.zh,e.en,t1,e.st==='究极体'?4:(e.st==='完全体'||e.st==='混合体')?3:2,b6[0],b6[1],b6[2],b6[5],t2,0,0]; BASE6[id]=b6;
-    LS[id]=[...mvs.map(m=>[1,m]),...(mvs.length<2?[[1,33]]:[])];   /* 必杀技少于两招：补一招撞击 */
+    LS[id]=mvs.map(m=>[1,m]);   /* 只用自己的必杀技，不补宝可梦的招式（Kris 2026-11-29） */
     const src=dgSrc(e), fr=await dgFlip(src,e.st,false), bk=await dgFlip(src,e.st,true);
     SPR[id]=fr; SPRS[id]=fr; SPB[id]=bk; SPBS[id]=bk; SPHI.set(fr,DG_K); SPHI.set(bk,DG_K); DGREG.ids.push(id); }
   LGC.re=null; LGC.cache.clear(); }   /* 战斗记录上色的名字/招式表要重建，不然数码宝贝的名字和招式没颜色（Kris 2026-11-29） */
