@@ -17534,7 +17534,7 @@ function dgClose(){ $('#modal').hidden=true; $('#battle').innerHTML=''; }
 
 /* ---------- 数码宝贝必杀技特效（Kris 2026-11-28）：按招式类型做模板（光束、能量弹、火焰、泡泡、斩击、拳、导弹、雷、冷气、旋风、海浪、黑暗、圣光、音波、鞭、箭、爆炸、投掷、群袭、冲撞），
    每招按名字和说明挑模板，按属性配色（圣 / 天堂 / 金光用金色，黑暗用暗紫，蓝色火焰用蓝色）；有名的必杀技（盖亚之力、加鲁鲁炮、天堂之拳、七重天堂）单独调过。
-   先做第 1 部（数码宝贝大冒险）、第 2 部（02）的数码宝贝，其余系列之后一批批加；没做的照旧借同属性宝可梦招式的特效 ---------- */
+   先做第 1 部（数码宝贝大冒险）、第 2 部（02）、第 3 部（驯兽师）的数码宝贝，其余系列之后一批批加；没做的照旧借同属性宝可梦招式的特效 ---------- */
 const DGPAL={火:['#7a1e05','#ff6a1a','#ffc23a','#fff6c8'],水:['#0c3a7a','#2f8cff','#8fd0ff','#eaf8ff'],草:['#1f5a14','#4cb83a','#a8e86a','#f0ffd0'],电:['#6a5200','#ffd21a','#fff27a','#ffffff'],
   冰:['#2a5a8a','#7fd8ff','#c8f4ff','#ffffff'],格斗:['#5a1a0a','#d8572a','#ffb04a','#fff0d0'],毒:['#3a1355','#7b2fb0','#c27ae8','#f0d0ff'],飞行:['#2a5a9a','#9fd2ff','#eaf6ff','#ffffff'],
   超能力:['#6a0f45','#ff4fa3','#ffb0d8','#ffffff'],虫:['#3a5a0a','#9ac21a','#d8ef6a','#ffffff'],幽灵:['#1e0f3a','#5a3aa0','#a68ae0','#efe6ff'],恶:['#120a18','#3a2450','#8a5ab8','#d8c0ff'],
@@ -17557,7 +17557,12 @@ const DGFX_NAME={'盖亚之力':'gaia','盖亚之力ZERO':'gaia0','黑暗盖亚�
   /* 第 2 代《02》（Kris 2026-11-28） */
   '竞技疾驰':'rush','流星':'meteor','罗塞塔石碑':'slab','百万吨重压':'slam','巨尾重锤':'rush','滚石':'drill','大爆裂':'quake','黄金冲击':'drill','潜艇攻击':'drill','氧气自导':'missile',
   '闪金太阳风暴':'sunstorm','钉刺':'rush','百万死亡':'blackhole','千兆死亡':'beam','喙啄':'rush','滑翔号角':'rush','风暴之翼':'wind','爆风激光':'ringbeam','马赫冲击波':'sound','音速二重击':'rush',
-  '和御魂':'orb','松球':'lob','粘粘网':'web','绢丝线':'arrow','业火地狱':'flame','灼热毒蛇':'beam','灾祸巨炮':'darkorb','蛇型绷带':'whip','飞羽斩':'slash','红叶落':'slash','草薙':'slash'};
+  '和御魂':'orb','松球':'lob','粘粘网':'web','绢丝线':'arrow','业火地狱':'flame','灼热毒蛇':'beam','灾祸巨炮':'darkorb','蛇型绷带':'whip','飞羽斩':'slash','红叶落':'slash','草薙':'slash',
+  /* 第 3 代《驯兽师》（Kris 2026-11-28） */
+  '火焰弹':'orb','皇家枪击':'lance','胜利枪击':'lance','极乐净土':'beam','君往何处':'blackhole','地狱咆哮':'sound','双重台风':'wind','巨人导弹':'bigmissile','爆裂射击':'missile',
+  '杀生石':'gas','酒气':'gas','死亡黑云':'gas','雾幻':'gas','狐叶楔':'swarm','鬼火球':'seven','饭纲':'swarm','召唤':'orb','双重冲击':'missile','混沌爆发':'beam','毁灭榴弹':'missile',
+  '困惑':'quake','黑':'arrow','倒逆':'sound','野猪攻击':'drill','刺穿':'meteor','食犬者':'quake','金刚':'sound','太极':'yinyang','恐龙爆风':'flame','火焰爆风':'flame','穿孔毒针':'bite',
+  '碰撞交响乐':'sound','蒸汽炸弹':'missile','车轮粉碎机':'drill','石敢当':'slab','太阳矢':'meteor','长牙强袭':'rush','冻原吐息':'blizzard','刺针暴风':'missile','障碍':'quake'};
 const DGFX_RULE=[[/泡/,'bubble'],[/拳/,'fist'],[/箭|矢/,'arrow'],[/鞭|藤蔓|荆棘/,'whip'],[/剑|刀|斩|刃|爪|镰|剪|切断/,'slash'],[/咬|牙/,'bite'],
   [/导弹|加特林|飞弹|炸弹|弹丸|风暴|火神炮/,'missile'],[/雷|电击|闪电/,'bolt'],[/冷冻气|暴风雪|冰狱|冷气/,'blizzard'],[/龙卷|飓风|旋风|风$/,'wind'],
   [/海啸|潮汐|波浪|浪/,'wave'],[/蝙蝠|鱼群|羽毛|爱心/,'swarm'],[/爆炸|爆破/,'boom'],[/投掷|大便/,'lob'],
@@ -17678,6 +17683,16 @@ const DGT={
     else if(t<800){ const p=(t-500)/300, x=fx+dx*p, y=fy+dy*p; dgOrb(c,x,y,12,['#000','#1a0a2a','#4a2a7a','#9a6ad0']); }
     if(t>=800){ c.once(800,t,()=>c.shake()); const q=Math.min(1,(t-800)/1000), R=(q<.7?14+q*20:28*(1-(q-.7)/.3)); c.disc(tx,ty,R+3,P[2]); c.disc(tx,ty,R+1,'#2a1040'); c.disc(tx,ty,R,'#000');
       for(let i=0;i<14;i++){ const a=i*.449-t/140, d=(1-((t/500+i/14)%1))*46+R; c.px(tx+Math.cos(a)*d,ty+Math.sin(a)*d*.8,2,i%2?P[2]:P[3]); } } },1900,800],
+  lance:(P)=>[c=>t=>{ const {fx,fy,tx,ty,dx,dy,ux,uy,nx,ny}=c, p=Math.min(1,t/240), x=fx+dx*p, y=fy+dy*p;   /* 圣枪：一道长枪光直刺过去，枪尖打中时十字闪光 */
+    if(t<700){ const k=t<240?1:Math.max(0,1-(t-240)/460), bx=x-ux*60, by=y-uy*60; c.line(bx,by,x,y,7*k+1,P[0]); c.line(bx,by,x,y,5*k+1,P[1]); c.line(bx,by,x,y,2*k+1,P[3]); c.line(x,y,x-ux*10+nx*6,y-uy*10+ny*6,3,P[3]); c.line(x,y,x-ux*10-nx*6,y-uy*10-ny*6,3,P[3]); }
+    if(t>=240){ c.once(240,t,()=>c.shake()); const q=Math.min(1,(t-240)/800); dgBurst(c,tx,ty,q,P,26); if(q<.5){ const L=30*(1-q*2)+6; c.line(tx-L,ty,tx+L,ty,3,P[3]); c.line(tx,ty-L,tx,ty+L,3,P[3]); } } },1200,240],
+  gas:(P)=>[c=>{ const B=Array.from({length:14},(_,i)=>({a:i*.45,r:c.rnd(4,9),d:c.rnd(0,300)})); return t=>{ const {fx,fy,tx,ty,dx,dy}=c;   /* 毒气 / 酒气 / 黑云 / 浓雾：一团团烟雾飘过去，把对手罩住 */
+    B.forEach((b,i)=>{ const p=Math.min(1,Math.max(0,(t-b.d)/700)); if(p<=0) return; const x=fx+dx*p+Math.cos(b.a+t/400)*(6+p*14), y=fy+dy*p+Math.sin(b.a+t/400)*(4+p*8)-p*4, r=b.r*(.5+p*.5)*(t>1250?Math.max(0,1-(t-1250)/350):1); if(r<1) return; c.g.globalAlpha=.72; c.disc(x,y,r+1,P[0]); c.disc(x,y,r,i%2?P[1]:P[2]); c.disc(x-r*.3,y-r*.3,Math.max(1,r*.35),P[3]); c.g.globalAlpha=1; });
+    if(t>=700) c.once(700,t,()=>c.shake()); }; },1600,700],
+  yinyang:()=>[c=>t=>{ const {tx,ty}=c, q=Math.min(1,t/500), R=18*q+2, a=t/120;   /* 太极：黑白两极绕着对手旋转，把它分解 */
+    c.disc(tx,ty,R+2,'#7a5a10'); for(let i=0;i<2;i++){ const b=a+i*3.1416, col=i?'#0a0a12':'#fffbe8', col2=i?'#fffbe8':'#0a0a12'; for(let k=0;k<12;k++){ const u=b+k*.26; c.disc(tx+Math.cos(u)*R*.55,ty+Math.sin(u)*R*.55,R*.45,col); } c.disc(tx+Math.cos(b)*R*.5,ty+Math.sin(b)*R*.5,Math.max(1,R*.16),col2); }
+    if(t>=500){ c.once(500,t,()=>c.shake()); const p=Math.min(1,(t-500)/900); c.ring(tx,ty,R+4+p*24,2,'#ffd84a'); if(p>.3) for(let i=0;i<10;i++){ const u=i*.628+t/200; c.px(tx+Math.cos(u)*(R+6+p*16),ty+Math.sin(u)*(R+6+p*16),2,i%2?'#fffbe8':'#0a0a12'); } } },1500,500],
+  bigmissile:(P)=>DGT.missile(P,{n:2,big:1}),
   /* 有名的必杀技 */
   gaia:(P)=>[c=>{ let sp=null; return t=>{ const {fx,fy,tx,ty,dx,dy}=c, hx=fx, hy=fy-c.fh*.9-6;
     if(t<900){ const r=3+Math.min(1,t/800)*13; for(let i=0;i<12;i++){ const a=i*.524-t/80, d=(1-((t/600+i/12)%1))*34; c.px(hx+Math.cos(a)*d,hy+Math.sin(a)*d,2,i%2?P[2]:P[3]); } dgOrb(c,hx,hy,r,P); c.ring(hx,hy,r+3+Math.sin(t/60)*2,1,P[2]); }
@@ -17693,8 +17708,8 @@ const DGT={
     for(let i=0;i<7;i++){ const t0=700+i*90, a=i/7*6.283+t/200, ox=fx+Math.cos(a)*22, oy=hy+Math.sin(a)*10; if(t<t0){ if(t>i*80) dgOrb(c,ox,oy,4,P); } else { const p=Math.min(1,(t-t0)/300); if(p<1) dgOrb(c,ox+(tx-ox)*p,oy+(ty-oy)*p,4,P); else c.once(t0+300,t,()=>c.shake()); } }
     if(t>=1000){ const q=Math.min(1,(t-1000)/1000); dgBurst(c,tx,ty,q,P,34); } }; },2100,1000],
 };
-function dgFxOf(m,e){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m,e), opt={garuru:{},missile:{ice:m[2]==='冰',own:!['钢','火','一般'].includes(m[2])},slash:{n:/全部删除|王牌飞剑|劲力三叉爪/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉|正电子|阳电子|亡命冲击波/.test(m[0])}}[k]||{}; const [setup,total,hit]=mk(P,opt); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total}}; }
-const DGFX_DONE=new Set([1,2]);   /* 已经做好特效的动画系列（g）：1 大冒险、2 《02》 */
+function dgFxOf(m,e){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m,e), opt={garuru:{},missile:{ice:m[2]==='冰',own:!['钢','火','一般'].includes(m[2])},slash:{n:/全部删除|王牌飞剑|劲力三叉爪/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉|正电子|阳电子|亡命冲击波|原子冲击波|极乐净土|混沌爆发|三重能量炮/.test(m[0])}}[k]||{}; const [setup,total,hit]=mk(P,opt); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total}}; }
+const DGFX_DONE=new Set([1,2,3]);   /* 已经做好特效的动画系列（g）：1 大冒险、2 《02》、3 《驯兽师》 */
 const dgFxReady=e=>DGFX_DONE.has(e.g);
 /* 开发者 → 技能特效：上面加「数码宝贝必杀技特效」测试，点一招就开一场测试对战（我方这只数码宝贝 Lv80，第一招就是这招，对手是血很多的巨鲸兽） */
 let DGFXT={g:1};
