@@ -6329,12 +6329,12 @@ function dTurn(){
       else if(t==='xdef'){ d.xdef=1; d.log.push(`使用了${ITEMS[k][0]}，我方的防御提升了！`); }
       else if(t==='xspd'){ d.xspd=1; d.log.push(`使用了${ITEMS[k][0]}，我方的速度提升了！`); }
       S.items[k]--; }
-    else acts.push({side:'m',slot:x.slot,mv:x.mv,tg:x.tg,z:x.z}); });
-  dAlive('f').forEach(([fi,fs])=>{ const al=dAlive('m'); if(!al.length) return; acts.push({side:'f',slot:fs,mv:d.foes[fi].fmv[Math.floor(Math.random()*d.foes[fi].fmv.length)],tg:al[Math.floor(Math.random()*al.length)][1]}); });
+    else acts.push({side:'m',slot:x.slot,mv:x.mv,tg:x.tg,z:x.z,who:d.my[x.slot]}); });
+  dAlive('f').forEach(([fi,fs])=>{ const al=dAlive('m'); if(!al.length) return; acts.push({side:'f',slot:fs,who:fi,mv:d.foes[fi].fmv[Math.floor(Math.random()*d.foes[fi].fmv.length)],tg:al[Math.floor(Math.random()*al.length)][1]}); });
   const spd=a=>{ const o=a.side==='m'?d.party[d.my[a.slot]].me:d.foes[d.fo[a.slot]]; return (a.side==='m'&&d.xspd)?1e9:effSpd(o); }, pri=a=>prioOf({id:a.mv});
   acts.sort((a,b)=>pri(b)-pri(a)||spd(b)-spd(a));
   for(const a of acts){ if(d.over) break;
-    const ai=(a.side==='m'?d.my:d.fo)[a.slot]; if(ai<0) continue;
+    const ai=(a.side==='m'?d.my:d.fo)[a.slot]; if(ai<0) continue; if(a.who!=null&&a.who!==ai) continue;   /* 这回合倒下后换上来的宝可梦，不会接着用前一只选的招式（Kris 2026-11-28：盖欧卡倒下后烈空坐上来直接用了飞翔） */
     { const o=a.side==='m'?(d.party[ai]||{}).me:d.foes[ai]; if(o&&o._chg){ a.mv=o._chg; if(o._chgT!=null) a.tg=o._chgT; a.z=false; } }   /* 两回合招式的第 2 回合：一定放出蓄好的那招，打第 1 回合选的目标 */ const att=a.side==='m'?d.party[ai]:d.foes[ai], ahp=a.side==='m'?att.mh:att.fh; if(ahp<=0) continue;
     if(a.side==='f'){ dFoeGim(att);
       if(d.foeItems&&d.foeItems.length&&att.fh>0&&att.fh<att.fx*.35){ const k=d.foeItems.shift(), it=BI.find(x=>x[0]===k); const hv=it?(it[2]==='healp'?Math.ceil(att.fx*it[3]):it[3]>=9999?att.fx:it[3]||30):30; att.fh=Math.min(att.fx,att.fh+hv); const cure=healCure(k,att); d.log.push(`对方使用了${ITEMS[k]?ITEMS[k][0]:'伤药'}，${SP[att.id][0]} 回复了 HP${cure?`，${cure}也治好了`:''}`); dHealBeat('f',a.slot); continue; } }
