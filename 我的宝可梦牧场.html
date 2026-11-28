@@ -5012,15 +5012,11 @@ function rCraft(){
 }
 $('#main').addEventListener('click',e=>{ const b=e.target.closest('[data-craftq]'); if(!b) return; const r=RECIPES[+b.dataset.craftq]; if(!r) return; const mx=craftMax(r); if(mx<1) return toast('材料不够'); const n=qtyOf(b,mx);
   Object.entries(r.mat).forEach(([k,m])=>{ S.items[k]-=m*n; }); S.items[r.out]=(S.items[r.out]||0)+n; save(); toast(`制作了 ${ITEMS[r.out][0]} ×${n}`); rCraft(); });
-/* 背包（Kris 2026-11-28 改）：拿掉上面的「使用对象」，按「使用 / 携带 / 教」以后弹窗选宝可梦（只列出用得上的），TM 选好宝可梦再选替换哪一格 */
+/* 背包（Kris 2026-11-28 改）：拿掉上面的「使用对象」，按「使用 / 携带」以后弹窗选宝可梦（只列出用得上的）；TM 选好宝可梦后用学技能弹窗选忘记哪一个 */
 const bagSort=L=>L.slice().sort((a,b)=>(S.team.includes(b.uid)?1:0)-(S.team.includes(a.uid)?1:0)||(b.fav?1:0)-(a.fav?1:0)||b.lv-a.lv);
 function bagPick(title,filt,note,cb){ const L=bagSort(S.mons.filter(filt)); if(!L.length) return toast('没有宝可梦能用'); monPop(L,title,u=>{ const x=mon([].concat(u)[0]); if(x) cb(x); },note); }
 const bagHeldNote=x=>[x.held&&ITEMS[x.held]?'携带：'+ITEMS[x.held][0]:'',x.ms&&ITEMS[x.ms]?ITEMS[x.ms][0]:''].filter(Boolean).join(' · ');
 const bagOff=k=>S.mons.filter(x=>x.held===k||x.ms===k);
-function bagTmSlot(x,id){ const pop=$('#mpick'), mv=getMoves(x);
-  pop.innerHTML=`<div class="mpc" style="max-width:520px"><div class="row" style="justify-content:space-between"><b style="font:16px var(--pix)">${nameOf(x)} 学 ${MV[id][0]}：忘记哪一个？</b><button class="btn alt" data-mpx="1">取消</button></div><div class="mvgrid" style="margin-top:10px">${[0,1,2,3].map(i=>`<button class="mvc" data-tmslot="${i}" style="text-align:left;cursor:pointer">${mv[i]?`<b>${i+1}. ${MV[mv[i]][0]}</b><span class="muted">${mvLine(mv[i])}</span>`:`<b class="muted">${i+1}. （空）</b>`}</button>`).join('')}</div></div>`;
-  pop._fn=null; pop.hidden=false;
-  pop.querySelectorAll('[data-tmslot]').forEach(b=>b.onclick=()=>{ const s=Math.min(+b.dataset.tmslot,mv.length), old=mv[s]; mv[s]=id; pop.hidden=true; save(); toast(old?`${nameOf(x)} 忘记了 ${MV[old][0]}，学会了 ${MV[id][0]}`:`${nameOf(x)} 学会了 ${MV[id][0]}`); render(); }); }
 function rBag(){
   const row=(l,r)=>`<div class="item"><div class="l">${rowImg(l)}<div style="min-width:0">${l}</div></div><div class="row">${r}</div></div>`;
   const selS='padding:6px;border-radius:6px;border:1px solid var(--line);font:inherit';
@@ -5124,7 +5120,7 @@ function rBag(){
   document.querySelectorAll('[data-evk]').forEach(b=>b.onclick=()=>{ evoSel=b.dataset.evk; rBag(); });
   document.querySelectorAll('[data-evo2]').forEach(b=>b.onclick=()=>{ const [u,to]=b.dataset.evo2.split(':'); const x=mon(+u); if(x) evolve(x,+to); });
   function bagTmUse(n){ const id=TMS[n];
-    bagPick(`谁要学 ${MV[id][0]}？`,x=>tmOK(x,id)&&!getMoves(x).includes(id),x=>getMoves(x).map(i=>MV[i][0]).join('、'),x=>{ const mv=getMoves(x); if(mv.length<4){ mv.push(id); save(); toast(`${nameOf(x)} 学会了 ${MV[id][0]}`); return render(); } bagTmSlot(x,id); }); }
+    bagPick(`谁要学 ${MV[id][0]}？`,x=>tmOK(x,id)&&!getMoves(x).includes(id),x=>getMoves(x).map(i=>MV[i][0]).join('、'),x=>{ const mv=getMoves(x); if(mv.length<4){ mv.push(id); x.lnew=(x.lnew||[]).concat(id); } else { x.pend=x.pend||[]; if(!x.pend.includes(id)) x.pend.push(id); x.pf=x.pf||[]; if(!x.pf.includes(id)) x.pf.push(id); } save(); tmPopFor=null; sigPopFor=null; monOpen=false; learnPop(x.uid); }); }   /* 和宝可梦详情学 TM 一样：用「想学会」弹窗选要忘记哪一个 */
 }
 function bagTmRows(){ const own=Object.keys(S.tm).map(Number).sort((a,b)=>a-b).filter(n=>tmFilt(n,tmF)), row=(l,r)=>`<div class="item"><div class="l">${rowImg(l)}<div style="min-width:0">${l}</div></div><div class="row">${r}</div></div>`;
   return `<div class="muted" style="margin-bottom:6px">共 ${own.length} 个</div><div class="list">${own.slice(0,tmF.n).map(n=>{const id=TMS[n]; return row(`<b>TM${String(n).padStart(2,'0')} ${MV[id][0]}</b><div class="muted">${mvLine(id)}</div>`,`<button class="btn" data-tm="${n}">使用</button>`)}).join('')||'<div class="muted">没有符合条件的 TM</div>'}</div>${own.length>tmF.n?'<div class="row" style="margin-top:8px"><button class="btn alt" id="tmmore">再显示 40 个</button></div>':''}`; }
