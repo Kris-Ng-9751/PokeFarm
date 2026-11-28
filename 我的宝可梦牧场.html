@@ -4950,7 +4950,7 @@ $('#battle').addEventListener('click',e=>{ if(e.target.matches&&e.target.matches
 });
 
 /* ---------- bag ---------- */
-let bagMon=null, bagSlot=0, bagTab='items', tmF={t:'',n:40,ok:true};
+let bagTab='items', tmF={t:'',n:40};
 const BAGTABS=[['items','道具'],['chest','宝箱'],['berry','树果'],['med','药品'],['hold','携带道具'],['mega','超级石'],['gem','宝石'],['sig','专属道具'],['mint','性格薄荷'],['mochi','粘糕'],['ball','精灵球'],['evo','进化道具'],['tm','技能机器 TM'],['key','手环 / 腕带']];
 const evoFor=(m,k)=>(EVO[m.id]||[]).find(x=>(x.k==='item'&&'i'+x.item===k)||(x.k==='trade'&&k==='link'));
 /* TM 学得会吗：按每种宝可梦实际能用 TM 学会哪些技能来判断（数据来自 PokeAPI，历代游戏里「机器」学会的技能取并集，1144 个形态）。
@@ -5000,43 +5000,51 @@ function rCraft(){
 }
 $('#main').addEventListener('click',e=>{ const b=e.target.closest('[data-craftq]'); if(!b) return; const r=RECIPES[+b.dataset.craftq]; if(!r) return; const mx=craftMax(r); if(mx<1) return toast('材料不够'); const n=qtyOf(b,mx);
   Object.entries(r.mat).forEach(([k,m])=>{ S.items[k]-=m*n; }); S.items[r.out]=(S.items[r.out]||0)+n; save(); toast(`制作了 ${ITEMS[r.out][0]} ×${n}`); rCraft(); });
+/* 背包（Kris 2026-11-28 改）：拿掉上面的「使用对象」，按「使用 / 携带 / 教」以后弹窗选宝可梦（只列出用得上的），TM 选好宝可梦再选替换哪一格 */
+const bagSort=L=>L.slice().sort((a,b)=>(S.team.includes(b.uid)?1:0)-(S.team.includes(a.uid)?1:0)||(b.fav?1:0)-(a.fav?1:0)||b.lv-a.lv);
+function bagPick(title,filt,note,cb){ const L=bagSort(S.mons.filter(filt)); if(!L.length) return toast('没有宝可梦能用'); monPop(L,title,u=>{ const x=mon([].concat(u)[0]); if(x) cb(x); },note); }
+const bagHeldNote=x=>[x.held&&ITEMS[x.held]?'携带：'+ITEMS[x.held][0]:'',x.ms&&ITEMS[x.ms]?ITEMS[x.ms][0]:''].filter(Boolean).join(' · ');
+const bagOff=k=>S.mons.filter(x=>x.held===k||x.ms===k);
+function bagTmSlot(x,id){ const pop=$('#mpick'), mv=getMoves(x);
+  pop.innerHTML=`<div class="mpc" style="max-width:520px"><div class="row" style="justify-content:space-between"><b style="font:16px var(--pix)">${nameOf(x)} 学 ${MV[id][0]}：忘记哪一个？</b><button class="btn alt" data-mpx="1">取消</button></div><div class="mvgrid" style="margin-top:10px">${[0,1,2,3].map(i=>`<button class="mvc" data-tmslot="${i}" style="text-align:left;cursor:pointer">${mv[i]?`<b>${i+1}. ${MV[mv[i]][0]}</b><span class="muted">${mvLine(mv[i])}</span>`:`<b class="muted">${i+1}. （空）</b>`}</button>`).join('')}</div></div>`;
+  pop._fn=null; pop.hidden=false;
+  pop.querySelectorAll('[data-tmslot]').forEach(b=>b.onclick=()=>{ const s=Math.min(+b.dataset.tmslot,mv.length), old=mv[s]; mv[s]=id; pop.hidden=true; save(); toast(old?`${nameOf(x)} 忘记了 ${MV[old][0]}，学会了 ${MV[id][0]}`:`${nameOf(x)} 学会了 ${MV[id][0]}`); render(); }); }
 function rBag(){
-  if(!mon(bagMon)) bagMon=S.team[0]; const m=mon(bagMon)||S.mons[0]; const mv=getMoves(m);
   const row=(l,r)=>`<div class="item"><div class="l">${rowImg(l)}<div style="min-width:0">${l}</div></div><div class="row">${r}</div></div>`;
   const selS='padding:6px;border-radius:6px;border:1px solid var(--line);font:inherit';
+  const qty=(k,on)=>{ const n=S.items[k]||0; return `<span class="bagqw"><input class="bagq" type="number" min="1" max="${Math.max(1,n)}" value="1" data-q="${k}" aria-label="数量" ${n&&on?'':'disabled'}><button class="btn alt bagqm" data-qmax="${k}" data-qv="${n}" ${n>1&&on?'':'disabled'}>全部</button></span>`; };
+  const offBtn=k=>bagOff(k).length?`<button class="btn alt" data-boff="${k}">取下</button>`:'';
   const head=`<div class="card xhero bgh"><div class="xart" style="background-image:url(${XART.bag})"></div><h2 class="xt">背包</h2>${TEST?`<div class="muted"><b>测试模式：道具和 TM 无限（没开放的除外），金币和星尘保持充足。</b></div>`:''}
-  <div class="row" style="margin:10px 0" role="tablist">${BAGTABS.map(([k,n])=>`<button class="btn fchip ${bagTab===k?'on':'alt'}" data-bt="${k}">${n}</button>`).join('')}</div>
-  <div class="row"><label for="bm">使用对象</label><select id="bm" style="${selS};max-width:100%">${S.mons.map(x=>`<option value="${x.uid}" ${x.uid===m.uid?'selected':''}>${SP[x.id][0]} Lv${x.lv}${x.shiny?'（异色）':''}</option>`).join('')}</select>${bagTab==='tm'?`<label for="bs">学技能时替换</label><select id="bs" style="${selS}">${[0,1,2,3].map(i=>`<option value="${i}" ${bagSlot==i?'selected':''}>第 ${i+1} 格</option>`).join('')}</select>`:''}</div>
-  ${bagTab==='tm'?`<div class="mvgrid" style="margin-top:8px">${[0,1,2,3].map(i=>mv[i]?`<div class="mvc"><b>${i+1}. ${MV[mv[i]][0]}</b><span class="muted">${mvLine(mv[i])}</span></div>`:`<div class="mvc empty muted">${i+1}. （空）</div>`).join('')}</div>`:''}</div>`;
+  <div class="row" style="margin:10px 0" role="tablist">${BAGTABS.map(([k,n])=>`<button class="btn fchip ${bagTab===k?'on':'alt'}" data-bt="${k}">${n}</button>`).join('')}</div></div>`;
   let body='';
   if(bagTab==='items'){
-    body=`<div class="card"><h2>道具</h2><div class="list">${['berry','candy','m_xp1','m_xp2','m_xp3','m_xp4'].map(k=>row(`<b>${ITEMS[k][0]} ×${S.items[k]||0}</b><div class="muted">${rareOK(k)?ITEMS[k][1]:rareNeed(k)}</div>`,`<span class="bagqw"><input class="bagq" type="number" min="1" max="${Math.max(1,bagCap(m,k))}" value="1" data-q="${k}" aria-label="数量" ${bagCap(m,k)?'':'disabled'}><button class="btn alt bagqm" data-qmax="${k}" data-qv="${bagCap(m,k)}" ${bagCap(m,k)>1?'':'disabled'}>全部</button></span><button class="btn" data-use="${k}" ${S.items[k]&&rareOK(k)?'':'disabled'}>对 ${SP[m.id][0]} 使用</button>`)).join('')}${(S.items.zcell||0)>0||zcOn()?row(`<b>${ITEMS.zcell[0]} ×${S.items.zcell||0}</b><div class="muted">在基格尔德的详情里切换 50% / 10% 形态用，每次 ${ZY_COST} 个</div>`,''):''}</div></div>`;
+    body=`<div class="card"><h2>道具</h2><div class="list">${['berry','candy','m_xp1','m_xp2','m_xp3','m_xp4'].map(k=>row(`<b>${ITEMS[k][0]} ×${S.items[k]||0}</b><div class="muted">${rareOK(k)?ITEMS[k][1]:rareNeed(k)}</div>`,`${qty(k,rareOK(k))}<button class="btn" data-use="${k}" ${S.items[k]&&rareOK(k)?'':'disabled'}>使用</button>`)).join('')}${(S.items.zcell||0)>0||zcOn()?row(`<b>${ITEMS.zcell[0]} ×${S.items.zcell||0}</b><div class="muted">在基格尔德的详情里切换 50% / 10% 形态用，每次 ${ZY_COST} 个</div>`,''):''}</div></div>`;
   } else if(bagTab==='chest'){
     body=`<div class="card"><h2>宝箱（共 ${chestN()} 个）</h2><div class="muted" style="margin-bottom:8px">宝箱分 4 种稀有度，越稀有奖励越多：普通 2 件道具，稀有 3 件，超稀有 4 件加稀有道具，传说再多一件稀有道具和 TM。签到第 7 天送稀有宝箱，地图探索也会掉宝箱。</div><div class="list">${[1,2,3,4].map(t=>`<div class="item"><div class="l">${chestIcon(48,t)}<div style="min-width:0"><b>${CHESTN[t]} ×${S.chests[t]||0}</b></div></div><div class="row"><button class="btn" data-oc="${t}:1" ${(S.chests[t]||0)?'':'disabled'}>开 1 个</button><button class="btn alt" data-oc="${t}:10" ${(S.chests[t]||0)>=2?'':'disabled'}>十连开</button></div></div>`).join('')}</div></div>`;
   } else if(bagTab==='berry'){
-    body=`<div class="card"><h2>树果（${Object.keys(BERRY).length} 种）</h2><div class="muted" style="margin-bottom:8px">树果可以喂、战斗里用或直接使用，也能拿去农场种。</div><div class="list">${Object.keys(BERRY).map(k=>{ const b=BERRY[k], n=S.items[k]||0; const act=b.t==='bat'?'<span class="muted">战斗中使用</span>':`<span class="bagqw"><input class="bagq" type="number" min="1" max="${Math.max(1,bagCap(m,k))}" value="1" data-q="${k}" aria-label="数量" ${n?'':'disabled'}><button class="btn alt bagqm" data-qmax="${k}" data-qv="${bagCap(m,k)}" ${bagCap(m,k)>1?'':'disabled'}>全部</button></span><button class="btn" data-bu="${k}" ${n?'':'disabled'}>${b.t==='exp'||b.t==='friend'||b.t==='evd'?'给 '+SP[m.id][0]:'使用'}</button>`; return row(`<b>${ITEMS[k][0]} ×${n}</b><div class="muted">${b.d} · 生长 ${BERRY_H[k]||2} 小时</div>`,act); }).join('')}</div></div>`;
+    body=`<div class="card"><h2>树果（${Object.keys(BERRY).length} 种）</h2><div class="muted" style="margin-bottom:8px">树果可以喂、战斗里用或直接使用，也能拿去农场种。</div><div class="list">${Object.keys(BERRY).map(k=>{ const b=BERRY[k], n=S.items[k]||0; const act=b.t==='bat'?'<span class="muted">战斗中使用</span>':`${qty(k,1)}<button class="btn" data-bu="${k}" ${n?'':'disabled'}>使用</button>`; return row(`<b>${ITEMS[k][0]} ×${n}</b><div class="muted">${b.d} · 生长 ${BERRY_H[k]||2} 小时</div>`,act); }).join('')}</div></div>`;
   } else if(bagTab==='med'){
     body=`<div class="card"><h2>药品</h2><div class="muted" style="margin-bottom:8px">药品在战斗里用，要通关条件够了才开放（见指南）。你现在同一地区最多赢了 ${gymBest()} 个道馆、拿下 ${champCount()} 个冠军。</div><div class="list">${['potion',...Object.keys(MED).filter(k=>!k.startsWith('m_xp'))].map(k=>{ const ul=unlockText(k); return row(`<b>${ITEMS[k][0]} ×${S.items[k]||0}</b><div class="muted">${ITEMS[k][1]}</div>`,ul?`<span class="tag">${ul}</span>`:'<span class="muted">战斗中使用</span>'); }).join('')}</div></div>`;
   } else if(bagTab==='hold'){
-    const opts=heldOpts(m).concat(typeof msOpts==='function'?msOpts(m):[]);
-    body=`<div class="card"><h2>携带道具</h2><div class="muted" style="margin-bottom:8px">超级石、Z 纯晶和火焰宝珠 / 剧毒宝珠 / 红线这些携带道具，要让宝可梦携带，战斗时才会起作用（携带道具一个；超级石 / Z 纯晶另占一格，二选一）。${SP[m.id][0]} 现在携带：<b>${m.held?iImg(m.held,22)+ITEMS[m.held][0]:'没有'}</b> ${m.held?'<button class="btn alt" data-unhold="1">取下</button>':''}${m.ms?` · Z纯晶 / 超级石：<b>${iImg(m.ms,22)+ITEMS[m.ms][0]}</b> <button class="btn alt" data-unms="1">取下</button>`:''}</div><div class="list">${opts.map(k=>row(`<b>${ITEMS[k][0]} ×${S.items[k]||0}</b><div class="muted">${ITEMS[k][1]}</div>`,`<button class="btn" data-hold="${k}" ${(m.held===k||m.ms===k)?'disabled':''}>${(m.held===k||m.ms===k)?'携带中':'让 '+SP[m.id][0]+' 携带'}</button>`)).join('')||'<div class="muted">背包里没有这只宝可梦能用的超级石或 Z 纯晶。可以到商场买，或从宝箱里抽。</div>'}</div></div>`;
+    const ms=k=>String(k).startsWith('zc_');
+    const opts=Object.keys(ITEMS).filter(k=>((typeof HOLDI!=='undefined'&&HOLDI[k])||(k.startsWith('zc_')&&ZC[k]))&&((S.items[k]||0)>0||bagOff(k).length)).sort((a,b)=>(ms(a)?1:0)-(ms(b)?1:0));
+    body=`<div class="card"><h2>携带道具</h2><div class="muted" style="margin-bottom:8px">Z 纯晶和火焰宝珠 / 剧毒宝珠 / 红线这些携带道具，要让宝可梦携带，战斗时才会起作用（携带道具一个；超级石 / Z 纯晶另占一格，二选一；超级石在「超级石」分页）。按「携带」再选宝可梦。</div><div class="list">${opts.map(k=>{ const w=bagOff(k); return row(`<b>${ITEMS[k][0]} ×${S.items[k]||0}</b>${w.length?` <span class="tag r3">${w.length} 只携带中</span>`:''}<div class="muted">${ITEMS[k][1]}${w.length?' · 携带：'+w.slice(0,6).map(x=>nameOf(x)).join('、')+(w.length>6?' 等':''):''}</div>`,`${offBtn(k)}<button class="btn" data-hold="${k}" ${(S.items[k]||0)>0?'':'disabled'}>携带</button>`); }).join('')||'<div class="muted">背包里还没有携带道具。可以到商场买，或从宝箱里抽。</div>'}</div></div>`;
   } else if(bagTab==='mint'){   /* 性格薄荷（Kris 2026-11-03）：全部 25 种；放进培育中心的性格栏用 */
     body=`<div class="card"><h2>性格薄荷（${Object.keys(MINTS).filter(k=>S.items[k]>0).length}/${Object.keys(MINTS).length} 种）</h2><div class="muted" style="margin-bottom:8px">传说道具，从珍宝阁抽，不能卖、不能交换。到「培育中心 → 性格培育」选宝可梦和薄荷，把性格改成对应的性格。${TEST?'测试模式下每种薄荷都有 99 个。':''}</div><div class="list">${Object.keys(MINTS).map(k=>row(`<b>${ITEMS[k][0]} ×${S.items[k]||0}</b><div class="muted">${ITEMS[k][1]}</div>`,'<span class="muted">培育中心用</span>')).join('')}</div></div>`;
   } else if(bagTab==='gem'){   /* 宝石（Kris 2026-10-29）：全部 18 种，没有的变灰；一个宝石只能给一只宝可梦带 */
     const who=k=>S.mons.filter(x=>x.gem===k);
-    body=`<div class="card"><h2>宝石</h2><div class="muted" style="margin-bottom:8px">传说道具，从珍宝阁「常驻 · 道具（宝石）」抽，18 种随机。携带后，每场战斗第一次使出同属性的攻击招式威力 ×1.3，战斗结束宝石还在；一个宝石只能给一只宝可梦带。${SP[m.id][0]} 现在携带：<b>${m.gem?iImg(m.gem,22)+ITEMS[m.gem][0]:'没有'}</b> ${m.gem?'<button class="btn alt" data-ungem="1">取下</button>':''}</div>
-    <div class="list">${Object.keys(GEMS).map(k=>{ const n=S.items[k]||0, w=who(k), has=n>0||w.length; return `<div class="item" style="${has?'':'opacity:.45'}"><div class="l">${iImg(k,32)}<div style="min-width:0"><b>${ITEMS[k][0]} ×${n}</b>${w.length?` <span class="tag r3">${w.length} 只携带中</span>`:''}<div class="muted">${GEMS[k]}属性招式 ×1.3${w.length?' · 携带：'+w.map(x=>SP[x.id][0]).join('、'):''}</div></div></div><div class="row"><button class="btn" data-bgem="${k}" ${m.gem===k||!n?'disabled':''}>${m.gem===k?'携带中':n?'让 '+SP[m.id][0]+' 携带':'没有'}</button></div></div>`; }).join('')}</div></div>`;
+    body=`<div class="card"><h2>宝石</h2><div class="muted" style="margin-bottom:8px">传说道具，从珍宝阁「常驻 · 道具（宝石）」抽，18 种随机。携带后，每场战斗第一次使出同属性的攻击招式威力 ×1.3，战斗结束宝石还在；一个宝石只能给一只宝可梦带。按「携带」再选宝可梦。</div>
+    <div class="list">${Object.keys(GEMS).map(k=>{ const n=S.items[k]||0, w=who(k), has=n>0||w.length; return `<div class="item" style="${has?'':'opacity:.45'}"><div class="l">${iImg(k,32)}<div style="min-width:0"><b>${ITEMS[k][0]} ×${n}</b>${w.length?` <span class="tag r3">${w.length} 只携带中</span>`:''}<div class="muted">${GEMS[k]}属性招式 ×1.3${w.length?' · 携带：'+w.map(x=>SP[x.id][0]).join('、'):''}</div></div></div><div class="row">${w.length?`<button class="btn alt" data-ungem="${k}">取下</button>`:''}<button class="btn" data-bgem="${k}" ${n?'':'disabled'}>${n?'携带':'没有'}</button></div></div>`; }).join('')}</div></div>`;
   } else if(bagTab==='sig'){   /* 专属道具（Kris 2026-11-03）：全部列出，没有的变灰；在宝可梦详情的「专属道具」面板里带上 */
     body=`<div class="card"><h2>专属道具</h2><div class="muted" style="margin-bottom:8px">神兽 / 幻兽的传说道具，不能卖、不能拍卖、不能交换。带上以后，自己属性的攻击招式威力 ×1.2；要给对应的宝可梦带，在它的详情页「专属道具」里点。</div>
     <div class="list">${Object.keys(SIGN).map(k=>{ const n=S.items[k]||0, w=S.mons.filter(x=>x.sig===k), has=n>0||w.length; return `<div class="item" style="${has?'':'opacity:.45'}"><div class="l">${iImg(k,32)}<div style="min-width:0"><b>${ITEMS[k][0]} ×${n}</b>${w.length?` <span class="tag r3">${w.length} 只携带中</span>`:''}<div class="muted">${SIGN[k].sp.map(i=>SP[i]?SP[i][0]:i).join('、')}${w.length?' · 携带：'+w.map(x=>nameOf(x)).join('、'):''}</div></div></div></div>`; }).join('')}</div></div>`;
-  } else if(bagTab==='mega'){   /* 超级石（Kris 2026-10-29）：全部列出，没有的变灰；能 Mega 的才能带对应的那颗 */
-    const ks=Object.keys(STONES).sort((a,b)=>STONES[a].sp-STONES[b].sp), own=ks.filter(k=>(S.items[k]||0)>0||S.mons.some(x=>x.held===k||x.ms===k)), mine=ks.filter(k=>STONES[k].sp===m.id);
-    const line=k=>{ const n=S.items[k]||0, who=S.mons.filter(x=>x.held===k||x.ms===k), has=n>0||who.length, ok=STONES[k].sp===m.id; return `<div class="item" style="${has?'':'opacity:.45'}"><div class="l">${iImg(k,32)}<div style="min-width:0"><b>${ITEMS[k][0]} ×${n}</b>${who.length?` <span class="tag r3">${who.length} 只携带中</span>`:''}<div class="muted">${SP[STONES[k].sp][0]} 用${who.length?' · 携带：'+who.map(x=>SP[x.id][0]).join('、'):''}</div></div></div><div class="row">${ok?`<button class="btn" data-hold="${k}" ${(m.held===k||m.ms===k)||!n?'disabled':''}>${(m.held===k||m.ms===k)?'携带中':n?'让 '+SP[m.id][0]+' 携带':'没有'}</button>`:`<span class="muted" style="font-size:12px">${SP[m.id][0]} 用不了</span>`}</div></div>`; };
-    body=`<div class="card"><h2>超级石</h2><div class="muted" style="margin-bottom:8px">传说道具。让对应的宝可梦携带，战斗里用超级手环 Mega 进化（放在「Z纯晶 / 超级石」这一格，和携带道具分开）。已收集 ${own.length} / ${ks.length}。${SP[m.id][0]} 现在携带：<b>${m.held?iImg(m.held,22)+ITEMS[m.held][0]:'没有'}</b> ${m.held?'<button class="btn alt" data-unhold="1">取下</button>':''}</div>
-    ${mine.length?`<div class="muted" style="margin:4px 0">${SP[m.id][0]} 能用的：</div><div class="list">${mine.map(line).join('')}</div><div class="muted" style="margin:10px 0 4px">全部超级石：</div>`:''}<div class="list">${ks.map(line).join('')}</div></div>`;
-  } else if(bagTab==='mochi'){   /* 粘糕：对上面选的宝可梦使用，每种最多吃 3 个 */
+  } else if(bagTab==='mega'){   /* 超级石（Kris 2026-10-29）：全部列出，没有的变灰；按「携带」只列出对应的宝可梦 */
+    const ks=Object.keys(STONES).sort((a,b)=>STONES[a].sp-STONES[b].sp), own=ks.filter(k=>(S.items[k]||0)>0||bagOff(k).length);
+    const line=k=>{ const n=S.items[k]||0, who=bagOff(k), has=n>0||who.length; return `<div class="item" style="${has?'':'opacity:.45'}"><div class="l">${iImg(k,32)}<div style="min-width:0"><b>${ITEMS[k][0]} ×${n}</b>${who.length?` <span class="tag r3">${who.length} 只携带中</span>`:''}<div class="muted">${SP[STONES[k].sp][0]} 用${who.length?' · 携带：'+who.map(x=>SP[x.id][0]).join('、'):''}</div></div></div><div class="row">${offBtn(k)}<button class="btn" data-hold="${k}" ${n?'':'disabled'}>${n?'携带':'没有'}</button></div></div>`; };
+    body=`<div class="card"><h2>超级石</h2><div class="muted" style="margin-bottom:8px">传说道具。让对应的宝可梦携带，战斗里用超级手环 Mega 进化（放在「Z纯晶 / 超级石」这一格，和携带道具分开）。已收集 ${own.length} / ${ks.length}。</div><div class="list">${ks.map(line).join('')}</div></div>`;
+  } else if(bagTab==='mochi'){   /* 粘糕：按「使用」再选宝可梦，每种最多吃 3 个 */
     body=`<div class="card"><h2>粘糕</h2><div class="muted" style="margin-bottom:8px">传说道具。每个让一项基础点数 +10，每一种最多吃 3 个；净空粘糕会把基础点数全部清掉。不能拍卖、不能交换。</div>
-    <div class="list">${Object.keys(MOCHI).map(k=>{ const n=S.items[k]||0, i=MOCHI[k][0], full=k!=='mc_clear'&&bpOf(m,i)>=BPMAX, no=k==='mc_clear'&&!bpTotal(m); return `<div class="item" style="${n?'':'opacity:.45'}"><div class="l">${iImg(k,32)}<div style="min-width:0"><b>${ITEMS[k][0]} ×${n}</b>${k!=='mc_clear'?` <span class="tag">${SP[m.id][0]} 已吃 ${bpOf(m,i)/BPSTEP}/3</span>`:''}<div class="muted">${ITEMS[k][1]}</div></div></div><div class="row"><button class="btn" data-bmochi="${k}" ${!n||full||no?'disabled':''}>${full?'已吃满':'对 '+SP[m.id][0]+' 使用'}</button></div></div>`; }).join('')}</div></div>`;
+    <div class="list">${Object.keys(MOCHI).map(k=>{ const n=S.items[k]||0; return `<div class="item" style="${n?'':'opacity:.45'}"><div class="l">${iImg(k,32)}<div style="min-width:0"><b>${ITEMS[k][0]} ×${n}</b><div class="muted">${ITEMS[k][1]}</div></div></div><div class="row"><button class="btn" data-bmochi="${k}" ${n?'':'disabled'}>使用</button></div></div>`; }).join('')}</div></div>`;
   } else if(bagTab==='evo'){
     const evk=Object.keys(S.items).filter(k=>(k[0]==='i'||k==='link')&&ITEMS[k]&&S.items[k]>0);
     const use=k=>S.mons.filter(x=>{ const e=evoFor(x,k); return e&&evoOK(x,e); });
@@ -5047,10 +5055,10 @@ function rBag(){
     <div class="evogrid">${evk.map(k=>`<button class="evob ${evoSel===k?'on':''} ${cnt[k]?'':'dim'}" data-evk="${k}" aria-pressed="${evoSel===k}">${iImg(k,32)}<b>${ITEMS[k][0]}</b><small>×${S.items[k]} · ${cnt[k]?cnt[k]+' 只能用':'没有能用的'}</small></button>`).join('')||'<div class="muted">还没有进化道具，可以从宝箱、抽道具、商场或地图探索得到。</div>'}</div></div>
     ${evoSel?`<div class="card"><h2>${iImg(evoSel,28)} ${ITEMS[evoSel][0]} · 选择宝可梦</h2><div class="muted" style="margin-bottom:8px">${ITEMS[evoSel][1]}。用了会消耗 1 个，宝可梦立刻进化。</div><div class="list">${list.slice(0,60).map(x=>{ const e=evoFor(x,evoSel); return row(`<b style="display:none"></b><div class="row" style="gap:8px"><img src="${spf(x.id,x.shiny)}" alt="" style="width:44px;height:44px;image-rendering:pixelated"><span><b>${SP[x.id][0]}</b>${gSym(x.g)} Lv${x.lv}${x.shiny?' '+shTag(x.shiny):''}<div class="muted">→ ${SP[e.to][0]}</div></span><img src="${spf(e.to,x.shiny)}" alt="" style="width:44px;height:44px;image-rendering:pixelated;opacity:.8"></div>`,`<button class="btn red" data-evo2="${x.uid}:${e.to}">进化</button>`); }).join('')||'<div class="muted">现在没有宝可梦能用这个道具。</div>'}</div>${list.length>60?`<div class="muted">只显示前 60 只，共 ${list.length} 只</div>`:''}</div>`:''}`;
   } else if(bagTab==='tm'){
-    const own=Object.keys(S.tm).map(Number).sort((a,b)=>a-b).filter(n=>(!tmF.t||MV[TMS[n]][1]===tmF.t)&&(!tmF.ok||tmOK(m,TMS[n])));
-    body=`<div class="card"><h2>技能机器 TM</h2><div class="muted" style="margin-bottom:8px">TM 可以反复使用，学会时替换上面选的那一格。每种宝可梦能学哪些 TM 是按原作的数据判断的。已收集 ${Object.keys(S.tm).length}/${Object.keys(TMS).length}。</div>
-    <div class="row" style="margin-bottom:8px"><select id="tmt" style="${selS}" aria-label="属性"><option value="">全部属性</option>${TYPES.map(t=>`<option ${tmF.t===t?'selected':''}>${t}</option>`).join('')}</select><label class="row" style="gap:4px"><input type="checkbox" id="tmok" ${tmF.ok?'checked':''}> 只看 ${SP[m.id][0]} 学得会的</label><span class="muted">共 ${own.length} 个</span></div>
-    <div class="list">${own.slice(0,tmF.n).map(n=>{const id=TMS[n]; return row(`<b>TM${String(n).padStart(2,'0')} ${MV[id][0]}</b><div class="muted">${mvLine(id)}</div>`,`<button class="btn" data-tm="${n}">教给 ${SP[m.id][0]}</button>`)}).join('')||'<div class="muted">没有符合条件的 TM</div>'}</div>${own.length>tmF.n?'<div class="row" style="margin-top:8px"><button class="btn alt" id="tmmore">再显示 40 个</button></div>':''}</div>`;
+    const own=Object.keys(S.tm).map(Number).sort((a,b)=>a-b).filter(n=>!tmF.t||MV[TMS[n]][1]===tmF.t);
+    body=`<div class="card"><h2>技能机器 TM</h2><div class="muted" style="margin-bottom:8px">TM 可以反复使用。按「使用」选学得会的宝可梦，再选要忘记哪一个招式。每种宝可梦能学哪些 TM 是按原作的数据判断的。已收集 ${Object.keys(S.tm).length}/${Object.keys(TMS).length}。</div>
+    <div class="row" style="margin-bottom:8px"><select id="tmt" style="${selS}" aria-label="属性"><option value="">全部属性</option>${TYPES.map(t=>`<option ${tmF.t===t?'selected':''}>${t}</option>`).join('')}</select><span class="muted">共 ${own.length} 个</span></div>
+    <div class="list">${own.slice(0,tmF.n).map(n=>{const id=TMS[n]; return row(`<b>TM${String(n).padStart(2,'0')} ${MV[id][0]}</b><div class="muted">${mvLine(id)}</div>`,`<button class="btn" data-tm="${n}">使用</button>`)}).join('')||'<div class="muted">没有符合条件的 TM</div>'}</div>${own.length>tmF.n?'<div class="row" style="margin-top:8px"><button class="btn alt" id="tmmore">再显示 40 个</button></div>':''}</div>`;
   } else if(bagTab==='ball'){
     body=`<div class="card"><h2>精灵球（${BALLS.length} 种）</h2><div class="muted" style="margin-bottom:8px">野外战斗赢了以后选球去捕捉。捕获率 = 稀有度基础值 × 球的倍率，最高 99%。</div><div class="list">${BALLS.map(x=>row(`<b>${x.n} ×${S.items[x.k]||0}</b><div class="muted">${x.d}</div>`,'<span class="muted">战斗中使用</span>')).join('')}</div></div>`;
   } else {
@@ -5058,10 +5066,11 @@ function rBag(){
   }
   $('#main').innerHTML=`<section class="panel">${head}${body}</section>`;
   document.querySelectorAll('[data-bt]').forEach(b=>b.onclick=()=>{ bagTab=b.dataset.bt; rBag(); });
-  $('#bm').onchange=e=>{ bagMon=+e.target.value; rBag(); }; if($('#bs')) $('#bs').onchange=e=>{ bagSlot=+e.target.value; };
-  if($('#tmt')){ $('#tmt').onchange=e=>{ tmF.t=e.target.value; tmF.n=40; rBag(); }; $('#tmok').onchange=e=>{ tmF.ok=e.target.checked; tmF.n=40; rBag(); }; }
+  if($('#tmt')) $('#tmt').onchange=e=>{ tmF.t=e.target.value; tmF.n=40; rBag(); };
   if($('#tmmore')) $('#tmmore').onclick=()=>{ tmF.n+=40; rBag(); };
-  document.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{ const k=b.dataset.use; if(!(S.items[k]>0)) return; const Q=bagQ(k), lv0=m.lv; let used=0;
+  const lvNote=k=>x=>`最多用 ${bagCap(x,k)} 个`;
+  document.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{ const k=b.dataset.use; if(!(S.items[k]>0)) return; const Q=bagQ(k);
+    bagPick(`对谁使用 ${ITEMS[k][0]}${Q>1?` ×${Q}`:''}？`,x=>x.lv<100,lvNote(k),m=>{ const lv0=m.lv; let used=0;
     const once=()=>{
     if(k==='berry'){ S.items[k]--; bond(m,8); S.stats.fed++; prog('fed'); const x=Math.round(18*expMult(m)); const u=addExp(m,x); toast(u?`${SP[m.id][0]} 升到 Lv${m.lv}！`:`吃得很开心 +${x} 经验`); }
     else if(k.startsWith('m_xp')){ const x=[100,500,2000,8000][+k.slice(4)-1]; S.items[k]--; const u=addExp(m,x); toast(u?`${SP[m.id][0]} 升到 Lv${m.lv}！`:`${SP[m.id][0]} +${x} 经验`); }
@@ -5069,9 +5078,10 @@ function rBag(){
     return 1; };
     for(let i=0;i<Q;i++){ if(!(S.items[k]>0)||m.lv>=100||!once()) break; used++; }
     if(used>1) toast(`对 ${SP[m.id][0]} 使用了 ${used} 个${ITEMS[k][0]}`+(m.lv>lv0?`，Lv${lv0} → Lv${m.lv}`:''));
-    render(); });
+    save(); render(); }); });
   document.querySelectorAll('[data-oc]').forEach(b=>b.onclick=()=>{ const [t,n]=b.dataset.oc.split(':').map(Number); openChests(t,n); });
-  document.querySelectorAll('[data-bu]').forEach(b=>b.onclick=()=>{ const k=b.dataset.bu, bv=BERRY[k]; if(!(S.items[k]>0)) return; const Q=bagQ(k), lv0=m.lv; let used=0;
+  document.querySelectorAll('[data-bu]').forEach(b=>b.onclick=()=>{ const k=b.dataset.bu, bv=BERRY[k]; if(!(S.items[k]>0)) return; const Q=bagQ(k);
+    const go=m=>{ const lv0=m?m.lv:0; let used=0;
     const once=()=>{
     if(bv.t==='exp'){ S.items[k]--; bond(m,5); S.stats.fed++; prog('fed'); const x=Math.round(bv.v*expMult(m)), u=addExp(m,x); toast(u?`${SP[m.id][0]} 升到 Lv${m.lv}！`:`${SP[m.id][0]} +${x} 经验`); }
     else if(bv.t==='evd'){ m.ev=m.ev||{}; const ev=m.ev[bv.s]||0; if(!ev&&(m.fr||0)>=100) return toast(`${SP[m.id][0]} 的${STN[bv.s]}努力值是 0，亲密度也满了，用不上`); S.items[k]--; bond(m,10); if(ev>0) m.ev[bv.s]=Math.max(0,ev-10); toast(ev>0?`${SP[m.id][0]} 的${STN[bv.s]}努力值 -${Math.min(10,ev)}，亲密度 +10`:`${SP[m.id][0]} 的亲密度 +10`); }
@@ -5082,20 +5092,28 @@ function rBag(){
     else if(bv.t==='lure'){ if(wildField().length>=WILD_N) return toast(`野外已经满了（${WILD_N} 只），等下一批刷新再用`); S.items[k]--; const rr=Math.random(), rar=bv.v>1?(rr<.5?3:2):wildRar(), id=pickWild(rar,S.tl||1), now=Date.now(); S.wild.push({wid:now+Math.floor(Math.random()*999),shiny:rollShiny(),g:gRoll(id),id,lv:rollLv(id,'wild'),exp:wildEnd()}); toast(`引来了一只野生的 ${SP[id][0]}！到「冒险 → 野外」看看`); }
     return 1; };
     for(let i=0;i<Q;i++){ if(!(S.items[k]>0)||(bv.t==='exp'&&m.lv>=100)||!once()) break; used++; if(bv.t==='cb') break; }
-    if(used>1) toast(`使用了 ${used} 个${ITEMS[k][0]}`+(m.lv>lv0?`，${SP[m.id][0]} Lv${lv0} → Lv${m.lv}`:''));
-    render(); });
-  document.querySelectorAll('[data-hold]').forEach(b=>b.onclick=()=>{ equip(m,b.dataset.hold); toast(`${SP[m.id][0]} 携带了 ${ITEMS[b.dataset.hold][0]}`); render(); });
-  document.querySelectorAll('[data-unhold]').forEach(b=>b.onclick=()=>{ equip(m,null); toast('已取下'); render(); });
-  document.querySelectorAll('[data-unms]').forEach(b=>b.onclick=()=>{ equipMS(m,null); toast('已取下'); render(); });
-  document.querySelectorAll('[data-bmochi]').forEach(b=>b.onclick=()=>{ useMochi(m,b.dataset.bmochi); render(); });
-  document.querySelectorAll('[data-bgem]').forEach(b=>b.onclick=()=>{ const k=b.dataset.bgem; if(!(S.items[k]>0)) return toast('没有这个宝石'); if(m.gem) S.items[m.gem]=(S.items[m.gem]||0)+1; S.items[k]--; m.gem=k; save(); toast(`${SP[m.id][0]} 携带了 ${ITEMS[k][0]}`); render(); });
-  document.querySelectorAll('[data-ungem]').forEach(b=>b.onclick=()=>{ if(m.gem){ S.items[m.gem]=(S.items[m.gem]||0)+1; delete m.gem; save(); } toast('已取下宝石'); render(); });
+    if(used>1) toast(`使用了 ${used} 个${ITEMS[k][0]}`+(m&&m.lv>lv0?`，${SP[m.id][0]} Lv${lv0} → Lv${m.lv}`:''));
+    save(); render(); };
+    if(bv.t==='exp') return bagPick(`给谁吃 ${ITEMS[k][0]}${Q>1?` ×${Q}`:''}？`,x=>x.lv<100,lvNote(k),go);
+    if(bv.t==='evd') return bagPick(`给谁吃 ${ITEMS[k][0]}${Q>1?` ×${Q}`:''}？`,()=>true,x=>`${STN[bv.s]}努力值 ${(x.ev||{})[bv.s]||0} · 亲密度 ${x.fr||0}`,go);
+    if(bv.t==='friend') return bagPick(`给谁吃 ${ITEMS[k][0]}${Q>1?` ×${Q}`:''}？`,()=>true,x=>`亲密度 ${x.fr||0}`,go);
+    go(null); });
+  document.querySelectorAll('[data-hold]').forEach(b=>b.onclick=()=>{ const k=b.dataset.hold; if(!(S.items[k]>0)) return toast('没有'+ITEMS[k][0]);
+    const can=x=>x.held!==k&&x.ms!==k&&(heldOpts(x).includes(k)||(typeof msOpts==='function'&&msOpts(x).includes(k)));
+    bagPick(`让谁携带 ${ITEMS[k][0]}？`,can,x=>bagHeldNote(x)||'没有携带',x=>{ equip(x,k); toast(`${nameOf(x)} 携带了 ${ITEMS[k][0]}`); render(); }); });
+  document.querySelectorAll('[data-boff]').forEach(b=>b.onclick=()=>{ const k=b.dataset.boff;
+    bagPick(`取下谁的 ${ITEMS[k][0]}？`,x=>x.held===k||x.ms===k,()=>'',x=>{ if(x.ms===k) equipMS(x,null); else equip(x,null); toast(`取下了 ${nameOf(x)} 的 ${ITEMS[k][0]}`); render(); }); });
+  document.querySelectorAll('[data-bmochi]').forEach(b=>b.onclick=()=>{ const k=b.dataset.bmochi, i=MOCHI[k][0];
+    const can=k==='mc_clear'?x=>bpTotal(x)>0:x=>bpOf(x,i)<BPMAX;
+    bagPick(`对谁使用 ${ITEMS[k][0]}？`,can,k==='mc_clear'?x=>`基础点数 ${bpTotal(x)}`:x=>`${STN[i]} 已吃 ${bpOf(x,i)/BPSTEP}/3`,x=>{ useMochi(x,k); render(); }); });
+  document.querySelectorAll('[data-bgem]').forEach(b=>b.onclick=()=>{ const k=b.dataset.bgem; if(!(S.items[k]>0)) return toast('没有这个宝石');
+    bagPick(`让谁携带 ${ITEMS[k][0]}？`,x=>x.gem!==k,x=>x.gem&&ITEMS[x.gem]?'携带：'+ITEMS[x.gem][0]:'没有宝石',m=>{ if(m.gem) S.items[m.gem]=(S.items[m.gem]||0)+1; S.items[k]--; m.gem=k; save(); toast(`${nameOf(m)} 携带了 ${ITEMS[k][0]}`); render(); }); });
+  document.querySelectorAll('[data-ungem]').forEach(b=>b.onclick=()=>{ const k=b.dataset.ungem;
+    bagPick(`取下谁的 ${ITEMS[k][0]}？`,x=>x.gem===k,()=>'',m=>{ S.items[m.gem]=(S.items[m.gem]||0)+1; delete m.gem; save(); toast(`取下了 ${nameOf(m)} 的宝石`); render(); }); });
   document.querySelectorAll('[data-evk]').forEach(b=>b.onclick=()=>{ evoSel=b.dataset.evk; rBag(); });
   document.querySelectorAll('[data-evo2]').forEach(b=>b.onclick=()=>{ const [u,to]=b.dataset.evo2.split(':'); const x=mon(+u); if(x) evolve(x,+to); });
-  document.querySelectorAll('[data-bevo]').forEach(b=>b.onclick=()=>{ evolve(m,+b.dataset.bevo); });
-  document.querySelectorAll('[data-tm]').forEach(b=>b.onclick=()=>{ const id=TMS[b.dataset.tm]; if(mv.includes(id)) return toast('已经会这个技能了');
-    if(!tmOK(m,id)) return toast(`${SP[m.id][0]} 学不会 ${MV[id][0]}`);
-    const slot=Math.min(bagSlot,mv.length); const old=mv[slot]; mv[slot]=id; toast(old?`忘记了 ${MV[old][0]}，学会了 ${MV[id][0]}`:`学会了 ${MV[id][0]}`); render(); });
+  document.querySelectorAll('[data-tm]').forEach(b=>b.onclick=()=>{ const id=TMS[b.dataset.tm];
+    bagPick(`谁要学 ${MV[id][0]}？`,x=>tmOK(x,id)&&!getMoves(x).includes(id),x=>getMoves(x).map(i=>MV[i][0]).join('、'),x=>{ const mv=getMoves(x); if(mv.length<4){ mv.push(id); save(); toast(`${nameOf(x)} 学会了 ${MV[id][0]}`); return render(); } bagTmSlot(x,id); }); });
 }
 
 /* ---------- poke balls ---------- */
