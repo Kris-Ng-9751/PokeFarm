@@ -1418,8 +1418,10 @@ const regOpen=ri=>DEVALL()||ri===0||!!(S.champ&&S.champ[ri-1]);
 const gate=(team,ri)=>DEVALL()?'':!regOpen(ri)?`要先成为${TR.regions[ri-1].region_zh}冠军`:S.tl<reqLv(team)?`训练家等级不够，需要 Lv${reqLv(team)}`:teamAvgLv()<needTeam(team)?`队伍平均等级不够：需要 Lv${needTeam(team)}（现在 Lv${teamAvgLv()}）`:'';
 const gateTxt=(team,ri)=>`<b style="color:${teamAvgLv()>=needTeam(team)?'var(--leaf)':'var(--red)'}">队伍平均需要 Lv${needTeam(team)}（现在 ${teamAvgLv()}）</b>`;
 const FEAT={nursery:15,wk:10,arena:3,gym:5,e4:15,legend:30,farm:8,explore:12,mine:10,fish:10,fossil:20,urg:5,sq:10,auction:15,trade:10};
-function featDev(){ Object.keys(FEAT).forEach(k=>{ const d=Object.getOwnPropertyDescriptor(FEAT,k); if(!d||d.get) return; const v=d.value; Object.defineProperty(FEAT,k,{get:()=>DEVALL()?0:v,enumerable:true,configurable:true}); }); }
-featDev(); setTimeout(()=>{ featDev(); if(DEVALL()) try{ render(); }catch(e){} },0);   /* 开发者模式：所有功能都不看训练家等级（Kris 2026-11-28）；后面才加的（例如对战塔）等脚本跑完再补一次 */
+/* 开发者模式下等级门槛当作 0：devZero(对象, 要改的键) 把那些数字改成「开发者模式回 0，不然回原本的值」 */
+function devZero(o,keys){ if(!o) return; (keys||Object.keys(o)).forEach(k=>{ const d=Object.getOwnPropertyDescriptor(o,k); if(!d||d.get||typeof d.value!=='number') return; const v=d.value; Object.defineProperty(o,k,{get:()=>DEVALL()?0:v,enumerable:true,configurable:true}); }); }
+function featDev(){ devZero(FEAT); try{ devZero(FARM_BULK); EXA.forEach(A=>devZero(A,['lv'])); SQ.forEach(q=>devZero(q,['tl'])); devZero(EX_SLOT_LV); }catch(e){} }
+featDev(); setTimeout(()=>{ featDev(); if(DEVALL()) try{ render(); }catch(e){} },0);   /* 后面才定义的（农场一键、探索地图、支线任务、对战塔）等脚本跑完再补一次 */   /* 开发者模式：所有功能都不看训练家等级（Kris 2026-11-28）；后面才加的（例如对战塔）等脚本跑完再补一次 */
 const DUO_LV=20;
 const okSp=(id,cap)=>{ const l=legendLv(id); return l?l<=cap:minLv(id)<=cap; };
 function pickId(rar,cap){ for(let r=rar;r>=1;r--){ const q=POOL[r].filter(id=>okSp(id,cap)); if(q.length) return formRoll(q[Math.floor(Math.random()*q.length)],cap); } return 10; }
@@ -5583,7 +5585,7 @@ const LGC_GRP=[
   [['灾厄宝可梦',[1001,1002,1003,1004]],['宝伴',[1014,1015,1016]],['悖论的传说',[1007,1008]]]];
 const lgcGrpKey=(ri,gi)=>ri+'-'+gi, lgcGrpLv=id=>LGC_BOSS.includes(id)?LGC_LV.b:LGC_LV.n;
 const lgcGrpRW=n=>({first:{coins:2500*n,stars:50*n,items:{candy:n}},daily:{coins:400*n}});
-const lgcGrpLeft=L=>L.filter(id=>!((S.lgc||{})[id]||{}).c);
+const lgcGrpLeft=L=>DEVALL()?[]:L.filter(id=>!((S.lgc||{})[id]||{}).c);   /* 开发者模式：组合挑战不用先单独打赢（Kris 2026-11-28） */
 function lgcGrpFight(ri,gi){ const [nm,L]=LGC_GRP[ri][gi]; if(!lgcOpen(ri)) return toast(`先成为${TR.regions[ri].region_zh}冠军`); const left=lgcGrpLeft(L); if(left.length) return toast(`先单独打赢：${left.map(id=>SP[id][0]).join('、')}`);
   const RW=lgcGrpRW(L.length), key=lgcGrpKey(ri,gi), foes=L.map(id=>{ const f=lgcFoe(id,lgcGrpLv(id)), fm=lgcForm(id); f.gm=fm.k==='etm'?{k:'dyn'}:{k:fm.k,t:fm.t||null}; return f; });
   startBattle({kind:'npc',tag:'传说宝可梦挑战',gimNow:true,title:`传说组合 · ${nm}`,foe:{...foes[0]},foes,reward:null,
@@ -6172,7 +6174,7 @@ function bindPvp(){ bindPvp0(); bindPvp2(); }
 let D=null;
 function genDuos(){ S.duosDay=today(); S.duos=[]; for(let i=0;i<4;i++){ const n=2+Math.floor(Math.random()*3), team=[]; for(let j=0;j<n;j++){ const r=Math.random(), rar=r<.45?1:r<.8?2:r<.97?3:4, id=pickId(rar,S.tl||1); team.push({id,lv:rollLv(id,'npc')}); } const avg=Math.round(team.reduce((a,x)=>a+x.lv,0)/n); S.duos.push({n:`${pickNpc(NPC_FIRST)} & ${pickNpc(NPC_FIRST)}（双人组合）`,team,rating:teamRating(team),r:{coins:Math.floor(avg*14*n)+60,stars:Math.max(2,Math.floor(avg/3)*2)}}); } }
 function duoCard(){
-  if(S.tl<DUO_LV) return `<div class="card"><div class="row cbn" style="--bg:url(${XART.arena})"><h2 style="margin:0">2v2 双打</h2></div><div class="muted">训练家 Lv${DUO_LV} 开放（你现在 Lv${S.tl}）。</div></div>`;
+  if(S.tl<DUO_LV&&!DEVALL()) return `<div class="card"><div class="row cbn" style="--bg:url(${XART.arena})"><h2 style="margin:0">2v2 双打</h2></div><div class="muted">训练家 Lv${DUO_LV} 开放（你现在 Lv${S.tl}）。</div></div>`;
   if(!S.duos||S.duosDay!==today()||S.duos[0].rating===undefined||S.duosVer!==2) genDuos();
   return `<div class="card"><div class="row cbn" style="justify-content:space-between;--bg:url(${XART.arena})"><h2 style="margin:0">2v2 双打</h2><span class="row" style="gap:8px">${arChip('duo')}<button class="btn alt" id="dref">刷新对手（${refTxt('rd')}）</button></span></div><div class="muted" style="margin:6px 0 8px">两边各 2 只，每回合给两只各选招式和目标。至少带 2 只，最多用队伍前 4 只。每天最多打 ${ARN_DAY} 次，刷新对手第一次免费，之后每次 ${REF_COST} 金币。</div><div class="list">${S.duos.map((o,i)=>`<div class="item"><div class="l">${npcAv(o)}<div style="min-width:0"><b>${o.n}</b> ${o.rating!==undefined?`<span class="tag r3">${rankText(o.rating)}</span>`:''} <span class="muted">${o.team.length} 只</span><div class="row" style="gap:2px">${o.team.map(x=>`<img src="${SPR[x.id]}" alt="" style="width:40px;height:40px;image-rendering:pixelated">`).join('')}</div><div class="muted">${o.team.map(x=>SP[x.id][0]+' Lv'+x.lv).join('、')} · 奖励 ${rtextH(o.r)}</div></div></div><button class="btn red" data-duo="${i}" ${arLeft('duo')?'':'disabled'}>${arLeft('duo')?'双打对战':'今天打满了'}</button></div>`).join('')}</div></div>`;
 }
