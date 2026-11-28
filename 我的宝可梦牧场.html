@@ -18243,11 +18243,12 @@ const DGFX_DONE=new Set([1,2,3,4,9]);   /* 已经做好特效的分类（g）：
 const dgFxReady=e=>DGFX_DONE.has(e.g);
 /* 开发者 → 技能特效：上面加「数码宝贝必杀技特效」测试，点一招就开一场测试对战（我方这只数码宝贝 Lv80，第一招就是这招，对手是血很多的巨鲸兽） */
 let DGFXT={g:1};
+const dgInk=c=>{ const n=parseInt(c.slice(1),16), l=v=>{ v/=255; return v<=.03928?v/12.92:((v+.055)/1.055)**2.4; }, L=.2126*l(n>>16&255)+.7152*l(n>>8&255)+.0722*l(n&255), dk=.0145; return (L+.05)/(dk+.05)>1.05/(L+.05)?'#1f2a1c':'#fff'; };   /* 按按钮底色挑对比更大的字色（黑或白） */
 function dgFxCard(){ const L=DIGI.filter(e=>e.g===DGFXT.g&&dgHas(e)&&(e.mv||[]).length), ok=DGFX_DONE.has(DGFXT.g);
-  return `<div class="card" id="dgfxc"><h2>数码宝贝必杀技特效</h2><div class="muted">按招式类型做的特效模板 + 属性配色。点一招直接开测试对战：这只数码宝贝 Lv80，第一个技能就是这招，对手是血很多的巨鲸兽。已做好的系列：${[...DGFX_DONE].map(g=>(DG_GEN[g]||['?'])[1]||(DG_GEN[g]||['?'])[0]).join('、')}。</div>
+  return `<div class="card" id="dgfxc"><h2>数码宝贝必杀技特效</h2><div class="muted">按每招的招式描述做的特效（从哪里发出、什么形状），蓄力用宝可梦的蓄力。点一招直接开测试对战：这只数码宝贝 Lv80，第一个技能就是这招，对手是血很多的巨鲸兽。已做好的系列：${[...DGFX_DONE].map(g=>(DG_GEN[g]||['?'])[1]||(DG_GEN[g]||['?'])[0]).join('、')}。</div>
   <div class="row" style="margin:8px 0;gap:6px;flex-wrap:wrap">${Object.keys(DG_GEN).map(g=>`<button class="btn fchip ${DGFXT.g==g?'on':'alt'}" data-dgfxg="${g}">${DG_GEN[g][0]}${DG_GEN[g][1]?' '+DG_GEN[g][1]:''}${DGFX_DONE.has(+g)?'':'（还没做）'}</button>`).join('')}</div>
   ${ok?'':'<div class="muted"><b>这个系列还没做专属特效，现在点会播借来的宝可梦招式特效。</b></div>'}
-  <div class="dgfxl">${L.map(e=>`<div class="dgfxr">${dgImg(e,40)}<b>${e.zh}</b><span class="row" style="gap:4px;flex-wrap:wrap">${e.mv.map((m,k)=>{ const P=dgPal(m,e); return `<button class="btn fxb" data-dgfx="${e.id}:${k}" title="${m[2]||'一般'}系 · 模板：${dgFxKind(m)} · ${m[1]||''}" style="background:${P[1]};border-color:${P[0]};color:${['电','冰','一般','钢','飞行'].includes(m[2])||P===DGPAL.圣?'#1f2a1c':'#fff'}">${m[0]}</button>`; }).join('')}</span></div>`).join('')}</div></div>`; }
+  <div class="dgfxl">${L.map(e=>`<div class="dgfxr">${dgImg(e,40)}<b>${e.zh}</b><span class="row" style="gap:4px;flex-wrap:wrap">${e.mv.map((m,k)=>{ const P=dgPal(m,e); return `<button class="btn fxb" data-dgfx="${e.id}:${k}" title="${m[2]||'一般'}系 · 模板：${dgFxKind(m)} · ${m[1]||''}" style="background:${P[1]};border-color:${P[0]};color:${dgInk(P[1])}">${m[0]}</button>`; }).join('')}</span></div>`).join('')}</div></div>`; }
 async function dgFxTest(id,k){ const e=DIGI.find(x=>x.id===id); if(!e) return; if(!S.chosen) return toast('先选好起始宝可梦'); const foe=DIGI.find(x=>x.id==='whamon'&&dgHas(x))||DIGI.find(x=>x.st==='完全体'&&dgHas(x));
   const sd=DGB.side; DGB.side='d'; try{ await dgStart({title:`必杀技特效测试 · ${e.zh} · ${e.mv[k][0]}`,tag:'数码宝贝对战'},[e],[{e:foe,lv:100,hpm:4}],80); } finally{ DGB.side=sd; }
   if(B&&B.cfg&&B.cfg.test){ const mid=dgMvIds(e)[k]; B.mvs=[mid,...(B.mvs||[]).filter(x=>x!==mid)].slice(0,4); B.pp=B.mvs.map(()=>99); bRender(); } }
