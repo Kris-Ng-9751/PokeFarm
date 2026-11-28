@@ -18287,8 +18287,9 @@ async function dgRegister(list){ dgUnregister(); DGREG={ids:[],mvs:[]};
     SP[id]=[e.zh,e.en,t1,e.st==='究极体'?4:(e.st==='完全体'||e.st==='混合体')?3:2,b6[0],b6[1],b6[2],b6[5],t2,0,0]; BASE6[id]=b6;
     LS[id]=[...mvs.map(m=>[1,m]),...(mvs.length<2?[[1,33]]:[])];   /* 必杀技少于两招：补一招撞击 */
     const src=dgSrc(e), fr=await dgFlip(src,e.st,false), bk=await dgFlip(src,e.st,true);
-    SPR[id]=fr; SPRS[id]=fr; SPB[id]=bk; SPBS[id]=bk; SPHI.set(fr,DG_K); SPHI.set(bk,DG_K); DGREG.ids.push(id); } }
-function dgUnregister(){ if(!DGREG) return; DGREG.ids.forEach(id=>{ [SPR[id],SPB[id]].forEach(u=>{ if(!u) return; const t=SPTRIM.get(u); SPHI.delete(u); SPTRIM.delete(u); if(t){ SPHI.delete(t); SPTRIM.delete(t); } }); [SP,BASE6,LS,SPR,SPRS,SPB,SPBS].forEach(T=>{ delete T[id]; }); if(S.seen) delete S.seen[id]; });
+    SPR[id]=fr; SPRS[id]=fr; SPB[id]=bk; SPBS[id]=bk; SPHI.set(fr,DG_K); SPHI.set(bk,DG_K); DGREG.ids.push(id); }
+  LGC.re=null; LGC.cache.clear(); }   /* 战斗记录上色的名字/招式表要重建，不然数码宝贝的名字和招式没颜色（Kris 2026-11-29） */
+function dgUnregister(){ if(!DGREG) return; LGC.re=null; LGC.cache.clear(); DGREG.ids.forEach(id=>{ [SPR[id],SPB[id]].forEach(u=>{ if(!u) return; const t=SPTRIM.get(u); SPHI.delete(u); SPTRIM.delete(u); if(t){ SPHI.delete(t); SPTRIM.delete(t); } }); [SP,BASE6,LS,SPR,SPRS,SPB,SPBS].forEach(T=>{ delete T[id]; }); if(S.seen) delete S.seen[id]; });
   DGREG.mvs.forEach(m=>{ delete MV[m]; delete FXF[m]; delete FXDUR[m]; delete FXTY[m]; delete FXCHG[m]; SPECIAL.delete(m); }); DGREG=null; }
 let DGRUN=null;   /* 进行中的测试对战：{team:原本的队伍} */
 async function dgStart(cfg,mine,foes,lv,flv){ if(DGRUN) return toast('上一场测试对战还没结束');
