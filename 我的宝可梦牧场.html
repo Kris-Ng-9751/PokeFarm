@@ -17534,7 +17534,7 @@ function dgClose(){ $('#modal').hidden=true; $('#battle').innerHTML=''; }
 
 /* ---------- 数码宝贝必杀技特效（Kris 2026-11-28）：按招式类型做模板（光束、能量弹、火焰、泡泡、斩击、拳、导弹、雷、冷气、旋风、海浪、黑暗、圣光、音波、鞭、箭、爆炸、投掷、群袭、冲撞），
    每招按名字和说明挑模板，按属性配色（圣 / 天堂 / 金光用金色，黑暗用暗紫，蓝色火焰用蓝色）；有名的必杀技（盖亚之力、加鲁鲁炮、天堂之拳、七重天堂）单独调过。
-   先做第 1 部（数码宝贝大冒险）、第 2 部（02）、第 3 部（驯兽师）的数码宝贝，其余系列之后一批批加；没做的照旧借同属性宝可梦招式的特效 ---------- */
+   先做第 1 部（数码宝贝大冒险）、第 2 部（02）、第 3 部（驯兽师）、第 4 部（无限地带）的数码宝贝，其余系列之后一批批加；没做的照旧借同属性宝可梦招式的特效 ---------- */
 const DGPAL={火:['#7a1e05','#ff6a1a','#ffc23a','#fff6c8'],水:['#0c3a7a','#2f8cff','#8fd0ff','#eaf8ff'],草:['#1f5a14','#4cb83a','#a8e86a','#f0ffd0'],电:['#6a5200','#ffd21a','#fff27a','#ffffff'],
   冰:['#2a5a8a','#7fd8ff','#c8f4ff','#ffffff'],格斗:['#5a1a0a','#d8572a','#ffb04a','#fff0d0'],毒:['#3a1355','#7b2fb0','#c27ae8','#f0d0ff'],飞行:['#2a5a9a','#9fd2ff','#eaf6ff','#ffffff'],
   超能力:['#6a0f45','#ff4fa3','#ffb0d8','#ffffff'],虫:['#3a5a0a','#9ac21a','#d8ef6a','#ffffff'],幽灵:['#1e0f3a','#5a3aa0','#a68ae0','#efe6ff'],恶:['#120a18','#3a2450','#8a5ab8','#d8c0ff'],
@@ -17544,10 +17544,10 @@ const DGPAL={火:['#7a1e05','#ff6a1a','#ffc23a','#fff6c8'],水:['#0c3a7a','#2f8c
 /* 指定数码宝贝的招式全部用某种配色（Kris 2026-11-28：奥米加兽兹瓦特、兹瓦特战损、Alter-B 用黑紫色），背景染色也跟着用恶系的暗色 */
 const DG_PAL_MON={omegamon_zwart:'黑紫',omegamonzwart_d:'黑紫','omegamon_alter-b':'黑紫'}, DG_TINT_PAL={黑紫:'恶'};
 const dgPal=(m,e)=>{ if(e&&DG_PAL_MON[e.id]) return DGPAL[DG_PAL_MON[e.id]]; const n=m[0], d=m[1]||'', t=m[2]||'一般';
-  if(/圣|天堂|天国|天诛|金光|金黄|金色|星光|天使|正义光/.test(n+d)&&!/黑暗|堕落/.test(n+d)) return DGPAL.圣;
+  if(/圣|天堂|天国|天诛|金光|金黄|金色|黄金|星光|天使|正义光/.test(n+d)&&!/黑暗|堕落/.test(n+d)) return DGPAL.圣;
   if(/黑暗|暗黑|负面/.test(n+d)) return DGPAL.暗;
   if(/蓝色火焰|蓝焰/.test(d)) return DGPAL.蓝焰;
-  if(/红色.{0,4}(光线|光)/.test(d)) return DGPAL.红;
+  if(/红色.{0,4}(光线|光|气体)/.test(d)) return DGPAL.红;
   return DGPAL[t]||DGPAL.一般; };
 /* 招式 → 模板：先看名字，再看说明；个别招式直接指定 */
 const DGFX_NAME={'盖亚之力':'gaia','盖亚之力ZERO':'gaia0','黑暗盖亚之力':'gaia','哈迪斯之力':'gaiax','三叉戟盖亚':'beam','加鲁鲁炮':'garuru','雅琉琉炮':'beam','天堂之拳':'hfist','七重天堂':'seven',
@@ -17562,7 +17562,9 @@ const DGFX_NAME={'盖亚之力':'gaia','盖亚之力ZERO':'gaia0','黑暗盖亚�
   '火焰弹':'orb','皇家枪击':'lance','胜利枪击':'lance','极乐净土':'beam','君往何处':'blackhole','地狱咆哮':'sound','双重台风':'wind','巨人导弹':'bigmissile','爆裂射击':'missile',
   '杀生石':'gas','酒气':'gas','死亡黑云':'gas','雾幻':'gas','狐叶楔':'swarm','鬼火球':'seven','饭纲':'swarm','召唤':'orb','双重冲击':'missile','混沌爆发':'beam','毁灭榴弹':'missile',
   '困惑':'quake','黑':'arrow','倒逆':'sound','野猪攻击':'drill','刺穿':'meteor','食犬者':'quake','金刚':'sound','太极':'yinyang','恐龙爆风':'flame','火焰爆风':'flame','穿孔毒针':'bite',
-  '碰撞交响乐':'sound','蒸汽炸弹':'missile','车轮粉碎机':'drill','石敢当':'slab','太阳矢':'meteor','长牙强袭':'rush','冻原吐息':'blizzard','刺针暴风':'missile','障碍':'quake'};
+  '碰撞交响乐':'sound','蒸汽炸弹':'missile','车轮粉碎机':'drill','石敢当':'slab','太阳矢':'meteor','长牙强袭':'rush','冻原吐息':'blizzard','刺针暴风':'missile','障碍':'quake',
+  /* 第 4 代《无限地带》（Kris 2026-11-28） */
+  '烈焰风暴':'flame','梵天炎爆':'gaia','梵天热弹':'orb','九头龙阵':'flame','速度之星':'rush','破坏机关枪':'missile','星光超速度':'rush','旋风腿':'rush','蔷薇暴风':'rush','吉尔伽美什剪切':'slash','疼痛之风':'wind','终极湍流':'wind','聚光暴风':'bolt','轰雷激光':'beam','冰柱飞袭':'arrow','雪球炮轰':'missile','雪崩步':'slash','冰河鱼雷':'missile','蓝色夏威夷死亡':'rush','草莓死亡':'rush','永恒睡眠':'missile','最终流星':'beam','黑色轰雷':'orb','黑色领主':'dark','黑定理':'blackhole','红十字架':'beam','蛇眼摧毁':'rush','箱中千斤顶':'quake','大地震':'quake','飓风轰炸':'drill','机关枪之舞':'rush','封锁之种':'missile','树叶旋风':'swarm','万千荆棘':'whip','豪雨流柱':'holy','嫉妒酸雨':'meteor','黑色追逐':'lob','泰坦冲击':'drill','慷慨之镜':'sound','抵消反射镜':'sound','隆隆混合数(1-10)':'orb','幽灵黄昏':'dark','征服':'slash','区域绝迹':'blackhole','暗黑领主':'dark','盖亚龙卷风':'wind','奥米加爆发':'flame','观飓者':'wind','彩虹交响曲':'beam','太拉冲击波':'bolt','巨型除雪机':'rush','黑暗冲击波':'beam','死蚀':'dark','原子轰炸':'rush','超新星':'boom','厄帕俄斯机关':'missile','奇袭大炮':'bigmissile','巨大漩涡':'wind','结晶狂涛':'wave','拉普拉斯之魔':'blackhole','古神之印':'holy','伊甸标枪':'lance','神球水晶':'orb','恶魔水晶':'dark','闪电长矛':'lance','天堂审判':'bolt','宏伟十字架':'seven','失乐园':'rush','生或死':'yinyang','神之赎罪':'beam','龙之怒吼':'orb','飞龙之息':'beam','飞龙阵风':'rush','急迫恐惧':'rush','胭红贵族':'swarm','究极战突剑大蔷薇':'lance','猛冲刺逃跑':'rush','冲刺逃跑':'rush','装睡':'sound','冷酷突进':'rush','急刹车火花':'boom','雷击手':'rush','炎击面':'rush','插头炸弹':'missile','椒香洋葱':'lob','美味馅饼':'lob','毒蘑菇炸弹':'missile','篝火':'orb','雷云':'bolt','深红诅咒':'gas','愤怒之石':'orb','过敏喷雾':'gas','热情之舞·砂槌版':'sound','流星暴雨':'meteor','领悟':'sound','冲击羽':'swarm','恶魔震动':'quake','疯狂音波':'sound','强袭捕鱼':'lance','嘴钳切割':'bite','哥布林强袭':'orb','炼狱之门':'blackhole','地狱业焰':'flame','结晶云':'blizzard','高温热波':'flame'};
 const DGFX_RULE=[[/泡/,'bubble'],[/拳/,'fist'],[/箭|矢/,'arrow'],[/鞭|藤蔓|荆棘/,'whip'],[/剑|刀|斩|刃|爪|镰|剪|切断/,'slash'],[/咬|牙/,'bite'],
   [/导弹|加特林|飞弹|炸弹|弹丸|风暴|火神炮/,'missile'],[/雷|电击|闪电/,'bolt'],[/冷冻气|暴风雪|冰狱|冷气/,'blizzard'],[/龙卷|飓风|旋风|风$/,'wind'],
   [/海啸|潮汐|波浪|浪/,'wave'],[/蝙蝠|鱼群|羽毛|爱心/,'swarm'],[/爆炸|爆破/,'boom'],[/投掷|大便/,'lob'],
@@ -17708,8 +17710,8 @@ const DGT={
     for(let i=0;i<7;i++){ const t0=700+i*90, a=i/7*6.283+t/200, ox=fx+Math.cos(a)*22, oy=hy+Math.sin(a)*10; if(t<t0){ if(t>i*80) dgOrb(c,ox,oy,4,P); } else { const p=Math.min(1,(t-t0)/300); if(p<1) dgOrb(c,ox+(tx-ox)*p,oy+(ty-oy)*p,4,P); else c.once(t0+300,t,()=>c.shake()); } }
     if(t>=1000){ const q=Math.min(1,(t-1000)/1000); dgBurst(c,tx,ty,q,P,34); } }; },2100,1000],
 };
-function dgFxOf(m,e){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m,e), opt={garuru:{},missile:{ice:m[2]==='冰',own:!['钢','火','一般'].includes(m[2])},slash:{n:/全部删除|王牌飞剑|劲力三叉爪/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉|正电子|阳电子|亡命冲击波|原子冲击波|极乐净土|混沌爆发|三重能量炮/.test(m[0])}}[k]||{}; const [setup,total,hit]=mk(P,opt); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total}}; }
-const DGFX_DONE=new Set([1,2,3]);   /* 已经做好特效的动画系列（g）：1 大冒险、2 《02》、3 《驯兽师》 */
+function dgFxOf(m,e){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m,e), opt={garuru:{},missile:{ice:m[2]==='冰',own:!['钢','火','一般'].includes(m[2])},slash:{n:/全部删除|王牌飞剑|劲力三叉爪/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉|正电子|阳电子|亡命冲击波|原子冲击波|极乐净土|混沌爆发|三重能量炮|大地毁灭者|飞龙之息|神之赎罪|彩虹交响曲|最终流星/.test(m[0])}}[k]||{}; const [setup,total,hit]=mk(P,opt); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total}}; }
+const DGFX_DONE=new Set([1,2,3,4]);   /* 已经做好特效的动画系列（g）：1 大冒险、2 《02》、3 《驯兽师》、4 《无限地带》 */
 const dgFxReady=e=>DGFX_DONE.has(e.g);
 /* 开发者 → 技能特效：上面加「数码宝贝必杀技特效」测试，点一招就开一场测试对战（我方这只数码宝贝 Lv80，第一招就是这招，对手是血很多的巨鲸兽） */
 let DGFXT={g:1};
