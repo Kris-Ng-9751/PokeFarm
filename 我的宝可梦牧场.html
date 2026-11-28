@@ -5615,7 +5615,12 @@ function lgxFight(id,dk){ const ri=lgcRegion(id), k='m'+id; if(!lgxOK(ri,k,dk,LG
 const LGX_NODBL=new Set(['超古代宝可梦']);
 function lgxGrpFight(ri,gi,dk){ const [nm,L]=LGC_GRP[ri][gi], k='g'+lgcGrpKey(ri,gi); if(!lgxOK(ri,k,dk,LGX_G)) return toast('这个难度还没开放'); const left=lgcGrpLeft(L); if(left.length) return toast(`先单独打赢：${left.map(id=>SP[id][0]).join('、')}`);
   const D0=LGX[dk], R=lgxRW(lgcGrpRW(L.length),D0.rw), foes=L.map(id=>{ const f=lgxFoe(id,dk), fm=lgcForm(id); f.gm=fm.k==='etm'?{k:'dyn'}:{k:fm.k,t:fm.t||null}; return f; }), win=()=>lgxSettle(k,dk,R,`「${nm}」`);
-  if(D0.dbl&&!LGX_NODBL.has(nm)){ if(foes.length<2) return toast('这个组合不能双打'); startDouble(`传说组合（${D0.nm} · 双打） · ${nm}`,foes,null,undefined,win,undefined,undefined,{wild:1,init:d=>{ d.gimNow=1; d.wildEnt=1; if(d.log[0]) d.log[0]=d.log[0].replace(/ 想要对战！$/,' 出现了！'); }}); return; }
+  if(D0.dbl&&!LGX_NODBL.has(nm)){ if(foes.length<2) return toast('这个组合不能双打');
+    /* 梦魇双打的变身（Kris 2026-11-28）：优先用这个地区的变身（丰缘、卡洛斯 Mega，阿罗拉 Z，伽勒尔极巨化，帕底亚太晶化），用不了的随机一半太晶化、一半极巨化 */
+    { const G=EV_GIM[ri], can=f=>G==='mega'?!!(MEGA[f.id]&&MEGA[f.id].length):G==='dyn'?!NODYN.has(f.id):!!G, rest=[];
+      foes.forEach(f=>{ if(G&&can(f)) f.gm=G==='tera'?{k:'tera',t:lgcTera(f.id)}:{k:G,t:null}; else rest.push(f); });
+      rest.sort(()=>Math.random()-.5).forEach((f,i)=>{ const dy=i%2===1&&!NODYN.has(f.id); f.gm=dy?{k:'dyn',t:null}:{k:'tera',t:lgcTera(f.id)}; });
+      if(rest.length>=2&&!rest.some(f=>f.gm.k==='dyn')){ const x=rest.find(f=>!NODYN.has(f.id)); if(x) x.gm={k:'dyn',t:null}; } } startDouble(`传说组合（${D0.nm} · 双打） · ${nm}`,foes,null,undefined,win,undefined,undefined,{wild:1,init:d=>{ d.gimNow=1; d.wildEnt=1; if(d.log[0]) d.log[0]=d.log[0].replace(/ 想要对战！$/,' 出现了！'); }}); return; }
   startBattle({kind:'npc',tag:'传说宝可梦挑战',gimNow:!!D0.now,title:`传说组合（${D0.nm}） · ${nm}`,foe:{...foes[0]},foes,reward:null,onWin:win}); }
 /* 双打（梦魇）：对方每只一上场就变身 */
 setInterval(()=>{ const d=typeof D!=='undefined'?D:null; if(!d||!d.gimNow||d.over||d.busy||(d.beats&&d.beats.length)||entWait()>0) return; if(window.__opening||window.__openHold||document.body.classList.contains('btwait')||$('#modal').hidden||!document.querySelector('#battle .garena.dbl')) return;
