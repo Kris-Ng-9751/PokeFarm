@@ -17591,7 +17591,7 @@ const DGPAL={火:['#7a1e05','#ff6a1a','#ffc23a','#fff6c8'],水:['#0c3a7a','#2f8c
   圣:['#7a5a10','#ffd84a','#fff2a8','#ffffff'],黑紫:['#0a0410','#3a1458','#8a3ac8','#e0b0ff'],红:['#5a0a0a','#e02020','#ff8a6a','#fff0e0'],暗:['#0a0612','#40205a','#9a5ad0','#e8d0ff'],蓝焰:['#0a2a7a','#3a7aff','#9ad0ff','#ffffff']};
 /* 指定数码宝贝的招式全部用某种配色（Kris 2026-11-28：奥米加兽兹瓦特、兹瓦特战损、Alter-B 用黑紫色），背景染色也跟着用恶系的暗色 */
 const DG_PAL_MON={omegamon_zwart:'黑紫',omegamonzwart_d:'黑紫','omegamon_alter-b':'黑紫'}, DG_TINT_PAL={黑紫:'恶'};
-const dgPal=(m,e)=>{ if(e&&DG_PAL_MON[e.id]) return DGPAL[DG_PAL_MON[e.id]]; const n=m[0], d=m[1]||'', t=m[2]||'一般';
+const dgPal=(m,e)=>{ if(e&&DG_PAL_MON[e.id]) return DGPAL[DG_PAL_MON[e.id]]; if(typeof dgSp!=='undefined'&&dgSp(m)&&DGPAL[dgSp(m).opt.pal]) return DGPAL[dgSp(m).opt.pal]; const n=m[0], d=m[1]||'', t=m[2]||'一般';
   if(/圣|天堂|天国|天诛|金光|金黄|金色|黄金|星光|天使|正义光/.test(n+d)&&!/黑暗|堕落/.test(n+d)) return DGPAL.圣;
   if(/黑暗|暗黑|负面/.test(n+d)) return DGPAL.暗;
   if(/蓝色火焰|蓝焰/.test(d)) return DGPAL.蓝焰;
@@ -17621,7 +17621,432 @@ const DGFX_RULE=[[/泡/,'bubble'],[/拳/,'fist'],[/箭|矢/,'arrow'],[/鞭|藤�
   [/炮|激光|光线|射线|能量波|冲击波|热线/,'beam'],[/火焰|烈焰|吐息|火$/,'flame'],[/圣|天堂|天国|神圣|天诛/,'holy'],
   [/黑暗|诅咒|魅惑|地狱|灵魂|剧毒|病毒|领域|毒/,'dark'],[/咆哮|鸣叫|小夜曲|音|叫/,'sound'],[/能量弹|弹|球|光球/,'orb'],[/撞|冲刺|踢|突击|贯穿|冲击|压|滑行|耳光/,'rush']];
 const DGFX_TYPE={火:'flame',水:'wave',草:'whip',电:'bolt',冰:'blizzard',格斗:'rush',毒:'lob',飞行:'wind',超能力:'sound',虫:'slash',幽灵:'dark',恶:'dark',钢:'beam',妖精:'holy',一般:'orb',龙:'beam'};
-function dgFxKind(m){ const n=m[0], d=m[1]||''; if(DGFX_NAME[n]) return DGFX_NAME[n]; for(const [re,k] of DGFX_RULE) if(re.test(n)) return k; for(const [re,k] of DGFX_RULE) if(re.test(d)) return k; return DGFX_TYPE[m[2]]||'orb'; }
+/* 按招式描述定的特效：招式名(#属性 区分同名招式)|模板|从哪里发出|参数（pal:换配色）（Kris 2026-11-28） */
+const DGSPEC={}; `酸性泡泡|bubble|mouth
+泡泡|bubble|mouth
+小型火焰|flame|mouth
+超级火焰|flame|mouth
+劲力三叉爪|slash|hands|n:3
+千兆破坏炮|missile|chest|n:2,big:1,gap:220
+吉加风暴|beam|chest|wide:1
+盖亚之力|gaia||
+勇气龙卷风|drill||
+盖亚之力ZERO|gaia0||
+后爆发|rush||
+龙兽破碎剑|bigsword||big:1
+三叉戟盖亚|beam|hands|wide:1
+胜利冲击|bigsword||
+湮没猎鸟|missile|back|n:4,big:1,gap:160
+爆炎火焰弹|orb|mouth
+妖狐火焰|flame|mouth
+恺撒锐爪|slash||n:2
+冰狱冷冻气|blizzard|mouth
+加鲁鲁战斧|missile|chest|n:1,big:1,ice:1,own:1
+慈悲交错冷库|missile|hands|n:12,gap:60,ice:1,own:1
+金属风暴|missile|hands|n:16,gap:45,fast:1
+终弩级炮|beam|back|wide:1
+全金属炽焰|missile|back|n:14,gap:55
+回爆气袭|beam|mouth
+加鲁鲁炮|garuru|hands
+暴龙剑|slash||n:2
+全部删除|delete||
+雅琉琉炮|beam|hands|wide:1
+虞玲刀|slash||n:1
+加鲁鲁剑|slash||n:2
+暴龙炮|beam|hands
+肥皂花|bubble|mouth
+魔法火焰|flame|mouth
+陨石巨翼|missile|back|n:8,gap:70,own:1
+影翼斩|blades||n:3
+星光爆破|holy||
+伸缩性泡泡|bubble|mouth
+小型雷电|zap|back
+百万冲击波|zap|head
+巨角破坏炮|rush||
+千兆冲击波|zap|head|big:1,n:4
+粘着性泡泡|bubble|mouth
+毒藤蔓|whip|hands
+尖尖碰碰拳|missile|hands|n:6,gap:60,prick:1,own:1,fast:1
+花仙炮|orb|hands
+荆棘之鞭|whip|hands
+蔷薇细剑|lance|hands
+禁断诱惑|petals||
+空气泡泡|bubble|mouth
+鱼群大进军|swarm||
+鱼叉火神炮|arrow|head
+重锤火花|hammer||spark:1
+北极暴风雪|blizzard||
+妙尔尼尔|hammer||
+牙咬|bite||
+空气炮|ringbeam|mouth
+羽翼耳光|rush||
+天堂之拳|hfist||
+天国之门|gate||
+七重天堂|seven||
+圣约|boom||big:1
+小狗咆哮|sound|mouth
+猫猫拳|slash||n:2
+猫眼|sound|eyes
+神圣之箭|arrow|hands
+天堂魔力|beam|hands
+神圣烈焰|beam|mouth|wide:1
+闪烁雷击|zap||
+死亡之爪|lance|hands
+兽王拳|fist||
+邪恶飓风|bigsword||
+大便投掷|lob|hands
+大便|lob|hands
+爱之小夜曲|notes|mouth
+黑暗之灵|darkorb|hands
+香蕉滑行|rush||
+夜魔飞袭|swarm||
+剧毒流注|dark||
+绝对零度拳|fist||
+燃烧拳|fist||
+火焰吐息|flame|mouth
+冰箭|missile|mouth|n:4,gap:90,prick:1,own:1
+究极波浪炮|beam|mouth|wide:1
+剪刀臂|slash||
+神圣飞弹|orb|mouth
+猎杀加农炮|beam|hands
+地狱之手|grab||
+死亡魅惑|dark||
+加特林导弹|missile|hands|n:8,gap:90
+螺旋剑|blades|hands|n:2
+爱心攻击|petals||heart:1,n:10
+潮汐波|wave||
+不给糖就捣蛋|drop||
+灵魂切断|slash||n:1
+暗黑波动|swarm||
+剧毒|dark||
+爪骨|beam|hands
+微笑炸弹|lob|hands
+能量炸弹|orb|hands
+樱桃炸弹|lob|head
+弹丸重锤|hammer||
+王牌飞剑|swords||n:4
+无限大炮|beam|back|wide:1
+黑暗领域|void||
+黑暗盖亚之力|gaia||
+哈迪斯之力|gaiax|hands
+竞技疾驰|rush||
+银色光芒|beam|head|
+流星|missile|back|n:6,gap:90,own:1
+女王之咒|beam|head|pal:红
+罗塞塔石碑|slab||
+跳跃攻击|rush||
+轰隆轰隆拳|fist||
+V仔兽头槌|rush||
+强烈啃咬|bite||
+X激光|xlaser|chest|
+火焰之拳|fist||
+火焰之箭|drill||
+闪电斩|blades|head|n:2
+蓝轰雷|zap|back|
+等离子射击|orb|hands|
+闪金太阳风暴|sunstorm||
+钉刺|lance|hands|
+亡命冲击波|beam|chest|wide:1
+百万死亡|blackhole||
+正电子激光炮|beam|hands|wide:1
+千兆死亡|beam|chest|wide:1
+奥米加剑|bigsword||big:1
+阳电子激光枪|beam|chest|wide:1
+珀罗罗微风|wind||
+喙啄|rush||
+飞羽斩|blades|head|n:1
+滑翔号角|rush||
+爆风激光|ringbeam|mouth|
+马赫冲击波|blades|back|n:2
+风暴之翼|wind||
+乌加特之凝视|beam|eyes|
+红叶落|blades|hands|n:4
+草薙|blades|back|n:1
+风灵弹|orb|hands|
+音速二重击|rush||
+激动叫喊|sound|mouth|
+挠击|slash||n:2
+滚石|rush||
+百万吨重压|slam||
+巨尾重锤|hammer||
+大爆裂|quake||
+黄金冲击|drill||
+氧气自导|missile|chest|n:2,gap:200,own:1
+潜艇攻击|drill||
+和御魂|orb|chest|
+荒御魂|beam|eyes|pal:红
+松球|lob|mouth|
+粘粘网|web|mouth|
+绢丝线|whip|mouth|
+终结刺钉|lance|hands|
+暗狱殿火焰|beam|back|
+灼热毒蛇|beam|hands|wide:1
+业火地狱|flame|mouth|
+灾祸巨炮|darkorb|chest|
+蛇型绷带|whip|hands|
+死灵恐惧|dark||
+热咬|bite||
+破岩爪|slash||n:2
+火焰弹|orb|mouth|
+等离子刃|blades|hands|n:2
+排射烈焰|flame|mouth|
+双斩|slash||n:2
+原子冲击波|beam|chest|wide:1
+皇家枪击|lance|hands|
+极乐净土|beam|hands|wide:1
+无敌剑|bigsword||big:1
+君往何处|lance|hands|
+胜利枪击|lance|hands|
+地狱咆哮|sound|mouth|
+灭世烈焰|flame|mouth|
+双重泡泡|bubble|mouth|
+小龙卷|wind||
+炽烈爆炎|orb|mouth|
+双重台风|wind||
+加特林武装|missile|hands|n:14,gap:50,fast:1
+达达上勾拳|fist||
+疾速火力|missile|back|n:8,gap:80
+黄金三角|beam|chest|wide:1
+爆裂射击|missile|hands|n:12,gap:60,fast:1
+巨人导弹|missile|back|n:2,big:1,gap:240
+杀生石|gas|mouth|
+狐变虚|dark||
+狐叶楔|blades|hands|n:3
+鬼火球|missile|tail|n:9,gap:70,own:1,pal:蓝焰
+狐炎龙|flame|tail|pal:蓝焰
+梵笔闪|blades|hands|n:3
+饭纲|swarm|chest|
+金刚界曼荼罗|holy||
+召唤|orb|hands|
+暗夜之炎|flame|hands|
+暗黑利爪|slash||n:3
+双重冲击|missile|hands|n:6,gap:90,fast:1
+死亡枪手|beam|hands|wide:1
+混沌爆发|beam|hands|wide:1
+碎裂撕咬|bite||
+绝灭爪|slash||n:3
+三位一体武装|fist||
+正义飞踢|rush||
+炽烈寒冰|orb|mouth|
+咒语赞歌|fist||
+毁灭榴弹|missile|chest|n:4,gap:120
+大海之爱|notes|mouth|
+困惑|quake||
+黑|lance|mouth|
+物质流|zap|back|
+火炎|arrow|hands|
+障碍|quake||
+倒逆|sound|mouth|
+食虫者|holy||
+野猪攻击|blades|hands|n:1,pal:红
+恐怖|dark||
+刺穿|missile|chest|n:16,gap:40,prick:1,fast:1,own:1
+食犬者|quake||
+红焰|wind||
+苍雷|bolt||
+雾幻|gas||
+金刚|sound|mouth|
+太极|yinyang||
+黄回|wind||
+影子镰刀|slash||n:2
+强力击|fist||
+恐龙爆风|flame|mouth|
+冷冻之爪|slash||n:2
+穿孔毒针|bite||
+风之探针|blades|back|n:3
+酒气|gas|mouth|
+天丛云|slash||n:1
+碰撞交响乐|sound|mouth|
+格杀勿论|slash||n:1
+火焰爆风|flame|mouth|
+三重能量炮|beam|mouth|wide:1
+骷髅獠牙|bite||
+蒸汽炸弹|lob|head|
+车轮粉碎机|blades|hands|n:2
+毁灭撞击|rush||
+黑色休息日|dark||
+死亡黑云|gas||
+音速毁灭者|rush||
+妙尔尼尔轰雷|bolt||
+石敢当|slab||
+太阳矢|missile|back|n:12,gap:50,prick:1,fast:1,own:1,pal:圣
+长牙强袭|rush||
+冻原吐息|blizzard|mouth|
+刺针暴风|missile|head|n:14,gap:40,prick:1,fast:1,own:1
+火龙烈焰拳|missile|hands|n:1,big:1,own:1
+火龙飞踢|rush||
+日冕冲击波|beam|chest|wide:1
+烈焰风暴|wind||
+梵天炎爆|orb|hands|big:1
+梵天热弹|orb|hands|
+炎龙击|arrow|hands|
+九头龙阵|missile|hands|n:9,gap:70,own:1
+光之胜利者|bigsword||
+双重胜利者|slash||n:2
+速度之星|rush||
+光能激光|beam|mouth|
+光袭|missile|back|n:6,gap:90
+双剑斩|slash||n:2
+破坏机关枪|missile|chest|n:14,gap:45,fast:1
+星光超速度|rush||
+天羽羽斩|bigsword||big:1
+八雷神|bolt||
+旋风腿|rush||
+蔷薇暴风|rush||
+吉尔伽美什剪切|slash||n:3
+疼痛之风|wind||
+寒风喷射|beam|hands|
+终极湍流|wind||
+雷神之锤|hammer||spark:1
+究极轰雷|zap|hands|big:1
+大地毁灭者|beam|head|wide:1
+聚光暴风|zap|head|big:1,n:4
+轰雷激光|beam|head|
+冰柱飞袭|drill||
+雪球炮轰|missile|hands|n:10,gap:60,ice:1,own:1
+雪崩步|slash||n:3
+冰河鱼雷|missile|mouth|n:3,gap:150,ice:1,own:1
+蓝色夏威夷死亡|hammer||
+草莓死亡|hammer||pal:红
+永恒睡眠|missile|hands|n:6,gap:80,fast:1
+最终流星|beam|chest|wide:1
+黑色轰雷|darkorb|hands|
+黑色领主|dark||
+黑定理|void||
+红十字架|beam|chest|pal:红
+蛇眼摧毁|hammer||
+箱中千斤顶|spikes||
+大地震|quake||
+飓风轰炸|fist||
+机关枪之舞|rush||
+封锁之种|missile|chest|n:5,gap:90,own:1
+树叶旋风|blades|head|n:4
+万千荆棘|spikes||
+豪雨流柱|holy||
+嫉妒酸雨|holy||
+黑色追逐|gas|mouth|
+泰坦冲击|drill||
+幽灵黄昏|sound|chest|
+征服|slash||n:1
+区域绝迹|void||
+暗黑领主|dark||
+盖亚龙卷风|wind||
+奥米加爆发|flame|mouth|
+锐利双刃|slash||n:2
+绝对零度|blizzard|mouth|
+观飓者|wind||
+彩虹交响曲|beam|chest|wide:1
+灾难轰雷|bolt||
+太拉冲击波|zap|head|big:1,n:5
+极寒暴风雪|blizzard||
+巨型除雪机|rush||
+黑暗冲击波|beam|mouth|wide:1
+死蚀|void||
+原子轰炸|rush||
+超新星|boom||big:1
+厄帕俄斯机关|missile|chest|n:14,gap:50
+奇袭大炮|missile|mouth|n:3,gap:150,big:1
+巨大漩涡|wind||
+结晶狂涛|wave||
+拉普拉斯之魔|void||
+古神之印|gate||
+伊甸标枪|lance|hands|
+神球水晶|swords||n:4
+炎狩狱镰|slash||n:2
+恶魔水晶|swords||n:4
+闪电长矛|lance|hands|
+天堂审判|bolt||
+宏伟十字架|cross10||
+失乐园|rush||
+生或死|yinyang||
+涤罪烈焰|flame|hands|
+神之赎罪|seven||
+龙之怒吼|orb|hands|big:1
+飞龙之息|beam|chest|wide:1
+飞龙阵风|rush||
+回旋华舞|slash||n:3
+急迫恐惧|lance|hands|
+友爱之王|slash||n:3
+胭红贵族|petals||pal:红,n:16
+究极战突剑大蔷薇|lance|hands|
+冷酷突进|rush||
+急刹车火花|boom||
+雷击手|fist||
+炎击面|slash||n:1
+插头炸弹|missile|hands|n:3,gap:120
+椒香洋葱|blades|hands|n:3
+美味馅饼|slab||
+毒蘑菇炸弹|missile|head|n:6,gap:80,own:1
+枯木吸取|whip|hands|
+篝火|orb|head|
+雷云|bolt||
+冰冷幻影|blizzard|mouth|
+寒冷烈焰|flame|hands|pal:蓝焰
+深红诅咒|gas|mouth|pal:红
+魔像拳|fist||
+愤怒之石|lob|head|
+过敏喷雾|gas|head|
+动物爪|slash||n:2
+阿修罗神拳|fist||
+热情之舞·砂槌版|notes||
+龙舌兰之拳|fist||
+流星暴雨|meteor||
+领悟|rush||
+冲击羽|blades|back|n:3
+恶魔震动|quake||
+疯狂音波|sound|mouth|
+强袭捕鱼|lance|hands|
+烂泥|lob|mouth|
+狂暴大剑|bigsword||
+剪刀臂迷你版|slash||n:2
+嘴钳切割|bite||
+哥布林强袭|orb|hands|
+炼狱之门|gate||
+地狱业焰|flame|mouth|
+结晶云|blizzard||
+高温热波|flame|mouth|
+圣剑格雷达尔法|beam|hands|wide:1
+灵魂数据化|gate||
+究极战刃王龙剑|bigsword||big:1
+终结华尔兹|ringbeam|hands|
+神之庇佑|holy||
+宏伟格莉德|blades|hands|n:2
+赫金华尔兹|swords||n:10
+毁天灭地|bigsword||big:1
+重力波|bigsword||
+摩天楼|spikes||
+封锁|slash||n:3
+征服#电|petals||n:8
+褐色星云|rush||
+亿万刺击|fist||
+阿瓦隆之门|lance|hands|
+龙帝辉光|holy||
+龙激冲|slam||
+龙帝耀击|bolt||
+雷剑布莱拉格克|swords||n:12
+辙剑审判|slash||n:3
+剑灵|swords||n:9
+超越平凡|rush||
+圣拳灭破|fist||
+骑士侵入者|drill||
+铁拳断罪|fist||
+剑翼|swords||n:8
+究极战刃圣霸剑|bigsword||big:1
+铁拳制裁|fist||
+地神！神鸣！神驰！亲父！|bolt||
+掀饭桌|quake||
+究极战技天仰拳|fist||
+铁屐张手|fist||
+虹桥烈矢|arrow|hands|
+奥丁寒息|blizzard|hands|
+史尔特尔抢夺|arrow|hands|
+尼福尔海姆监禁|blizzard||
+闪光V热线|beam|chest|wide:1隆隆混合数(1-10)|orb|head|`.split('\n').forEach(l=>{ const [n,k,from,o]=l.split('|'); const opt={}; (o||'').split(',').filter(Boolean).forEach(p=>{ const [a,b]=p.split(':'); opt[a]=isNaN(+b)?b:+b; }); DGSPEC[n]={k,from:from||'',opt}; });
+/* 发射点：嘴、眼、胸口、手、头/角、背/翅膀、尾巴（按出招那只的图大小算） */
+const dgSp=m=>DGSPEC[m[0]+'#'+(m[2]||'一般')]||DGSPEC[m[0]];
+const DG_FROM={mouth:[.24,.3],eyes:[.14,.26],chest:[.04,.45],hands:[.26,.5],head:[.08,.18],back:[-.14,.3],tail:[-.3,.6]};   /* [离图中心往前多少（图宽的比例）, 离图顶多少（图高的比例）] */
+function dgFrom(c,w){ const o=DG_FROM[w]; if(!o) return c; const s=c.tx>=c.fx?1:-1, cx=c.fx-s*.3*c.fw, top=c.fy-(s>0?.4:.45)*c.fh, d=Object.create(c); d.fx=cx+s*c.fw*o[0]; d.fy=top+c.fh*o[1]; d.dx=c.tx-d.fx; d.dy=c.ty-d.fy; d.L=Math.hypot(d.dx,d.dy)||1; d.ux=d.dx/d.L; d.uy=d.dy/d.L; d.nx=-d.uy; d.ny=d.ux; return d; }   /* fxPlay 给的出招点是图的「前方」（中心往前 0.3 图宽、离顶 0.4/0.45 图高），先换回图框再算 */
+function dgFxKind(m){ const n=m[0], d=m[1]||''; if(dgSp(m)) return dgSp(m).k; if(DGFX_NAME[n]) return DGFX_NAME[n]; for(const [re,k] of DGFX_RULE) if(re.test(n)) return k; for(const [re,k] of DGFX_RULE) if(re.test(d)) return k; return DGFX_TYPE[m[2]]||'orb'; }
 /* 模板：P=[暗边, 主色, 亮色, 高光]；每个返回 [setup, 总长 ms, 命中 ms] */
 const dgBurst=(c,x,y,q,P,r0)=>{ const R0=(r0||20)*Math.min(1,q*1.6); c.ring(x,y,R0,3,q<.5?P[3]:P[2],.85); if(q<.7){ for(let i=0;i<10;i++){ const a=i/10*6.283+.2, r1=R0*.5, r2=R0*(1.05+.3*(1-q)); c.line(x+Math.cos(a)*r1,y+Math.sin(a)*r1*.85,x+Math.cos(a)*r2,y+Math.sin(a)*r2*.85,i%2?2:3,i%2?P[2]:P[1]); } } if(q<.3){ c.disc(x,y,R0*.55,P[1]); c.disc(x,y,R0*.35,P[3]); } };
 const dgOrb=(c,x,y,r,P)=>{ c.disc(x,y,r+1,P[0]); c.disc(x,y,r,P[1]); c.disc(x-r*.2,y-r*.2,Math.max(1,r*.6),P[2]); c.disc(x-r*.3,y-r*.3,Math.max(1,r*.25),P[3]); };
@@ -17658,11 +18083,12 @@ const DGT={
   drill:(P)=>[c=>t=>{ const {fx,fy,tx,ty,dx,dy,ux,uy,nx,ny}=c, p=Math.min(1,t/420), x=fx+dx*p, y=fy+dy*p;
     if(t<520){ for(let k=0;k<3;k++){ const a=t/40+k*2.094; for(let j=0;j<6;j++){ const r=4+j*2, b=a+j*.5; c.px(x-ux*j*3+nx*Math.cos(b)*r,y-uy*j*3+ny*Math.cos(b)*r,2,k===0?P[3]:k===1?P[2]:P[1]); } } c.disc(x,y,4,P[1]); c.disc(x,y,2,P[3]); }
     if(t>=420){ c.once(420,t,()=>c.shake()); const q=Math.min(1,(t-420)/700); dgBurst(c,tx,ty,q,P,26); for(let i=0;i<3;i++){ const a=t/60+i*2.09; c.ring(tx+Math.cos(a)*6,ty+Math.sin(a)*4,8+q*14,1,P[2],.6); } } },1250,420],
-  missile:(P,o={})=>[c=>t=>{ const {fx,fy,tx,ty,dx,dy,nx,ny}=c, N=o.n||6;
-    for(let i=0;i<N;i++){ const t0=i*(o.n?150:80), p=(t-t0)/420; if(p<0) continue; const s=((i%3)-1)*(12+i*2), ox=((i*7)%9-4)*2, oy=((i*5)%7-3)*2;
+  missile:(P,o={})=>[c=>t=>{ const {fx,fy,tx,ty,dx,dy,nx,ny}=c, N=o.n||6, GAP=o.gap||(o.n?150:80);
+    for(let i=0;i<N;i++){ const t0=i*GAP, p=(t-t0)/(o.fast?260:420); if(p<0) continue; const s=((i%3)-1)*(12+i*2), ox=((i*7)%9-4)*2, oy=((i*5)%7-3)*2;
       if(p<1){ const e=p, x=fx+dx*e+nx*s*Math.sin(e*3.14), y=fy+dy*e+ny*s*Math.sin(e*3.14), bx=fx+dx*(e-.06)+nx*s*Math.sin((e-.06)*3.14), by=fy+dy*(e-.06)+ny*s*Math.sin((e-.06)*3.14), R=o.big?4:2;
-        c.line(bx,by,x,y,R+2,P[0]); c.line(bx,by,x,y,R,P[1]); c.px(x,y,R,P[3]); c.px(bx-(x-bx),by-(y-by),2,'#ffb040'); }
-      else if(p<2.2){ const q=(p-1)/1.2; c.once(t0+420,t,()=>c.shake()); dgBurst(c,tx+ox,ty+oy,q,o.own?P:['#7a1e05','#ff6a1a','#ffc23a','#fff6c8'],o.big?22:12); if(o.ice&&q>.2){ for(let k=0;k<6;k++){ const a=k*1.047; c.line(tx+ox,ty+oy,tx+ox+Math.cos(a)*14*q,ty+oy+Math.sin(a)*14*q,2,P[2]); } } } } },o.n?1500:1600,420],
+        c.line(bx,by,x,y,R+2,P[0]); c.line(bx,by,x,y,R,P[1]); c.px(x,y,R,P[3]); if(!o.prick) c.px(bx-(x-bx),by-(y-by),2,'#ffb040'); }
+      else if(o.prick){ if(p<1.6){ c.once(t0+(o.fast?260:420),t,()=>c.shake()); c.star(tx+ox,ty+oy,3,P[3]); } }
+      else if(p<2.2){ const q=(p-1)/1.2; c.once(t0+420,t,()=>c.shake()); dgBurst(c,tx+ox,ty+oy,q,o.own?P:['#7a1e05','#ff6a1a','#ffc23a','#fff6c8'],o.big?22:12); if(o.ice&&q>.2){ for(let k=0;k<6;k++){ const a=k*1.047; c.line(tx+ox,ty+oy,tx+ox+Math.cos(a)*14*q,ty+oy+Math.sin(a)*14*q,2,P[2]); } } } } },Math.max(1300,((o.n||6)-1)*(o.gap||(o.n?150:80))+(o.fast?260:420)+700),o.fast?260:420],
   bolt:(P)=>[c=>t=>{ const {tx,ty}=c; for(let i=0;i<3;i++){ const t0=i*160; if(t<t0||t>t0+300) continue; let x=tx+(i-1)*10, y=ty-c.th*1.4-20; const pts=[[x,y]]; while(y<ty){ x+=c.rnd(-6,6); y+=c.rnd(5,9); pts.push([x,Math.min(y,ty)]); }
       for(let k=1;k<pts.length;k++){ c.line(pts[k-1][0],pts[k-1][1],pts[k][0],pts[k][1],4,P[0]); } for(let k=1;k<pts.length;k++){ c.line(pts[k-1][0],pts[k-1][1],pts[k][0],pts[k][1],2,k%2?P[3]:P[2]); } c.once(t0+1,t,()=>c.shake()); }
     if(t>=180){ const q=Math.min(1,(t-180)/900); dgBurst(c,tx,ty,q,P,20); for(let i=0;i<4;i++){ if(Math.random()<.6) c.line(tx+c.rnd(-14,14),ty+c.rnd(-12,12),tx+c.rnd(-14,14),ty+c.rnd(-12,12),1,P[3]); } } },1250,180],
@@ -17756,6 +18182,46 @@ const DGT={
   cross10:(P)=>[c=>{ let sp=null; return t=>{ const {fx,fy,tx,ty}=c, hy=fy-c.fh*.7, pos=[[0,-3],[0,-2],[0,-1],[0,0],[0,1],[0,2],[0,3],[-2,-1],[-1,-1],[1,-1],[2,-1]].slice(0,10);   /* 宏伟十字架：十个超热光球排成十字，一起射出去 */
     pos.forEach(([a,b],i)=>{ const ox=fx+a*7, oy=hy+b*7; if(t<700){ if(t>i*55) dgOrb(c,ox,oy,3,P); } else { const p=Math.min(1,(t-700)/320); if(p<1) dgOrb(c,ox+(tx+a*5-ox)*p,oy+(ty+b*5-oy)*p,3,P); } });
     if(t>=1020){ c.once(1020,t,()=>c.shake()); const q=Math.min(1,(t-1020)/900); dgBurst(c,tx,ty,q,P,30); if(q<.55){ const L=34*(1-q); c.line(tx,ty-L,tx,ty+L,4,P[3]); c.line(tx-L*.7,ty-L*.3,tx+L*.7,ty-L*.3,4,P[3]); } } }; },2100,1020],
+  /* —— 按招式说明加的（Kris 2026-11-28） —— */
+  zap:(P,o={})=>[c=>t=>{ const {fx,fy,tx,ty,dx,dy,nx,ny}=c;   /* 电击从身上（角、翅膀……）直接射到对手：折线闪电 */
+    for(let i=0;i<(o.n||3);i++){ const t0=i*140; if(t<t0||t>t0+260) continue; let px=fx, py=fy; const N=9; for(let k=1;k<=N;k++){ const u=k/N, j=k<N?c.rnd(-7,7)*(o.big?1.6:1):0, x=fx+dx*u+nx*j, y=fy+dy*u+ny*j; c.line(px,py,x,y,o.big?5:4,P[0]); c.line(px,py,x,y,2,k%2?P[3]:P[2]); px=x; py=y; } c.once(t0+1,t,()=>c.shake()); }
+    if(t>=120){ const q=Math.min(1,(t-120)/900); dgBurst(c,tx,ty,q,P,o.big?28:18); for(let i=0;i<3;i++) if(Math.random()<.6) c.line(tx+c.rnd(-14,14),ty+c.rnd(-12,12),tx+c.rnd(-14,14),ty+c.rnd(-12,12),1,P[3]); } },1250,120],
+  blades:(P,o={})=>[c=>t=>{ const {fx,fy,tx,ty,dx,dy,ux,uy,nx,ny}=c;   /* 真空刃 / 能量刃：一道道新月形的刃飞过去 */
+    for(let i=0;i<(o.n||3);i++){ const t0=i*110, p=(t-t0)/330; if(p<0) continue; const s=(i-1)*8;
+      if(p<1){ const x=fx+dx*p+nx*s*(1-p), y=fy+dy*p+ny*s*(1-p); for(let k=-5;k<=5;k++){ const a=k/5*1.1, r=10; const X=x+ux*Math.cos(a)*r*.4+nx*Math.sin(a)*r, Y=y+uy*Math.cos(a)*r*.4+ny*Math.sin(a)*r; c.px(X,Y,Math.abs(k)<3?3:2,Math.abs(k)<2?P[3]:P[2]); } }
+      else if(p<2.4){ c.once(t0+330,t,()=>c.shake()); const q=(p-1)/1.4; if(q<.6) c.line(tx-14+i*4,ty-12+i*6,tx+14-i*4,ty+12-i*6,3,P[3]); dgBurst(c,tx,ty,q,P,14); } } },1300,330],
+  petals:(P,o={})=>[c=>t=>{ const {tx,ty}=c, N=o.n||14;   /* 花瓣 / 蔷薇 / 爱心：在对手周围旋转、收紧 */
+    for(let i=0;i<N;i++){ const a=i/N*6.283+t/260, r=Math.max(4,40-t/30)+Math.sin(i*2+t/100)*3, x=tx+Math.cos(a)*r, y=ty+Math.sin(a)*r*.7;
+      if(o.heart){ c.px(x-1,y-1,2,P[1]); c.px(x+1,y-1,2,P[1]); c.px(x,y+1,2,P[1]); c.px(x-1,y-1,1,P[3]); } else { c.rect(x-1,y-1,3,2,i%2?P[1]:P[2]); c.px(x,y,1,P[3]); } }
+    if(t>=900){ c.once(900,t,()=>c.shake()); const q=Math.min(1,(t-900)/700); dgBurst(c,tx,ty,q,P,22); } },1650,900],
+  hammer:(P,o={})=>[c=>{ let sp=null; return t=>{ const {tx,ty}=c, gy=ty+c.th*.3, p=Math.min(1,t/380), y=ty-c.th*1.7+(c.th*1.7-c.th*.1)*p*p, x=tx;   /* 大锤从上面砸下来：冲击波 + 火花 */
+    if(t<700){ const Y=t<380?y:gy-14; c.rect(x-1,Y-26,3,22,'#5a3a1a'); c.rect(x-10,Y-6,21,12,P[0]); c.rect(x-9,Y-5,19,10,P[1]); c.rect(x-9,Y-5,19,2,P[2]); }
+    if(t>=380){ c.once(380,t,()=>c.shake()); const q=Math.min(1,(t-380)/900); c.ring(tx,gy,8+q*40,2,P[2],.3); c.ring(tx,gy,4+q*24,1,P[3],.3);
+      if(!sp) sp=Array.from({length:16},()=>{ const a=c.rnd(3.4,6),v=c.rnd(1.5,3.5); return {x:tx,y:gy-4,vx:Math.cos(a)*v,vy:Math.sin(a)*v}; }); sp.forEach(s=>{ s.x+=s.vx; s.y+=s.vy; s.vy+=.18; if(q<.8) c.px(s.x,s.y,2,o.spark?'#fff27a':P[2]); }); } }; },1400,380],
+  gate:(P)=>[c=>t=>{ const {tx,ty}=c, q=Math.min(1,t/600), R=8+q*22, k=t>1300?Math.max(0,1-(t-1300)/400):1;   /* 天国之门：对手身后打开通往亚空间的门，把它吸进去 */
+    if(k>0){ c.ring(tx,ty,R*k+2,3,P[0],1.3); c.ring(tx,ty,R*k,2,P[1],1.3); c.ring(tx,ty,R*k*.7,1,P[3],1.3); for(let i=0;i<12;i++){ const a=i*.524+t/150, d=R*k*(1.6-((t/400+i/12)%1)); c.px(tx+Math.cos(a)*d,ty+Math.sin(a)*d*1.3,2,i%2?P[2]:P[3]); } }
+    if(t>=600){ c.once(600,t,()=>c.shake()); } },1750,600],
+  notes:(P)=>[c=>t=>{ const {fx,fy,tx,ty,dx,dy,nx,ny}=c;   /* 歌声 / 小夜曲：一个个音符飘过去 */
+    for(let i=0;i<6;i++){ const p=(t-i*110)/700; if(p<0||p>1) continue; const w=Math.sin(p*8+i)*7, x=fx+dx*p+nx*w, y=fy+dy*p+ny*w-Math.sin(p*3.14)*10; c.disc(x,y+3,2,i%2?P[1]:P[2]); c.rect(x+1,y-5,1,8,P[0]); if(i%2) c.rect(x+1,y-5,4,2,P[0]); }
+    if(t>=700){ c.once(700,t,()=>c.shake()); const q=Math.min(1,(t-700)/600); c.ring(tx,ty,6+q*18,1,P[2]); for(let i=0;i<3;i++) c.px(tx+Math.cos(t/90+i*2)*12,ty-8+Math.sin(t/90+i*2)*6,2,P[3]); } },1400,700],
+  grab:(P)=>[c=>t=>{ const {tx,ty}=c, gy=ty+c.th*.45;   /* 地狱之手：地面伸出好几只鬼手，抓住对手往下拖 */
+    for(let i=0;i<4;i++){ const ox=(i-1.5)*9, p=Math.min(1,Math.max(0,(t-i*80)/380)), h=(14+((i*5)%3)*5)*p*(t>1200?Math.max(0,1-(t-1200)/300):1); if(h<1) continue; const x=tx+ox+Math.sin(t/120+i)*2;
+      c.rect(x-2,gy-h,5,h,P[0]); c.rect(x-1,gy-h,3,h,P[1]); for(let f=-1;f<=1;f++) c.rect(x+f*2,gy-h-4,1,4,P[2]); }
+    if(t>=480){ c.once(480,t,()=>c.shake()); const q=Math.min(1,(t-480)/700); c.ring(tx,gy,14+q*10,1,P[2],.3); } },1500,480],
+  swords:(P,o={})=>[c=>t=>{ const {tx,ty}=c, N=o.n||4;   /* 几把剑瞬间出现在对手四周，一起刺进去 */
+    for(let i=0;i<N;i++){ const a=i/N*6.283+.6, app=Math.min(1,Math.max(0,(t-i*Math.min(70,360/N))/150)), p=t<420?0:Math.min(1,(t-420)/140), d=36*(1-p)+4, x=tx+Math.cos(a)*d, y=ty+Math.sin(a)*d*.8, ex=x-Math.cos(a)*14, ey=y-Math.sin(a)*14*.8;
+      if(app<=0||t>1100) continue; c.line(x+Math.cos(a)*10,y+Math.sin(a)*8,x,y,2,'#5a3a1a'); c.line(x,y,ex,ey,4,P[0]); c.line(x,y,ex,ey,2,P[3]); c.line(x-Math.sin(a)*4,y+Math.cos(a)*4,x+Math.sin(a)*4,y-Math.cos(a)*4,2,P[1]); }
+    if(t>=560){ c.once(560,t,()=>c.shake()); const q=Math.min(1,(t-560)/700); dgBurst(c,tx,ty,q,P,22); } },1350,560],
+  void:(P)=>[c=>t=>{ const {tx,ty}=c, q=Math.min(1,t/900), R=q*70, k=t>1300?Math.max(0,1-(t-1300)/400):1;   /* 黑暗领域：无限延伸的黑暗从对手那里扩散开，吞掉一切 */
+    if(k>0){ c.g.globalAlpha=.85*k; c.disc(tx,ty,R,'#05020a'); c.g.globalAlpha=1; for(let i=0;i<20;i++){ const a=i*.314+t/300, d=R*(.4+((i*7)%10)/14); c.px(tx+Math.cos(a)*d,ty+Math.sin(a)*d,2,i%3?P[1]:P[2]); } c.ring(tx,ty,R,2,P[2]); }
+    if(t>=500) c.once(500,t,()=>c.shake()); },1750,500],
+  bigsword:(P,o={})=>[c=>t=>{ const {tx,ty}=c, p=Math.min(1,t/300), a=-1.9+p*2.2, L=46, hx=tx+28, hy=ty-34;   /* 巨剑挥下来砸中对手 */
+    if(t<620){ const ex=hx+Math.cos(a)*L*-1, ey=hy-Math.sin(a)*L*-1; c.line(hx,hy,ex,ey,9,P[0]); c.line(hx,hy,ex,ey,6,P[1]); c.line(hx,hy,ex,ey,2,P[3]); c.rect(hx-5,hy-2,10,4,'#5a3a1a');
+      if(t>120) for(let k=1;k<4;k++){ const b=a-k*.18; c.line(hx,hy,hx-Math.cos(b)*L,hy+Math.sin(b)*L,2,P[2]); } }
+    if(t>=300){ c.once(300,t,()=>c.shake()); const q=Math.min(1,(t-300)/800); dgBurst(c,tx,ty,q,P,o.big?32:26); if(q<.5) c.line(tx-24,ty+18,tx+24,ty-18,3,P[3]); } },1250,300],
+  delete:(P)=>[c=>{ const B=[]; for(let y=-16;y<16;y+=4) for(let x=-14;x<14;x+=4) B.push({x,y,v:c.rnd(.6,1.6),d:c.rnd(0,300)}); return t=>{ const {tx,ty}=c;   /* 全部删除：斩到的地方变成一格格数据碎掉、消失 */
+    if(t<200){ c.line(tx-22,ty-20,tx+22,ty+20,4,P[3]); c.line(tx-22,ty-20,tx+22,ty+20,2,'#ffffff'); }
+    if(t>=200){ c.once(200,t,()=>c.shake()); const q=t-200; B.forEach((b,i)=>{ const u=Math.max(0,(q-b.d)/700); if(u>=1) return; c.rect(tx+b.x+b.v*u*8*(b.x>0?1:-1),ty+b.y-u*14*b.v,3,3,u<.3?'#ffffff':i%3?P[2]:'#7fdcff'); }); } }; },1300,200],
   /* 有名的必杀技 */
   gaia:(P)=>[c=>{ let sp=null; return t=>{ const {fx,fy,tx,ty,dx,dy}=c, hx=fx, hy=fy-c.fh*.9-6;
     if(t<900){ const r=3+Math.min(1,t/800)*13; for(let i=0;i<12;i++){ const a=i*.524-t/80, d=(1-((t/600+i/12)%1))*34; c.px(hx+Math.cos(a)*d,hy+Math.sin(a)*d,2,i%2?P[2]:P[3]); } dgOrb(c,hx,hy,r,P); c.ring(hx,hy,r+3+Math.sin(t/60)*2,1,P[2]); }
@@ -17772,7 +18238,7 @@ const DGT={
     if(t>=1000){ const q=Math.min(1,(t-1000)/1000); dgBurst(c,tx,ty,q,P,34); } }; },2100,1000],
 };
 const DG_SKIP={orb:360,darkorb:360,beam:380,blackhole:500,sunstorm:600};   /* 模板开头自己的蓄力段有多长：剪掉，改用宝可梦的蓄力 */
-function dgFxOf(m,e){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m,e), opt={garuru:{},missile:{ice:m[2]==='冰',own:!['钢','火','一般'].includes(m[2])},slash:{n:/全部删除|王牌飞剑|劲力三叉爪|剑灵|赫金华尔兹|剑翼|封锁|辙剑审判/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉|正电子|阳电子|亡命冲击波|原子冲击波|极乐净土|混沌爆发|三重能量炮|大地毁灭者|飞龙之息|神之赎罪|彩虹交响曲|最终流星|圣剑格雷达尔法|闪光V热线/.test(m[0])}}[k]||{}; const [setup0,total0,hit0]=mk(P,opt), sk=DG_SKIP[k]||0, setup=sk?c=>{ const d=setup0(c); return t=>d(t+sk); }:setup0, total=total0-sk, hit=Math.max(60,hit0-sk); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total},c:P[1]}; }
+function dgFxOf(m,e){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m,e), opt={garuru:{},missile:{ice:m[2]==='冰',own:!['钢','火','一般'].includes(m[2])},slash:{n:/全部删除|王牌飞剑|劲力三叉爪|剑灵|赫金华尔兹|剑翼|封锁|辙剑审判/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉|正电子|阳电子|亡命冲击波|原子冲击波|极乐净土|混沌爆发|三重能量炮|大地毁灭者|飞龙之息|神之赎罪|彩虹交响曲|最终流星|圣剑格雷达尔法|闪光V热线/.test(m[0])}}[k]||{}; const SP=dgSp(m); if(SP) Object.assign(opt,SP.opt); const [setup0,total0,hit0]=mk(P,opt), sk=DG_SKIP[k]||0, setupA=sk?c=>{ const d=setup0(c); return t=>d(t+sk); }:setup0, setup=SP&&SP.from?c=>setupA(dgFrom(c,SP.from)):setupA, total=total0-sk, hit=Math.max(60,hit0-sk); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total},c:P[1]}; }
 const DGFX_DONE=new Set([1,2,3,4,9]);   /* 已经做好特效的分类（g）：1 大冒险、2 《02》、3 《驯兽师》、4 《无限地带》、9 其他（皇家骑士等）——全部做完了 */
 const dgFxReady=e=>DGFX_DONE.has(e.g);
 /* 开发者 → 技能特效：上面加「数码宝贝必杀技特效」测试，点一招就开一场测试对战（我方这只数码宝贝 Lv80，第一招就是这招，对手是血很多的巨鲸兽） */
