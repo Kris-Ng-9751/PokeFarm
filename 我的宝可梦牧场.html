@@ -18283,16 +18283,17 @@ function dgFlip(src,st,flip){ return new Promise(res=>{ const im=new Image(); im
     const t=(DG_SZ[st]||60)*DG_K, m=Math.max(im.width,im.height), s=t/m, w=Math.round(im.width*s), h=Math.round(im.height*s), dx=Math.round((B-w)/2), dy=Math.max(0,92*DG_K-h); x.imageSmoothingEnabled=s<1;
     if(flip){ x.translate(B,0); x.scale(-1,1); } x.drawImage(im,dx,dy,w,h); res(c.toDataURL('image/png')); }; im.onerror=()=>res(src); im.src=src; }); }
 const DG_CONTACT_K=new Set(['rush','fist','hfist','slash','bite','drill','bigsword','hammer','slam']);   /* 要冲到对手面前打的特效 */
+const dgSpcM=m=>dgSpc(m[0],m[1])&&!DG_CONTACT_K.has(dgFxKind(m));   /* 冲上去近身打的必杀技一律算物理（Kris 2026-11-29） */
 async function dgRegister(list){ dgUnregister(); DGREG={ids:[],mvs:[],ct:[]};
   for(const e of list){ const id=dgSid(e), mvs=dgMvIds(e), pw=dgPwFix(e)||DG_POW[e.st]||60, tys=[];
-    (e.mv||[]).forEach((m,k)=>{ const t=m[2]||'一般', sp=dgSpc(m[0],m[1]), mid=mvs[k]; tys.includes(t)||tys.push(t);
+    (e.mv||[]).forEach((m,k)=>{ const t=m[2]||'一般', sp=dgSpcM(m), mid=mvs[k]; tys.includes(t)||tys.push(t);
       MV[mid]=[m[0],t,(dgPwFix(e)?pw:pw+(k===e.mv.length-1&&k>0?10:0)),100,15]; if(sp) SPECIAL.add(mid); if(m[3]&&m[3]!==t) MV2[mid]=m[3];   /* 必杀技的第二属性（Kris 2026-11-29） */
       { const ck=DG_CONTACT_K.has(dgFxKind(m)), S2=sp?SPCONTACT:NOCONTACT; if((sp?ck:!ck)&&!S2.has(m[0])){ S2.add(m[0]); DGREG.ct.push([S2,m[0]]); } }   /* 冲上去打不打，按特效：光线、导弹这类站在原地放，拳、爪、冲撞才冲上去（Kris 2026-11-29） */
       if(dgFxReady(e)){ const X=dgFxOf(m,e); FXF[mid]=X.f; FXDUR[mid]=X.d; if(DG_PAL_MON[e.id]) FXTY[mid]=DG_TINT_PAL[DG_PAL_MON[e.id]]; FXCHG[mid]=X.c; }   /* 已经做好专属特效的系列（Kris 2026-11-28） */
       else { const pr=DG_FXP[t]||DG_FXP.一般, base=[pr[sp?1:0],pr[sp?0:1]].find(i=>FXF[i])||Object.keys(MV).map(Number).find(i=>i<1000&&FXF[i]&&MV[i][1]===t&&MV[i][2]>0);
       if(base){ FXF[mid]=FXF[base]; if(FXDUR[base]) FXDUR[mid]=FXDUR[base]; } }
       DGREG.mvs.push(mid); });
-    const spN=(e.mv||[]).filter(m=>dgSpc(m[0],m[1])).length, phys=(e.mv||[]).length-spN>spN, tot=(dgTier(e)||{}).tot||DG_TOT[e.st]||330;
+    const spN=(e.mv||[]).filter(m=>dgSpcM(m)).length, phys=(e.mv||[]).length-spN>spN, tot=(dgTier(e)||{}).tot||DG_TOT[e.st]||330;
     const w=phys?[1,1.25,1,.8,.9,1.05]:[1,.8,.9,1.25,1,1.05]; if(e.at==='疫苗种') w[2]+=.12; if(e.at==='病毒种'){ w[1]+=.08; w[3]+=.08; } if(e.at==='数据种') w[4]+=.12;
     const ws=w.reduce((a,x)=>a+x,0), b6=w.map(x=>Math.max(10,Math.round(tot*x/ws)));
     const t1=tys[0]||(e.at==='病毒种'?'恶':'一般'), t2=tys[1]&&tys[1]!==t1?tys[1]:'';
