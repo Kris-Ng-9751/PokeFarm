@@ -4727,7 +4727,7 @@ function hitBy(att,def,sh,mine){
 /* 馆主和传奇训练家的特殊能力（Kris 2026-10-24）：Mega / 极巨化 / 太晶化 / Z 招式，按那个时代的游戏分配，在对方第一次出招时发动 */
 function foeGim(){
   const b=B, f=b.foe, g=f.gm; if(!g||g.used) return; g.used=1; const nm=SP[f.id][0];
-  if(g.k==='mega'){ const fs=MEGA[f.id]; if(!fs) return; const r=b.fh/b.fx; f.id=fs[Math.floor(Math.random()*fs.length)]; wxEnter(f.id,false,f); b.fx=f.fx=maxhp(f); b.fh=f.fh=Math.max(1,Math.ceil(r*b.fx)); b.log.push(`对方的 ${nm} 的超级石在发光……Mega 进化成了 ${SP[f.id][0]}！`); }
+  if(g.k==='mega'){ const fs=MEGA[f.id]; if(!fs) return; const r=b.fh/b.fx; f.id=fs[Math.floor(Math.random()*fs.length)]; b.log.push(`对方的 ${nm} 的超级石在发光……Mega 进化成了 ${SP[f.id][0]}！`); wxEnter(f.id,false,f); b.fx=f.fx=maxhp(f); b.fh=f.fh=Math.max(1,Math.ceil(r*b.fx)); }   /* 先说变身，再说特性（始源之海等，Kris 2026-11-28） */
   else if(g.k==='dyn'){ f.dyn=3; b.fx=f.fx=Math.floor(b.fx*1.5); b.fh=f.fh=Math.floor(b.fh*1.5); b.log.push(`对方的 ${nm} ${GMX[f.id]?'超极巨化了':'巨大化了'}！HP 变成 1.5 倍，技能变成极巨招式（3 回合）`); }
   else if(g.k==='tera'){ f.tera=g.t||SP[f.id][2]; b.log.push(`对方的 ${nm} 太晶化了！变成 ${f.tera} 属性，${f.tera} 系技能威力 ×2`); }
   else if(g.k==='z'){ f.zNow=1; b.log.push(`对方的 ${nm} 摆出了 Z 力量的姿势！`); }
@@ -4776,7 +4776,7 @@ function bFoeDown(){
   bSendNext();
 }
 /* 对方派出下一只（玩家选了不换、或者换好了宝可梦之后） */
-function bSendNext(){ const b=B; saveActive(); b.shift=false; b.menu='main'; b.fcur++; loadActive(); b.log.push(`对方派出了 ${SP[b.foe.id][0]} Lv${b.foe.lv}！`); wxEnter(b.foe.id,false,b.foe); bRender(); }
+function bSendNext(){ const b=B; saveActive(); b.shift=false; b.menu='main'; b.fcur++; loadActive(); b.log.push(/^(世界 Boss|传说宝可梦挑战)/.test(b.cfg.tag||'')?`${SP[b.foe.id][0]} 出现了！`:`对方派出了 ${SP[b.foe.id][0]} Lv${b.foe.lv}！`); wxEnter(b.foe.id,false,b.foe); bRender(); }
 function shiftPop(b){ const f=b.foes[b.fcur+1], s=SP[f.id], ty=[s[2],s[8]].filter(Boolean);
   return `<div class="shiftpop" role="dialog" aria-modal="true"><div class="shiftcard"><div class="muted">${b.cfg.title||'对方'} 要派出下一只宝可梦</div><img src="${spfM(f,f.shiny)}" alt=""><div><b>${s[0]}${gSym(f.g)}</b> <span class="muted">Lv${f.lv}</span></div><div class="tys">${ty.map(x=>`<i style="background:${TYC[x]||'#aaa'}">${x}</i>`).join('')}</div><div class="shifttxt">要更换宝可梦应对吗？<small>现在上场的是 ${SP[b.me.id][0]}（HP ${b.mh}/${b.mx}）。换人不会被对方攻击。</small></div><div class="row" style="justify-content:center"><button class="btn" data-m="shift:yes">更换宝可梦</button><button class="btn alt" data-m="shift:no">不换，继续</button></div></div></div>`; }
 /* 快速折返（Kris 2026-10-30）：打中后出招的宝可梦回来，玩家选一只换上；对方还没出手的话，换上来的那只挨这一下，然后照常结束这个回合 */
@@ -5611,9 +5611,11 @@ function lgxFight(id,dk){ const ri=lgcRegion(id), k='m'+id; if(!lgxOK(ri,k,dk,LG
   lgxArmor=arm; const f=lgxFoe(id,dk); lgxArmor=false; const fm=lgcForm(id); if(!arm&&!D0.now) f.gm=fm.k==='etm'?{k:'dyn'}:{k:fm.k,t:fm.t||null};
   const R=lgxRW(LGC_RW[isB?'b':'n'],D0.rw);
   startBattle({kind:'npc',tag:'传说宝可梦挑战',title:`${isB?'传说大 Boss':'传说宝可梦'}（${D0.nm}） · ${SP[f.id][0]}`,foe:{...f},foes:[f],reward:null,bossFm:arm||!D0.now?null:fm,onWin:()=>lgxSettle(k,dk,R,SP[f.id][0])}); }
+/* 不双打的组合（Kris 2026-11-28）：超古代宝可梦的梦魇也是一只接一只单打，每只一出场就变身 */
+const LGX_NODBL=new Set(['超古代宝可梦']);
 function lgxGrpFight(ri,gi,dk){ const [nm,L]=LGC_GRP[ri][gi], k='g'+lgcGrpKey(ri,gi); if(!lgxOK(ri,k,dk,LGX_G)) return toast('这个难度还没开放'); const left=lgcGrpLeft(L); if(left.length) return toast(`先单独打赢：${left.map(id=>SP[id][0]).join('、')}`);
   const D0=LGX[dk], R=lgxRW(lgcGrpRW(L.length),D0.rw), foes=L.map(id=>{ const f=lgxFoe(id,dk), fm=lgcForm(id); f.gm=fm.k==='etm'?{k:'dyn'}:{k:fm.k,t:fm.t||null}; return f; }), win=()=>lgxSettle(k,dk,R,`「${nm}」`);
-  if(D0.dbl){ if(foes.length<2) return toast('这个组合不能双打'); startDouble(`传说组合（${D0.nm} · 双打） · ${nm}`,foes,null,undefined,win,undefined,undefined,{init:d=>{ d.gimNow=1; if(d.log[0]) d.log[0]=d.log[0].replace(/ 想要对战！$/,' 出现了！'); }}); return; }
+  if(D0.dbl&&!LGX_NODBL.has(nm)){ if(foes.length<2) return toast('这个组合不能双打'); startDouble(`传说组合（${D0.nm} · 双打） · ${nm}`,foes,null,undefined,win,undefined,undefined,{wild:1,init:d=>{ d.gimNow=1; d.wildEnt=1; if(d.log[0]) d.log[0]=d.log[0].replace(/ 想要对战！$/,' 出现了！'); }}); return; }
   startBattle({kind:'npc',tag:'传说宝可梦挑战',gimNow:!!D0.now,title:`传说组合（${D0.nm}） · ${nm}`,foe:{...foes[0]},foes,reward:null,onWin:win}); }
 /* 双打（梦魇）：对方每只一上场就变身 */
 setInterval(()=>{ const d=typeof D!=='undefined'?D:null; if(!d||!d.gimNow||d.over||d.busy||(d.beats&&d.beats.length)||entWait()>0) return; if(window.__opening||window.__openHold||document.body.classList.contains('btwait')||$('#modal').hidden||!document.querySelector('#battle .garena.dbl')) return;
@@ -5630,7 +5632,7 @@ setInterval(()=>{ const P=gimPendNow(); document.body.classList.toggle('gimlock'
   try{ if(P.k==='boss'){ if(!s.__bossGim){ s.__bossGim=1; bossGimGo(s,s.cfg.bossFm); } }
     else if(P.k==='now'){ foeGim(); saveActive(); bRender(); s.__gimUntil=Math.max(GFXEND,performance.now()+300); }
     else { dFoeGim(P.f); dRender(); } }catch(e){ console.warn(e); } },150);
-const lgxBtns=(ri,k,keys,fn)=>lgxOpen(ri)?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${keys.map(dk=>{ const ok=lgxOK(ri,k,dk,keys), c=(lgxRec(k)[dk]||{}).c; return `<button class="btn ${ok?'':'alt'}" style="padding:3px 10px;font-size:12px" ${ok?`data-lgx="${fn}:${dk}"`:'disabled'} title="Lv${LGX[dk].lv}${LGX[dk].dbl?' · 双打':''}">${c?'✓ ':ok?'':'🔒 '}${LGX[dk].nm}</button>`; }).join('')}</div>`:'';
+const lgxBtns=(ri,k,keys,fn,nodbl)=>lgxOpen(ri)?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${keys.map(dk=>{ const ok=lgxOK(ri,k,dk,keys), c=(lgxRec(k)[dk]||{}).c; return `<button class="btn ${ok?'':'alt'}" style="padding:3px 10px;font-size:12px" ${ok?`data-lgx="${fn}:${dk}"`:'disabled'} title="Lv${LGX[dk].lv}${LGX[dk].dbl&&!nodbl?' · 双打':''}">${c?'✓ ':ok?'':'🔒 '}${LGX[dk].nm}</button>`; }).join('')}</div>`:'';
 function rLgc(){ const ri=lgcTab, R=TR.regions[ri], open=lgcOpen(ri), boss=LGC_BOSS[ri], L=lgcList(ri), rec=id=>(S.lgc||{})[id]||{}, beat=[boss,...L].filter(id=>rec(id).c).length;
   const left=lgcLeft(ri);
   const row=(id,isB)=>{ const r=rec(id), lv=LGC_LV[isB?'b':'n'], RW=LGC_RW[isB?'b':'n'], dd=r.c&&r.d===today(), ok=open&&!(isB&&left&&!DEVALL());
@@ -5639,7 +5641,7 @@ function rLgc(){ const ri=lgcTab, R=TR.regions[ri], open=lgcOpen(ri), boss=LGC_B
   <div class="row" style="margin:10px 0">${TR.regions.map((r,i)=>`<button class="btn fchip ${lgcTab===i?'on':'alt'}" data-lgct="${i}">${r.region_zh}</button>`).join('')}</div>
   <div class="muted">${R.region_zh} · 已击败 ${beat}/${L.length+1}${open?'':` · <b style="color:var(--red)">未开放：要先成为${R.region_zh}冠军</b>`}</div></div>
   <div class="list">${row(boss,true)}${(LGC_GRP[ri]||[]).map(([nm,G],gi)=>{ const r=((S.lgcg||{})[lgcGrpKey(ri,gi)])||{}, left=lgcGrpLeft(G), ok=open&&!left.length, RW=lgcGrpRW(G.length), dd=r.c&&r.d===today();
-    return `<div class="item trc lgcg" style="${ok?'':'opacity:.6'}"><div class="l"><div style="min-width:0"><b>${nm}</b> <span class="tag r4">组合挑战</span>${r.c?' <span class="tag r4">已击败</span>':''}<div class="muted">${G.length} 只连战，中间 HP 不回复 · Lv${Math.min(...G.map(lgcGrpLv))}${Math.max(...G.map(lgcGrpLv))!==Math.min(...G.map(lgcGrpLv))?'–'+Math.max(...G.map(lgcGrpLv)):''}</div>${left.length?`<div class="muted"><b style="color:var(--red)">先单独打赢：${left.map(id=>SP[id][0]).join('、')}</b></div>`:''}<div class="muted">${r.c?`每天第一次打赢：${rtext(RW.daily)}${dd?'（今天已领）':''}`:`第一次打赢：${rtext(RW.first)}`}</div><div class="row" style="gap:2px;margin-top:4px">${G.map(id=>`<span class="tmon"><img src="${spf(id,false)}" alt="" title="${SP[id][0]}"><small>${SP[id][0]}</small></span>`).join('')}</div>${left.length?'':lgxBtns(ri,'g'+lgcGrpKey(ri,gi),LGX_G,'g:'+gi)}</div></div><button class="btn red" data-lgcg="${gi}" ${ok?'':'disabled'}>${!open?'未开放':left.length?'还没解锁':r.c?'再次挑战':'挑战'}</button></div>`; }).join('')}${L.map(id=>row(id,false)).join('')}</div></section>`;
+    return `<div class="item trc lgcg" style="${ok?'':'opacity:.6'}"><div class="l"><div style="min-width:0"><b>${nm}</b> <span class="tag r4">组合挑战</span>${r.c?' <span class="tag r4">已击败</span>':''}<div class="muted">${G.length} 只连战，中间 HP 不回复 · Lv${Math.min(...G.map(lgcGrpLv))}${Math.max(...G.map(lgcGrpLv))!==Math.min(...G.map(lgcGrpLv))?'–'+Math.max(...G.map(lgcGrpLv)):''}</div>${left.length?`<div class="muted"><b style="color:var(--red)">先单独打赢：${left.map(id=>SP[id][0]).join('、')}</b></div>`:''}<div class="muted">${r.c?`每天第一次打赢：${rtext(RW.daily)}${dd?'（今天已领）':''}`:`第一次打赢：${rtext(RW.first)}`}</div><div class="row" style="gap:2px;margin-top:4px">${G.map(id=>`<span class="tmon"><img src="${spf(id,false)}" alt="" title="${SP[id][0]}"><small>${SP[id][0]}</small></span>`).join('')}</div>${left.length?'':lgxBtns(ri,'g'+lgcGrpKey(ri,gi),LGX_G,'g:'+gi,LGX_NODBL.has(nm))}</div></div><button class="btn red" data-lgcg="${gi}" ${ok?'':'disabled'}>${!open?'未开放':left.length?'还没解锁':r.c?'再次挑战':'挑战'}</button></div>`; }).join('')}${L.map(id=>row(id,false)).join('')}</div></section>`;
   document.querySelectorAll('[data-lgct]').forEach(b=>b.onclick=()=>{ lgcTab=+b.dataset.lgct; rLgc(); });
   document.querySelectorAll('[data-lgc]').forEach(b=>b.onclick=()=>lgcFight(+b.dataset.lgc)); trimImgs('#main .sptrim');
   document.querySelectorAll('[data-lgcg]').forEach(b=>b.onclick=()=>lgcGrpFight(ri,+b.dataset.lgcg));
@@ -6323,7 +6325,7 @@ function dGimmick(m){ const d=D, c=dCur(); if(!c||d.over||d.shift) return; const
   else if(m==='z'){ if(d.gu[p.real.uid]||p.dyn>0) return; p.zOn=!p.zOn; }
   dRender(); }
 function dFoeGim(f){ const d=D, g=f.gm; if(!g||g.used) return; g.used=1; const nm=SP[f.id][0];
-  if(g.k==='mega'){ const fs=MEGA[f.id]; if(!fs) return; const r=f.fh/f.fx; f.id=fs[Math.floor(Math.random()*fs.length)]; wxEnter(f.id,false,f); f.fx=maxhp(f); f.fh=Math.max(1,Math.ceil(r*f.fx)); d.log.push(`对方的 ${nm} 的超级石在发光……Mega 进化成了 ${SP[f.id][0]}！`); }
+  if(g.k==='mega'){ const fs=MEGA[f.id]; if(!fs) return; const r=f.fh/f.fx; f.id=fs[Math.floor(Math.random()*fs.length)]; d.log.push(`对方的 ${nm} 的超级石在发光……Mega 进化成了 ${SP[f.id][0]}！`); wxEnter(f.id,false,f); f.fx=maxhp(f); f.fh=Math.max(1,Math.ceil(r*f.fx)); }
   else if(g.k==='dyn'){ f.dyn=3; f.fx=Math.floor(f.fx*1.5); f.fh=Math.floor(f.fh*1.5); d.log.push(`对方的 ${nm} ${GMX[f.id]?'超极巨化了':'巨大化了'}！HP 变成 1.5 倍，技能变成极巨招式（3 回合）`); }
   else if(g.k==='tera'){ f.tera=g.t||SP[f.id][2]; d.log.push(`对方的 ${nm} 太晶化了！变成 ${f.tera} 属性，${f.tera} 系技能威力 ×2`); }
   else if(g.k==='z'){ f.zNow=1; d.log.push(`对方的 ${nm} 摆出了 Z 力量的姿势！`); } }
@@ -6391,7 +6393,7 @@ function dMyFill(){ const d=D; d.mneed=(d.mneed||[]).filter(s=>d.my[s]<0); const
   d.shift={step:'f',slot:d.mneed[0]}; return dRender(); }
 function dAfterFill(){ const d=D; d.shift=null; if(!d.over&&d.need&&d.need.length){ if(d.party.some((p,i)=>p.mh>0&&!d.my.includes(i))){ d.shift={step:0}; return dRender(); } return dSendFoes(); } dRender(); }
 /* 双打：倒下的对手由下一批补上；补上之前先问要不要更换宝可梦应对 */
-function dSendFoes(){ const d=D; (d.need||[]).forEach(s=>{ if(d.nf<d.foes.length){ d.fo[s]=d.nf; d.log.push(`对方派出了 ${SP[d.foes[d.nf].id][0]} Lv${d.foes[d.nf].lv}！`); wxEnter(d.foes[d.nf].id,false,d.foes[d.nf]); d.nf++; } }); d.need=[]; d.shift=null; d.sel=[]; d.pm=null; d.menu='main'; dRender(); }
+function dSendFoes(){ const d=D; (d.need||[]).forEach(s=>{ if(d.nf<d.foes.length){ d.fo[s]=d.nf; d.log.push(d.wildEnt?`${SP[d.foes[d.nf].id][0]} 出现了！`:`对方派出了 ${SP[d.foes[d.nf].id][0]} Lv${d.foes[d.nf].lv}！`); wxEnter(d.foes[d.nf].id,false,d.foes[d.nf]); d.nf++; } }); d.need=[]; d.shift=null; d.sel=[]; d.pm=null; d.menu='main'; dRender(); }
 function dShiftPop(d){ const st=d.shift.step, inc=d.foes.slice(d.nf,d.nf+(d.need||[]).length);
   const prev=inc.map(f=>{ const s=SP[f.id], ty=[s[2],s[8]].filter(Boolean); return `<div class="shiftmon"><img src="${spfM(f,f.shiny)}" alt=""><b>${s[0]}${gSym(f.g)}</b><span class="muted">Lv${f.lv}</span><div class="tys">${ty.map(x=>`<i style="background:${TYC[x]||'#aaa'}">${x}</i>`).join('')}</div></div>`; }).join('');
   let body;
@@ -9434,7 +9436,7 @@ function entPlay(host,gsp,side,key,t0){ const hr=host.getBoundingClientRect(), r
   setTimeout(()=>{ [ball,fl,ry,...host.querySelectorAll('.pbs')].forEach(x=>x.remove()); if(gsp.isConnected) gsp.style.transformOrigin=''; if(ENT.act[key]&&ENT.act[key].t0===t0) delete ENT.act[key]; },left); }
 function entCheck(){ const host=document.querySelector('#battle .garena'); if(!host) return; const dbl=host.classList.contains('dbl'), st=dbl?(typeof D!=='undefined'&&D):B; if(!st) return;
   let keys=[];
-  if(dbl) [0,1].forEach(i=>{ keys.push(['f'+i,st.fo[i],`.gsp.df${i}`,0]); keys.push(['m'+i,st.my[i],`.gsp.dm${i}`,0]); });
+  if(dbl) [0,1].forEach(i=>{ keys.push(['f'+i,st.fo[i],`.gsp.df${i}`,!!st.wildEnt]);   /* 传说宝可梦挑战的双打：对方跟野外一样直接出现（Kris 2026-11-28） */ keys.push(['m'+i,st.my[i],`.gsp.dm${i}`,0]); });
   else { const wild=!st.cfg||st.cfg.kind==='wild'||st.cfg.wildEnt||/^(世界 Boss|传说宝可梦挑战)/.test(st.cfg.tag||'')||host.classList.contains('bw'); keys.push(['f',st.fcur,'#bfoe',wild]);   /* 世界 Boss 跟野外一样直接出现，不用精灵球放出来（Kris 2026-11-20） */ keys.push(['m',st.mon&&st.mon.uid,'#bme',0]); }
   const prev=ENT.seen.get(st), now={}, first=!prev, nowT=performance.now(); let n=0;
   keys.forEach(([k,v,sel,skip])=>{ now[k]=v; const id=(dbl?'d':'s')+k; const e=host.querySelector(sel), gsp=e&&(e.classList.contains('gsp')?e:e.closest('.gsp'));
@@ -16916,7 +16918,7 @@ const BGMA={"fish":"SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA
   function bgmSync(){ if(!live()) return; if(window.__titleStop){ try{ window.__titleStop(); }catch(e){} }   /* 加载画面接着放的标题曲：游戏自己的声音开始了就淡出（Kris 2026-11-19） */
     if(JHOLD) return; if(HOLD&&!inBattle()) HOLD=false;
     if(!SND.bgm||HOLD) return bgmStop(); if(!inBattle()){ const t=typeof tab!=='undefined'?tab:''; return bgmPlay(t==='pcenter'?'pcenter':t==='fish'?'fish':t==='mine'?'mine':['shop','auction','trade'].includes(t)?'mart':'home'); }   /* 有自己曲子的页面放自己的；其他页面都放主页的未白镇（Kris 2026-11-19） */
-    const st=battleState(), boss=(typeof B!=='undefined'&&B&&B.cfg&&/^(世界 Boss|传说宝可梦挑战)/.test(B.cfg.tag||'')&&!(typeof D!=='undefined'&&D&&D.my))||(typeof D!=='undefined'&&D&&D.my&&D.ttm); if(boss) return bgmPlay(st==='won'?'victory':st==='on'?'lbattle':null);
+    const st=battleState(), boss=(typeof B!=='undefined'&&B&&B.cfg&&/^(世界 Boss|传说宝可梦挑战)/.test(B.cfg.tag||'')&&!(typeof D!=='undefined'&&D&&D.my))||(typeof D!=='undefined'&&D&&D.my&&(D.ttm||D.wildEnt)); if(boss) return bgmPlay(st==='won'?'victory':st==='on'?'lbattle':null);
     const wild=typeof B!=='undefined'&&B&&B.cfg&&B.cfg.kind==='wild'&&!(typeof D!=='undefined'&&D&&D.my), sg=typeof B!=='undefined'&&B&&B.cfg&&!(typeof D!=='undefined'&&D&&D.my)?B.cfg:null, pre=wild?'':sg&&CHAMP(sg)?'c':sg&&BOSSTAG.has(sg.tag)?'g':'t'; bgmPlay(st==='won'?pre+'victory':st==='on'?pre+'battle':null); }
   setInterval(()=>{ try{ bgmSync(); }catch(e){} },500);
   window.__bgmSync=()=>{ try{ bgmSync(); }catch(e){} };   /* 进入对战时马上换曲（不等 0.5 秒的轮询） */
@@ -17109,10 +17111,10 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
     try{
       await sleep((window.__btIntroEnd||0)-420-performance.now()); if(!alive()) return;   /* 转场开始淡出时就开始进场（Kris 2026-11-18：不要只剩野生宝可梦站在暗掉的画面上） */
       const host=document.querySelector('#battle .garena'); if(!host) return;
-      const wild=!dbl&&(!st.cfg||st.cfg.kind==='wild'||st.cfg.wildEnt||/^(世界 Boss|传说宝可梦挑战)/.test(st.cfg.tag||''));   /* wildEnt：数码宝贝测试对战，对手也直接出现 */   /* 世界 Boss 出场跟野外一样：从左边滑进来、叫一声（Kris 2026-11-20） */
+      const wild=dbl?!!st.wildEnt:(!st.cfg||st.cfg.kind==='wild'||st.cfg.wildEnt||/^(世界 Boss|传说宝可梦挑战)/.test(st.cfg.tag||''));   /* wildEnt：数码宝贝测试对战，对手也直接出现 */   /* 世界 Boss 出场跟野外一样：从左边滑进来、叫一声（Kris 2026-11-20） */
       /* ① 双方进场 */
       const mtw=trEnter(host,SLIDE); let ftw=null;
-      if(wild){ const sp=host.querySelector('.gsp.foe'); document.body.classList.remove('opn-hf'); if(sp) sp.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:SLIDE,easing:'linear'}); }
+      if(wild){ document.body.classList.remove('opn-hf'); host.querySelectorAll(dbl?'.gsp.df0,.gsp.df1':'.gsp.foe').forEach(sp=>sp.animate([{transform:`translateX(${-(sp.offsetLeft+sp.offsetWidth)}px)`},{transform:'none'}],{duration:SLIDE,easing:'linear'})); }
       else if(dbl?st.av:st.cfg.av) ftw=dbl?foeEnterD(host,st.av,SLIDE):foeEnter(host,st.cfg.av,SLIDE);   /* 双打的对方训练家也先进场（Kris 2026-11-20） */
       await sleep(SLIDE+350); if(!alive()) return;
       /* ② 对方派出宝可梦，叫完 */
@@ -17121,7 +17123,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
         keys.forEach(([k,v],i)=>{ ENT.act[k]={t0:t+i*350,v}; }); document.body.classList.remove('opn-hf'); entCheck();
         await sleep(950+(keys.length-1)*350); if(!alive()) return; document.body.classList.remove('opn-if');
         for(const [k,v] of keys){ const f=dbl?D.foes[v]:st.foe; if(f) await cryP(f.id); if(!alive()) return; } }
-      else { document.body.classList.remove('opn-if'); await cryP(st.foe.id); if(!alive()) return; }
+      else { document.body.classList.remove('opn-if'); for(const f of (dbl?st.fo.filter(i=>i>=0).map(i=>D.foes[i]):[st.foe])){ if(f) await cryP(f.id); if(!alive()) return; } }
       /* ③ 我方丢球，宝可梦出场，叫完 */
       const rel=trThrowNow(mtw), t=performance.now()+rel, mk=dbl?[0,1].map(i=>['dm'+i,st.my[i]]).filter(x=>x[1]>=0):[['sm',st.mon&&st.mon.uid]];
       mk.forEach(([k,v],i)=>{ ENT.act[k]={t0:t+i*350,v}; }); document.body.classList.remove('opn-hm'); entCheck();
@@ -17158,7 +17160,7 @@ const TRBK={red:{st:0,rel:3,w:64,h:49,sh:48},leaf:{st:0,rel:3,w:64,h:50,sh:49},b
   { const _tp=teamPop; teamPop=function(title,go,dbl){ const k=pend; pend=null; return _tp.call(this,title,function(){ if(k) try{ btIntro(k.k,k.av); openArm(k.k==='wild'); }catch(e){} return go.apply(this,arguments); },dbl); }; }
   const popWill=cfg=>!window.__noTeamPop&&!(cfg&&cfg.noPop);
   { const _sb=startBattle; startBattle=function(cfg){ const k={k:kindOf(cfg),av:cfg&&cfg.av}; if(popWill(cfg)) pend=k; else try{ btIntro(k.k,k.av); openArm(k.k==='wild'); }catch(e){} return _sb.apply(this,arguments); }; }
-  { const _sd=startDouble; startDouble=function(){ const o=arguments[7]||{}, k={k:o.vs&&o.av?'vs':'trainer',av:o.av};   /* 双打道馆也用 VS 转场（Kris 2026-11-20） */ if(popWill(null)) pend=k; else try{ btIntro(k.k,k.av); openArm(false); }catch(e){} return _sd.apply(this,arguments); }; }
+  { const _sd=startDouble; startDouble=function(){ const o=arguments[7]||{}, k={k:o.vs&&o.av?'vs':o.wild?'boss':'trainer',av:o.av};   /* 双打道馆也用 VS 转场（Kris 2026-11-20） */ if(popWill(null)) pend=k; else try{ btIntro(k.k,k.av); openArm(false); }catch(e){} return _sd.apply(this,arguments); }; }
   const mo=new MutationObserver(()=>{ try{ apply(); }catch(e){} });
   const arm=()=>{ const h=document.getElementById('battle'); if(h&&!h.__trw){ h.__trw=1; mo.observe(h,{childList:true,subtree:true}); } }; arm(); setInterval(arm,1500);
   const st=document.createElement('style'); st.textContent=`
