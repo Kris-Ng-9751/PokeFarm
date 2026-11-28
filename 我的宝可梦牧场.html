@@ -5628,13 +5628,14 @@ setInterval(()=>{ const d=typeof D!=='undefined'?D:null; if(!d||!d.gimNow||d.ove
 /* 开场变身一定在开场后马上发生（Kris 2026-11-28：不能等玩家点「战斗」才变）：
    有还没变身的（Boss 开场变身、地狱难度王牌、梦魇双打）时把按钮锁住，开场一结束就变；画面动画的标记卡住超过 1.2 秒也直接变，不再等 */
 const gimPendNow=()=>{ if($('#modal').hidden) return null; const b=typeof B!=='undefined'?B:null, d=typeof D!=='undefined'?D:null;
-  if(b){ if(b.over) return null; if(b.cfg&&b.cfg.bossFm&&!b.__gimDone) return {k:'boss',b}; if(gimNowPend(b)) return {k:'now',b}; return null; }
+  if(b){ if(b.over) return null; if(b.cfg&&b.cfg.bossFm&&!b.__gimDone) return {k:'boss',b}; if(gimNowPend(b)) return {k:'now',b}; if(b.foe&&b.foe.__p2&&b.foe.gm&&!b.foe.gm.used) return {k:'armor',b}; return null; }
   if(d&&d.my&&d.gimNow&&!d.over){ const f=(d.fo||[]).map(i=>i>=0?d.foes[i]:null).find(f=>f&&f.fh>0&&f.gm&&!f.gm.used&&f.gm.k!=='z'); if(f) return {k:'dbl',d,f}; } return null; };
 let GIMP0=0;
 setInterval(()=>{ const P=gimPendNow(); document.body.classList.toggle('gimlock',!!P||(!$('#modal').hidden&&typeof GFXEND==='number'&&performance.now()<GFXEND)); if(!P){ GIMP0=0; return; }   /* 变身特效放完之前也先锁着 */
   const s=P.b||P.d; if(window.__opening||window.__openHold||s.busy||(s.beats&&s.beats.length)||s.pick||s.shift){ GIMP0=0; return; }
   if(!GIMP0){ GIMP0=performance.now(); return; } if(performance.now()-GIMP0<1200) return; GIMP0=0;   /* 其他检查卡住了：直接变身 */
   try{ if(P.k==='boss'){ if(!s.__bossGim){ s.__bossGim=1; bossGimGo(s,s.cfg.bossFm); } }
+    else if(P.k==='armor'){ }
     else if(P.k==='now'){ foeGim(); saveActive(); bRender(); s.__gimUntil=Math.max(GFXEND,performance.now()+300); }
     else { dFoeGim(P.f); dRender(); } }catch(e){ console.warn(e); } },150);
 const lgxBtns=(ri,k,keys,fn,nodbl)=>lgxOpen(ri)?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${keys.map(dk=>{ const ok=lgxOK(ri,k,dk,keys), c=(lgxRec(k)[dk]||{}).c; return `<button class="btn ${ok?'':'alt'}" style="padding:3px 10px;font-size:12px" ${ok?`data-lgx="${fn}:${dk}"`:'disabled'} title="Lv${LGX[dk].lv}${LGX[dk].dbl&&!nodbl?' · 双打':''}">${c?'✓ ':ok?'':'🔒 '}${LGX[dk].nm}</button>`; }).join('')}</div>`:'';
@@ -10836,9 +10837,13 @@ function prankOn(list){ const add=[]; list.forEach(([o,mv])=>{ if(!o||abOf(o)!==
 { const _fd=bFoeDown; bFoeDown=function(){ const b=B, f=b&&b.foe;
     if(f&&f.id===ARMOR_ID&&!f.__p2&&/^传说宝可梦挑战/.test(b.cfg.tag||b.cfg.title||'')){ f.__p2=1; const nm=SP[ARMOR_ID][0];
       b.log.push(`对方的 ${nm} 的盔甲碎掉了！`); fcTo(f,150,`对方的 ${SP[150][0]} 露出了原本的样子！`); f.stg={}; delete f.sta;
-      b.fx=f.fx=maxhp(f); b.fh=f.fh=b.fx; b.log.push(`对方的 ${SP[150][0]} 的 HP 回满了！`); f.gm={k:'mega'}; foeGim(); saveActive(); return bRender(); }
+      b.fx=f.fx=maxhp(f); b.fh=f.fh=b.fx; b.log.push(`对方的 ${SP[150][0]} 的 HP 回满了！`); f.gm={k:'mega'}; f.__p2T=0; saveActive(); return bRender(); }   /* Mega 先不变：等变回普通超梦的特效放完、看得到原本的样子，再 Mega（Kris 2026-11-28） */
     return _fd.apply(this,arguments); }; }
 
+setInterval(()=>{ const b=typeof B!=='undefined'?B:null, f=b&&b.foe; if(!f||!f.__p2||!f.gm||f.gm.used||b.over||b.busy||(b.beats&&b.beats.length)||b.pick||$('#modal').hidden) return;
+  if(FCQ.some(q=>q.o===f)||entWait()>0||(typeof GFXEND==='number'&&performance.now()<GFXEND)){ f.__p2T=0; return; }
+  if(!f.__p2T){ f.__p2T=performance.now(); return; } if(performance.now()-f.__p2T<1100) return;   /* 普通超梦站一下，再 Mega */
+  try{ foeGim(); saveActive(); bRender(); }catch(e){ console.warn(e); } },150);
 /* ---------- 黑暗石 / 光明石 / 基因之楔（Kris 2026-11-05）
    黑暗石：捷克罗姆、酋雷姆的专属道具；光明石：莱希拉姆、酋雷姆的专属道具；基因之楔：酋雷姆的专属道具。带上以后自己属性的攻击招式威力 ×1.2（捷克罗姆、莱希拉姆不变身）。
    获取：第一次得到捷克罗姆送黑暗石、第一次得到莱希拉姆送光明石、第一次得到酋雷姆送基因之楔。
