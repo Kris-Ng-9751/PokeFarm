@@ -2829,7 +2829,7 @@ function bReplay(b,bs){ b.busy=true; let i=0; const st={over:b.over,pick:b.pick,
     if(chg) fxCharge(id,e.who==='me');
     const fm=(e.castFx&&FXF[e.castFx]&&fxOn())?e.castFx:(e.semi&&FXF[e.semi]&&fxOn())?e.semi:(e.z&&FXF['z:'+e.z]&&fxOn())?'z:'+e.z:(e.mv||(cat==='st'&&FXF[id]?id:null));   /* Z 招式放自己的特效（Kris 2026-11-06）；变化招式（大晴天、火焰守护、龙之舞……）也放特效 */
     const fd=fm&&fxOn()&&FXDUR[fm]; if(fd) setTimeout(()=>{ if(B===b) fxPlay(fm,e.who==='me'); },180+pad);
-    const atk=e.mv&&MV[e.mv]&&MV[e.mv][2]>0, tintMv=e.mv||id; if(tintMv&&MV[tintMv]&&fxOn()) fxTint(MV[tintMv][1],(fd?fd.total:900)+pad);   /* 第八阶段：所有招式都沿用原版属性背景色，包括变化招式、一般系招式和已有专属动画。 */
+    const atk=e.mv&&MV[e.mv]&&MV[e.mv][2]>0, tintMv=e.mv||id; if(tintMv&&MV[tintMv]&&fxOn()) fxTint(FXTY[tintMv]||MV[tintMv][1],(fd?fd.total:900)+pad);   /* 第八阶段：所有招式都沿用原版属性背景色，包括变化招式、一般系招式和已有专属动画。 */
     setTimeout(()=>{ if(B===b&&atk){ const sel=e.who==='me'?'#bfoe':'#bme', n=blinkN(e.mm); if(fxOn()) blink(sel,n); else if(n) flash(sel); } },(fd?fd.total+180:260)+pad);   /* 被打中的闪烁和命中音效：等招式特效整个放完才来（Kris 2026-11-20），和扣血同一刻 */ if(fd&&fd.pre&&fxOn()) fd.pre.forEach(tp=>setTimeout(()=>{ if(B===b&&atk) blink(e.who==='me'?'#bfoe':'#bme',2); },tp+pad));   /* 多段攻击：前面几下也各闪一次 */
     const fxEnd=fd?fd.total+180:0;   /* 血条等招式特效整个放完（结尾也放完）才扣（Kris 2026-11-04） */
     { const emh=e.mh, efh=e.fh; setTimeout(()=>{ if(B===b){ if(b.stg){ b.stg.mh=emh; b.stg.fh=efh; } hpShow(emh,efh); } },(fd?fxEnd:260)+pad+(fd?extra0(e,fd,contact,atk):0)); pm=emh; pf=efh; }
@@ -2974,6 +2974,7 @@ function bossPick(b,f,pool,cs){ const H=b.__fH=b.__fH||[], me=b.me, ev=pool.map(
   H.push(pick.id); if(H.length>4) H.shift(); return pick; }
 
 /* ---------- 技能特效（Kris 2026-10-28）：先做一个招式对比看看效果 —— 大字爆。出招时在对手身上播放，按招式编号对应；没有特效的招式照旧只有抖一下 ---------- */
+const FXTY={};   /* 招式特效的背景染色改用别的属性（数码宝贝指定配色用） */
 const FXDUR={126:{hit:1660,total:2450},56:{hit:900,total:1750},437:{hit:980,total:1800},63:{hit:520,total:1500},223:{hit:340,total:1300},403:{hit:500,total:1300},188:{hit:460,total:1500},89:{hit:230,total:1500},157:{hit:340,total:1700},405:{hit:640,total:1500},247:{hit:480,total:1500},232:{hit:300,total:1100},85:{hit:380,total:1200},94:{hit:820,total:1400},58:{hit:420,total:1600},406:{hit:860,total:1700},242:{hit:320,total:1100},585:{hit:640,total:1500},200:{hit:250,total:1300},225:{hit:420,total:1200},239:{hit:450,total:1300},337:{hit:300,total:1100},407:{hit:460,total:1300},434:{hit:420,total:1700},459:{hit:720,total:1600},460:{hit:300,total:1250},525:{hit:360,total:1200},530:{hit:230,total:1000},687:{hit:340,total:1400},691:{hit:540,total:1500},692:{hit:480,total:1400},744:{hit:480,total:1500},751:{hit:290,total:1000},784:{hit:330,total:1100},795:{hit:430,total:1500},799:{hit:300,total:1200},820:{hit:540,total:1500},856:{hit:420,total:1300},862:{hit:330,total:1000},907:{hit:400,total:1300}};   /* hit：对手被打中、闪一下的时间；total：这一拍要放多久（毫秒） */
 const fxOn=()=>!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 (function(){ const st=document.createElement('style'); st.textContent=`.fx-wrap{position:absolute;pointer-events:none;z-index:6}.fx-wrap svg{width:100%;height:100%;overflow:visible}.fx-ball{position:absolute;pointer-events:none;z-index:6;border-radius:50%;background:radial-gradient(circle,#fff6b0 0 25%,#ffb02e 55%,#e5471b 85%,#0000);box-shadow:0 0 18px 8px #ff7a2a99}.fx-ember{position:absolute;pointer-events:none;z-index:6;border-radius:50%;background:radial-gradient(circle,#fff0a0,#ff8a2e 60%,#0000)}.garena.fx-shake{animation:fxshake .32s linear}@keyframes fxshake{0%,100%{transform:translate(0,0)}20%{transform:translate(-5px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,-2px)}80%{transform:translate(3px,2px)}}.garena.fx-shake{animation-timing-function:steps(1,end)}`; document.head.appendChild(st); })();
@@ -6274,7 +6275,7 @@ function dReplay(d,bs){ d.busy=true; let i=0; const st={over:d.over,shift:d.shif
     const mapOf=([s,sl])=>fromMe?{me:'dm'+e.asl,foe:'d'+s+sl}:{foe:'df'+e.asl,me:'d'+s+sl}, mapTo=t=>dMapSet(mapOf(t));
     mapTo(tg[0]);
     if(a){ a.classList.remove('lunge','charge'); void a.offsetWidth; if(contact&&!isMax) setTimeout(()=>{ if(D===d) dZone(mapOf(tg[0]),()=>fxDash(a,fromMe,Math.max(140,fd.hit-120),fd.hold||140)); },100); else a.classList.add(isMax||e.cat!=='ph'?'charge':'lunge'); }
-    if(MV[e.mv]) fxTint(MV[e.mv][1],fd.total);
+    if(MV[e.mv]) fxTint(FXTY[e.mv]||MV[e.mv][1],fd.total);
     setTimeout(()=>{ if(D!==d) return; tg.forEach(t=>dZone(mapOf(t),()=>fxPlay(fm,fromMe))); mapTo(tg[0]); },180);   /* 每只目标各自记住对应，特效不会全挤到最后一只身上 */
     const bdur=e.cat==='st'?0:Math.max(0,...tg.map(t=>blinkN(t[2])*140));   /* 闪烁和命中音效等特效放完才来（Kris 2026-11-20）；闪完才扣血、换下倒下的（重画会把闪烁切掉） */
     setTimeout(()=>{ if(D!==d) return; tg.forEach(([s,sl,mm])=>{ const n=e.cat==='st'?0:blinkN(mm); if(n) blink(`#battle .gsp.d${s}${sl}`,n); }); },fd.total+180);
@@ -17539,8 +17540,10 @@ const DGPAL={火:['#7a1e05','#ff6a1a','#ffc23a','#fff6c8'],水:['#0c3a7a','#2f8c
   超能力:['#6a0f45','#ff4fa3','#ffb0d8','#ffffff'],虫:['#3a5a0a','#9ac21a','#d8ef6a','#ffffff'],幽灵:['#1e0f3a','#5a3aa0','#a68ae0','#efe6ff'],恶:['#120a18','#3a2450','#8a5ab8','#d8c0ff'],
   钢:['#3a4450','#9aa8b8','#dbe4ee','#ffffff'],妖精:['#7a2a58','#ff8fc8','#ffd0ea','#ffffff'],一般:['#5d6178','#c8cce0','#eef0fa','#ffffff'],龙:['#2a1470','#6a4aff','#b0a0ff','#ffffff'],
   地面:['#5a3a14','#c08a3a','#e8c87a','#fff4d8'],岩石:['#4a3a20','#a08850','#d8c890','#fff8e0'],
-  圣:['#7a5a10','#ffd84a','#fff2a8','#ffffff'],暗:['#0a0612','#40205a','#9a5ad0','#e8d0ff'],蓝焰:['#0a2a7a','#3a7aff','#9ad0ff','#ffffff']};
-const dgPal=(m)=>{ const n=m[0], d=m[1]||'', t=m[2]||'一般';
+  圣:['#7a5a10','#ffd84a','#fff2a8','#ffffff'],黑紫:['#0a0410','#3a1458','#8a3ac8','#e0b0ff'],暗:['#0a0612','#40205a','#9a5ad0','#e8d0ff'],蓝焰:['#0a2a7a','#3a7aff','#9ad0ff','#ffffff']};
+/* 指定数码宝贝的招式全部用某种配色（Kris 2026-11-28：奥米加兽兹瓦特、兹瓦特战损、Alter-B 用黑紫色），背景染色也跟着用恶系的暗色 */
+const DG_PAL_MON={omegamon_zwart:'黑紫',omegamonzwart_d:'黑紫','omegamon_alter-b':'黑紫'}, DG_TINT_PAL={黑紫:'恶'};
+const dgPal=(m,e)=>{ if(e&&DG_PAL_MON[e.id]) return DGPAL[DG_PAL_MON[e.id]]; const n=m[0], d=m[1]||'', t=m[2]||'一般';
   if(/圣|天堂|天国|天诛|金光|星光|天使|正义光/.test(n+d)&&!/黑暗|堕落/.test(n+d)) return DGPAL.圣;
   if(/黑暗|暗黑|负面/.test(n+d)) return DGPAL.暗;
   if(/蓝色火焰|蓝焰/.test(d)) return DGPAL.蓝焰;
@@ -17654,7 +17657,7 @@ const DGT={
     for(let i=0;i<7;i++){ const t0=700+i*90, a=i/7*6.283+t/200, ox=fx+Math.cos(a)*22, oy=hy+Math.sin(a)*10; if(t<t0){ if(t>i*80) dgOrb(c,ox,oy,4,P); } else { const p=Math.min(1,(t-t0)/300); if(p<1) dgOrb(c,ox+(tx-ox)*p,oy+(ty-oy)*p,4,P); else c.once(t0+300,t,()=>c.shake()); } }
     if(t>=1000){ const q=Math.min(1,(t-1000)/1000); dgBurst(c,tx,ty,q,P,34); } }; },2100,1000],
 };
-function dgFxOf(m){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m), opt={garuru:{},missile:{ice:m[2]==='冰'},slash:{n:/全部删除|王牌飞剑|劲力三叉爪/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉/.test(m[0])}}[k]||{}; const [setup,total,hit]=mk(P,opt); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total}}; }
+function dgFxOf(m,e){ const k=dgFxKind(m), mk=DGT[k]||DGT.orb, P=dgPal(m,e), opt={garuru:{},missile:{ice:m[2]==='冰'},slash:{n:/全部删除|王牌飞剑|劲力三叉爪/.test(m[0])?3:2},beam:{wide:/无限大炮|终弩级炮|究极波浪炮|千兆|奥米加|雅琉琉/.test(m[0])}}[k]||{}; const [setup,total,hit]=mk(P,opt); return {k,f:(h,f,t)=>fxRun(h,f,t,total,setup),d:{hit,total}}; }
 const DGFX_DONE=new Set([1]);   /* 已经做好特效的动画系列（g）：1 = 数码宝贝大冒险 */
 const dgFxReady=e=>DGFX_DONE.has(e.g);
 /* 开发者 → 技能特效：上面加「数码宝贝必杀技特效」测试，点一招就开一场测试对战（我方这只数码宝贝 Lv80，第一招就是这招，对手是血很多的巨鲸兽） */
@@ -17663,7 +17666,7 @@ function dgFxCard(){ const L=DIGI.filter(e=>e.g===DGFXT.g&&dgHas(e)&&(e.mv||[]).
   return `<div class="card" id="dgfxc"><h2>数码宝贝必杀技特效</h2><div class="muted">按招式类型做的特效模板 + 属性配色。点一招直接开测试对战：这只数码宝贝 Lv80，第一个技能就是这招，对手是血很多的巨鲸兽。已做好的系列：${[...DGFX_DONE].map(g=>(DG_GEN[g]||['?'])[1]||(DG_GEN[g]||['?'])[0]).join('、')}。</div>
   <div class="row" style="margin:8px 0;gap:6px;flex-wrap:wrap">${Object.keys(DG_GEN).map(g=>`<button class="btn fchip ${DGFXT.g==g?'on':'alt'}" data-dgfxg="${g}">${DG_GEN[g][0]}${DG_GEN[g][1]?' '+DG_GEN[g][1]:''}${DGFX_DONE.has(+g)?'':'（还没做）'}</button>`).join('')}</div>
   ${ok?'':'<div class="muted"><b>这个系列还没做专属特效，现在点会播借来的宝可梦招式特效。</b></div>'}
-  <div class="dgfxl">${L.map(e=>`<div class="dgfxr">${dgImg(e,40)}<b>${e.zh}</b><span class="row" style="gap:4px;flex-wrap:wrap">${e.mv.map((m,k)=>{ const P=dgPal(m); return `<button class="btn fxb" data-dgfx="${e.id}:${k}" title="${m[2]||'一般'}系 · 模板：${dgFxKind(m)} · ${m[1]||''}" style="background:${P[1]};border-color:${P[0]};color:${['电','冰','一般','钢','飞行'].includes(m[2])||P===DGPAL.圣?'#1f2a1c':'#fff'}">${m[0]}</button>`; }).join('')}</span></div>`).join('')}</div></div>`; }
+  <div class="dgfxl">${L.map(e=>`<div class="dgfxr">${dgImg(e,40)}<b>${e.zh}</b><span class="row" style="gap:4px;flex-wrap:wrap">${e.mv.map((m,k)=>{ const P=dgPal(m,e); return `<button class="btn fxb" data-dgfx="${e.id}:${k}" title="${m[2]||'一般'}系 · 模板：${dgFxKind(m)} · ${m[1]||''}" style="background:${P[1]};border-color:${P[0]};color:${['电','冰','一般','钢','飞行'].includes(m[2])||P===DGPAL.圣?'#1f2a1c':'#fff'}">${m[0]}</button>`; }).join('')}</span></div>`).join('')}</div></div>`; }
 async function dgFxTest(id,k){ const e=DIGI.find(x=>x.id===id); if(!e) return; if(!S.chosen) return toast('先选好起始宝可梦'); const foe=DIGI.find(x=>x.id==='whamon'&&dgHas(x))||DIGI.find(x=>x.st==='完全体'&&dgHas(x));
   const sd=DGB.side; DGB.side='d'; try{ await dgStart({title:`必杀技特效测试 · ${e.zh} · ${e.mv[k][0]}`,tag:'数码宝贝对战'},[e],[{e:foe,lv:100,hpm:4}],80); } finally{ DGB.side=sd; }
   if(B&&B.cfg&&B.cfg.test){ const mid=dgMvIds(e)[k]; B.mvs=[mid,...(B.mvs||[]).filter(x=>x!==mid)].slice(0,4); B.pp=B.mvs.map(()=>99); bRender(); } }
@@ -17692,7 +17695,7 @@ async function dgRegister(list){ dgUnregister(); DGREG={ids:[],mvs:[]};
   for(const e of list){ const id=dgSid(e), mvs=dgMvIds(e), pw=dgPwFix(e)||DG_POW[e.st]||60, tys=[];
     (e.mv||[]).forEach((m,k)=>{ const t=m[2]||'一般', sp=dgSpc(m[0],m[1]), mid=mvs[k]; tys.includes(t)||tys.push(t);
       MV[mid]=[m[0],t,(dgPwFix(e)?pw:pw+(k===e.mv.length-1&&k>0?10:0)),100,15]; if(sp) SPECIAL.add(mid);
-      if(dgFxReady(e)){ const X=dgFxOf(m); FXF[mid]=X.f; FXDUR[mid]=X.d; }   /* 已经做好专属特效的系列（Kris 2026-11-28） */
+      if(dgFxReady(e)){ const X=dgFxOf(m,e); FXF[mid]=X.f; FXDUR[mid]=X.d; if(DG_PAL_MON[e.id]) FXTY[mid]=DG_TINT_PAL[DG_PAL_MON[e.id]]; }   /* 已经做好专属特效的系列（Kris 2026-11-28） */
       else { const pr=DG_FXP[t]||DG_FXP.一般, base=[pr[sp?1:0],pr[sp?0:1]].find(i=>FXF[i])||Object.keys(MV).map(Number).find(i=>i<1000&&FXF[i]&&MV[i][1]===t&&MV[i][2]>0);
       if(base){ FXF[mid]=FXF[base]; if(FXDUR[base]) FXDUR[mid]=FXDUR[base]; } }
       DGREG.mvs.push(mid); });
@@ -17705,7 +17708,7 @@ async function dgRegister(list){ dgUnregister(); DGREG={ids:[],mvs:[]};
     const src=dgSrc(e), fr=await dgFlip(src,e.st,false), bk=await dgFlip(src,e.st,true);
     SPR[id]=fr; SPRS[id]=fr; SPB[id]=bk; SPBS[id]=bk; SPHI.set(fr,DG_K); SPHI.set(bk,DG_K); DGREG.ids.push(id); } }
 function dgUnregister(){ if(!DGREG) return; DGREG.ids.forEach(id=>{ [SPR[id],SPB[id]].forEach(u=>{ if(!u) return; const t=SPTRIM.get(u); SPHI.delete(u); SPTRIM.delete(u); if(t){ SPHI.delete(t); SPTRIM.delete(t); } }); [SP,BASE6,LS,SPR,SPRS,SPB,SPBS].forEach(T=>{ delete T[id]; }); if(S.seen) delete S.seen[id]; });
-  DGREG.mvs.forEach(m=>{ delete MV[m]; delete FXF[m]; delete FXDUR[m]; SPECIAL.delete(m); }); DGREG=null; }
+  DGREG.mvs.forEach(m=>{ delete MV[m]; delete FXF[m]; delete FXDUR[m]; delete FXTY[m]; SPECIAL.delete(m); }); DGREG=null; }
 let DGRUN=null;   /* 进行中的测试对战：{team:原本的队伍} */
 async function dgStart(cfg,mine,foes,lv,flv){ if(DGRUN) return toast('上一场测试对战还没结束');
   const pk=DGB.side==='p', team=pk?S.team.map(mon).filter(m=>m&&!isBusy(m)):[];
